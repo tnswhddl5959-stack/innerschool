@@ -42,18 +42,18 @@ const INIT_ACCOUNTS = [
 ];
 
 const INIT_WIKI = [
-  {icon:"🏫",title:"상담실 이용 안내",desc:"예약 방법, 운영 시간, 담당 선생님 안내",ok:true,
+  {icon:"🏫",title:"상담실 이용 안내",desc:"",ok:true,
    content:"📍 위치: 본관 1층 107호\n\n⏰ 운영 시간\n평일 09:00~17:00 (점심시간 포함)\n\n📝 예약 방법\n1. 담임 선생님께 상담 신청서 제출\n2. 또는 상담실 앞 예약 노트에 직접 기재\n3. 긴급 상담은 예약 없이 방문 가능\n\n👩‍🏫 담당: 김○○ 선생님 (내선 101)"},
-  {icon:"📚",title:"도서관 이용 규칙",desc:"대출 권수, 반납 기한, 연장 방법 안내",ok:true,
+  {icon:"📚",title:"도서관 이용 규칙",desc:"",ok:true,
    link:{label:"도서 검색",url:"https://read365.edunet.net/PureScreen/SchoolSearch?schoolName=%EA%B2%BD%EA%B8%B0%EC%B0%BD%EC%A1%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&provCode=J10&neisCode=J100005831"},
    content:"📍 위치: 본관 3층\n\n⏰ 운영 시간: 평일 08:00~18:00\n\n📖 대출 규정\n• 1인 최대 3권 대출\n• 대출 기간: 2주\n• 1회 1주 연장 가능\n\n⚠️ 연체 시 연체일수만큼 대출 정지"},
-  {icon:"🎨",title:"동아리 목록 & 소개",desc:"전체 동아리 목록, 활동 내용, 담당자 연락처",ok:false,
+  {icon:"🎨",title:"동아리 목록 & 소개",desc:"",ok:false,
    content:"🎨 색채 (미술)\n활동: 회화, 소묘, 전시회 기획\n활동일: 화·목 방과 후\n\n🎵 하모니 (합창)\n활동: 합창, 교내 행사 공연\n활동일: 월·수 방과 후\n\n💻 코딩클럽\n활동: 프로그래밍, 앱 개발\n활동일: 금 방과 후"},
-  {icon:"🎓",title:"수시 지원 절차",desc:"학교장추천, 자기소개서, 면접 준비 가이드",ok:false,
+  {icon:"🎓",title:"수시 지원 절차",desc:"",ok:false,
    content:"📋 학교장 추천 전형\n• 추천 기준: 교과 석차등급 평균 2등급 이내\n• 봉사 시간: 50시간 이상 권장\n\n📝 자기소개서 팁\n1. 구체적인 경험과 성장 과정 중심\n2. 학교 활동과 연결\n3. 지원 학과와의 연관성 명확히\n\n🎤 면접: 모의 면접 상담실 활용 가능"},
-  {icon:"🏥",title:"보건실 이용 안내",desc:"운영 시간, 구비 약품, 응급 상황 절차",ok:true,
+  {icon:"🏥",title:"보건실 이용 안내",desc:"",ok:true,
    content:"📍 위치: 본관 1층 103호\n\n⏰ 운영 시간: 평일 08:30~17:00\n\n💊 구비 약품\n두통약, 소화제, 밴드, 소독약 등\n(처방약은 제공하지 않음)\n\n🚨 응급 상황\n1. 즉시 보건실 방문 또는 담임 선생님께 연락\n2. 심각한 경우 119 신고 후 보호자 연락"},
-  {icon:"🍱",title:"급식 알레르기 정보",desc:"알레르기 유발 식품 표시 기준",ok:true,
+  {icon:"🍱",title:"급식 알레르기 정보",desc:"",ok:true,
    content:"1.난류  2.우유  3.메밀  4.땅콩  5.대두  6.밀  7.고등어  8.게  9.새우  10.돼지고기  11.복숭아  12.토마토  13.아황산류  14.호두  15.닭고기  16.쇠고기  17.오징어  18.조개류(굴,전복,홍합 포함)  19.잣"},
 ];
 
@@ -918,7 +918,6 @@ export default function App() {
                 <div style={{fontSize:30,flexShrink:0}}>{w.icon}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:3}}>{w.title}</div>
-                  <div style={{fontSize:12,color:SO}}>{w.desc}</div>
                   <span style={{display:"inline-block",marginTop:6,padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:w.ok?MS:"#fef3c7",color:w.ok?"#0e8a5f":"#92400e"}}>{w.ok?"✅ 교사 인증":"📝 학생 작성"}</span>
                 </div>
                 <span style={{fontSize:16,color:LI,flexShrink:0}}>›</span>
@@ -936,7 +935,6 @@ export default function App() {
               <h1 style={{fontSize:19,fontWeight:700,color:TX}}>{curWiki.title}</h1>
             </div>
             <span style={{display:"inline-block",padding:"3px 9px",borderRadius:5,fontSize:11,fontWeight:700,background:curWiki.ok?MS:"#fef3c7",color:curWiki.ok?"#0e8a5f":"#92400e",marginBottom:10}}>{curWiki.ok?"✅ 교사 인증":"📝 학생 작성"}</span>
-            <p style={{fontSize:13,color:SO,marginBottom:16}}>{curWiki.desc}</p>
             <div style={{borderTop:`1px solid ${BO}`,paddingTop:16,fontSize:14,lineHeight:1.9,color:TX,whiteSpace:"pre-line"}}>{curWiki.content}</div>
             {curWiki.link&&<a href={curWiki.link.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:14,background:N,color:"#fff",borderRadius:9,padding:"10px 18px",fontSize:13,fontWeight:600,textDecoration:"none"}}>🔗 {curWiki.link.label}</a>}
             {curWiki.ok&&<div style={{marginTop:16,background:MS,border:`1px solid ${MM}`,borderRadius:9,padding:"11px 14px",fontSize:12,color:"#0e7a5a"}}>✅ 교사가 직접 검토하고 인증한 공식 정보입니다.</div>}
