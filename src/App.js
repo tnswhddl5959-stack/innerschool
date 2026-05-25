@@ -91,6 +91,14 @@ const CAL={
 
 const VQ_INIT=[];
 
+
+// ── 비속어 필터 ──
+const BAD_WORDS=["씨발","시발","씨팔","시팔","개새끼","새끼","병신","지랄","미친놈","미친년","꺼져","닥쳐","존나","개소리","찐따","멍청이","바보새끼","개년","보지","자지","섹스","개같은","썅","개쓰레기","ㅅㅂ","ㅂㅅ","ㄱㅅㄲ","fuck","shit","bitch","asshole","bastard"];
+function hasBadWord(text){
+  if(!text) return false;
+  const t=text.toLowerCase().replace(/\s+/g,"");
+  return BAD_WORDS.some(w=>t.includes(w.toLowerCase().replace(/\s+/g,"")));
+}
 function Chip({type,status}){
   if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩‍🏫 선생님 인증 정보</span>;
   if(type==="verified"&&status==="verified") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:MS,color:"#0e8a5f"}}>✅ 확인된 정보</span>;
@@ -514,6 +522,15 @@ const INIT_ACCOUNTS=[
   {role:"teacher",id:"T0001",name:"테스트",pw:"1234",subject:"도덕"},
 ];
 
+async function getAccounts(){
+  const r=await storageGet("accs");
+  if(r&&Array.isArray(r)&&r.length>0) return r;
+  return null;
+}
+async function saveAccounts(list){
+  await storageSet("accs",list);
+}
+
 // ── Firebase 기반 Storage 헬퍼 (모든 데이터 Firebase에 저장) ──
 async function storageGet(key){
   try{
@@ -598,6 +615,14 @@ export default function App(){
       } else {
         setScr("login");
       }
+    })();
+  },[]);
+
+  // Firestore에서 위키 불러오기
+  useEffect(()=>{
+    (async()=>{
+      const saved=await storageGet("wiki");
+      if(saved&&Array.isArray(saved)&&saved.length>0) setWikiItems(saved);
     })();
   },[]);
 
@@ -755,8 +780,10 @@ export default function App(){
     toast_("게시글이 수정됐어요 ✅");
   };
 
-  const saveEditWiki=(idx,newTitle,newContent)=>{
-    setWikiItems(prev=>prev.map((w,i)=>i===idx?{...w,title:newTitle,content:newContent}:w));
+  const saveEditWiki=async(idx,newTitle,newContent)=>{
+    const updated=wikiItems.map((w,i)=>i===idx?{...w,title:newTitle,content:newContent}:w);
+    setWikiItems(updated);
+    await storageSet("wiki",updated);
     setWikiEditModal(false);
     toast_("위키가 수정됐어요 ✅");
   };
