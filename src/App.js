@@ -121,7 +121,7 @@ const authCard = {background:"rgba(255,255,255,0.05)",backdropFilter:"blur(20px)
 const AuthHeader = () => (
   <>
     <div style={{fontFamily:"serif",fontSize:22,fontWeight:800,color:M}}>INNERSCHOOL</div>
-    <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,marginBottom:24}}>교내 정보격차 해소를 위한 정보 공유 게시판</div>
+    <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,marginBottom:24}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
   </>
 );
 
@@ -770,7 +770,7 @@ export default function App() {
       {/* 사이드바 */}
       <aside style={{width:240,background:N,minHeight:"100vh",display:"flex",flexDirection:"column",position:"fixed",left:0,top:0,zIndex:100,transform:sidebar?"translateX(0)":"translateX(-100%)",transition:"transform 0.25s ease",boxShadow:sidebar?"4px 0 24px rgba(0,0,0,0.2)":"none"}}>
         <div style={{padding:"20px 18px 16px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><div style={{fontFamily:"serif",fontSize:19,fontWeight:800,color:M}}>INNERSCHOOL</div><div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:1}}>교내 정보공유 플랫폼</div></div>
+          <div><div style={{fontFamily:"serif",fontSize:19,fontWeight:800,color:M}}>INNERSCHOOL</div><div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:1}}>경기창조고 교내 정보 공유 플랫폼</div></div>
           <Btn onClick={()=>setSidebar(false)} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,width:32,height:32,color:"rgba(255,255,255,0.6)",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</Btn>
         </div>
         <div onClick={()=>goPage("profile")} style={{padding:"14px 18px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
@@ -1169,6 +1169,7 @@ export default function App() {
       {/* 관리자 문의 모달 */}
       <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
         <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
+        <div style={{background:BG,border:`1px solid ${BO}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:SO,marginBottom:14}}>📋 접수자: <strong style={{color:TX}}>{user.name}</strong> · 학번 <strong style={{color:TX}}>{user.id}</strong></div>
         <div style={{marginBottom:12}}>
           <label style={lbl1}>문의 유형</label>
           <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
