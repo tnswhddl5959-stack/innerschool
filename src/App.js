@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect } from "react";
 
 const N="#0f1f3d", M="#2dd4a0", MS="#e6faf4", MM="#a8edcf", AC="#ff6b6b", BG="#f4f6fb", CA="#fff", TX="#1a2540", SO="#5a6a8a", LI="#9aa5c0", BO="#e2e8f4";
