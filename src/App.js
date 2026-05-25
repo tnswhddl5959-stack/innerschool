@@ -372,6 +372,9 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate}) {
   const [newSub,setNewSub]=useState(user.room||"국어");
   const [curPw,setCurPw]=useState(""); const [newPw,setNewPw]=useState(""); const [confirmPw,setConfirmPw]=useState("");
   const [err,setErr]=useState(""); const [ok,setOk]=useState("");
+  const [deleteReason,setDeleteReason]=useState("");
+  const [deleteReasonText,setDeleteReasonText]=useState("");
+  const [deleteConfirm,setDeleteConfirm]=useState(false);
   const SUBS=["국어","영어","수학","과학","사회","역사","도덕","체육","음악","미술","기술·가정","정보","한문","제2외국어","진로"];
 
   const saveInfo=async()=>{
@@ -381,6 +384,19 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate}) {
     await fbSet("accounts",updated);
     onUpdate(updated,{...user,name:newName.trim(),...(isTeacher?{room:newSub}:{})});
     setErr("");setOk("정보가 수정되었어요 ✅");
+  };
+
+  const doDelete=async()=>{
+    if(!deleteReason){setErr("삭제 이유를 선택해주세요");return;}
+    if(!deleteConfirm){setErr("계정 삭제에 동의해주세요");return;}
+    const reason=deleteReason==="기타"?deleteReasonText.trim()||"기타":deleteReason;
+    // Firebase에서 계정 삭제
+    const updated=accounts.filter(a=>a.id!==user.id);
+    await fbSet("accounts",updated);
+    await fbDel("sess");
+    onUpdate(updated,user);
+    alert(`계정이 삭제됐어요. 이유: ${reason}`);
+    window.location.reload();
   };
 
   const savePw=async()=>{
@@ -409,7 +425,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate}) {
         </div>
       </div>
       <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16}}>
-        {[{k:"info",l:"✏️ 정보 수정"},{k:"pw",l:"🔑 비밀번호 변경"}].map(t=>(
+        {[{k:"info",l:"✏️ 정보 수정"},{k:"pw",l:"🔑 비밀번호 변경"},{k:"delete",l:"🗑 계정 삭제"}].map(t=>(
           <Btn key={t.k} onClick={()=>{setTab(t.k);setErr("");setOk("");}} style={{flex:1,padding:"9px",borderRadius:8,fontSize:13,fontWeight:tab===t.k?700:500,color:tab===t.k?N:SO,background:tab===t.k?CA:"transparent"}}>
             {t.l}
           </Btn>
@@ -458,13 +474,44 @@ function InquiryTab({db,onSnapshot,collection}){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:6}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>{item.type}</span>
-              <span style={{fontSize:12,color:"#5a6a8a"}}>{item.author} · {item.date}</span>
+              <span style={{fontSize:12,color:"#5a6a8a"}}>{item.author} · {item.isTeacher?"교사":item.userId} · {item.date}</span>
             </div>
             <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:5,background:item.status==="미확인"?"#fef3c7":"#dcfce7",color:item.status==="미확인"?"#92400e":"#166534"}}>{item.status}</span>
           </div>
           <div style={{fontSize:13,color:"#1a2540",lineHeight:1.6,background:"#f4f6fb",borderRadius:8,padding:"10px 12px"}}>{item.text}</div>
         </div>
       ))}
+      {tab==="delete"&&(
+        <div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+          <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:10,padding:"14px",marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#991b1b",marginBottom:6}}>⚠️ 계정 삭제 주의사항</div>
+            <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.7}}>
+              • 삭제한 계정은 복구할 수 없어요<br/>
+              • 작성한 게시글과 댓글은 삭제되지 않아요<br/>
+              • 재가입 시 동일 학번으로 가입 가능해요
+            </div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={lbl1}>삭제 이유 선택 *</label>
+            <select value={deleteReason} onChange={e=>setDeleteReason(e.target.value)} style={inp1}>
+              <option value="">선택해주세요</option>
+              {["졸업 또는 전학","개인정보 보호","사이트 이용 안 함","기타"].map(r=><option key={r}>{r}</option>)}
+            </select>
+          </div>
+          {deleteReason==="기타"&&<div style={{marginBottom:14}}>
+            <label style={lbl1}>기타 이유 입력</label>
+            <textarea value={deleteReasonText} onChange={e=>setDeleteReasonText(e.target.value)} rows={3} placeholder="삭제 이유를 입력해주세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/>
+          </div>}
+          <div style={{marginBottom:16}}>
+            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
+              <input type="checkbox" checked={deleteConfirm} onChange={e=>setDeleteConfirm(e.target.checked)} style={{accentColor:"#ef4444",width:16,height:16}}/>
+              계정을 삭제하면 복구할 수 없음을 이해했어요
+            </label>
+          </div>
+          {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:10,background:"#fff7ed",borderRadius:7,padding:"7px 11px"}}>{err}</div>}
+          <Btn onClick={doDelete} style={{width:"100%",background:"#ef4444",color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>계정 삭제하기</Btn>
+        </div>
+      )}
     </div>
   );
 }
@@ -672,6 +719,7 @@ export default function App() {
         text:inquiryText.trim(),
         author:user.name,
         userId:user.id,
+        isTeacher:isTeacher,
         date:new Date().toLocaleDateString("ko-KR"),
         createdAt:Date.now(),
         status:"미확인"
@@ -1169,7 +1217,7 @@ export default function App() {
       {/* 관리자 문의 모달 */}
       <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
         <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
-        <div style={{background:BG,border:`1px solid ${BO}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:SO,marginBottom:14}}>📋 접수자: <strong style={{color:TX}}>{user.name}</strong> · 학번 <strong style={{color:TX}}>{user.id}</strong></div>
+        <div style={{background:BG,border:`1px solid ${BO}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:SO,marginBottom:14}}>총관리자(11025 이윤진)가 확인 후 처리할게요</div>
         <div style={{marginBottom:12}}>
           <label style={lbl1}>문의 유형</label>
           <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
