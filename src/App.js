@@ -1088,7 +1088,6 @@ export default function App() {
               </div>
             ))}
           </div>}
-        </div>}
           {adminTab==="inquiry"&&<InquiryTab db={db} onSnapshot={onSnapshot} collection={collection}/>}
         </div>}
       </main>
