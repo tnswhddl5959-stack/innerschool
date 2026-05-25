@@ -581,6 +581,13 @@ export default function App(){
   const [fcModal,setFcModal]=useState(false);
   const [fcTarget,setFcTarget]=useState(null);
   const [fcText,setFcText]=useState("");
+  const [editModal,setEditModal]=useState(false);
+  const [editPost,setEditPost]=useState(null);
+  const [editTitle,setEditTitle]=useState("");
+  const [editBody,setEditBody]=useState("");
+  const [wikiEditModal,setWikiEditModal]=useState(false);
+  const [editWiki,setEditWiki]=useState(null);
+  const [wikiItems,setWikiItems]=useState(WIKI);
 
   const toast_=msg=>{setToast(msg);setTimeout(()=>setToast(""),2600);};
 
@@ -733,6 +740,38 @@ export default function App(){
     toast_(isTeacher?"사실 확인이 등록됐어요 ✅":"사실 확인 요청이 접수됐어요");
   };
 
+  const deletePost=async(id)=>{
+    if(!window.confirm("이 게시글을 삭제할까요?")) return;
+    try{await deleteDoc(doc(db,"posts",id));}catch(e){console.error(e);}
+    setPosts(p=>p.filter(x=>x.id!==id));
+    setPage("board");
+    toast_("게시글이 삭제됐어요");
+  };
+
+  const openEditPost=(p)=>{
+    setEditPost(p);
+    setEditTitle(p.title);
+    setEditBody(p.body);
+    setEditModal(true);
+  };
+
+  const saveEditPost=async()=>{
+    if(!editTitle.trim()||!editBody.trim()){toast_("제목과 내용을 입력해주세요");return;}
+    try{
+      await updateDoc(doc(db,"posts",editPost.id),{title:editTitle.trim(),body:editBody.trim()});
+    }catch(e){console.error(e);}
+    setPosts(p=>p.map(x=>x.id===editPost.id?{...x,title:editTitle.trim(),body:editBody.trim()}:x));
+    if(curPost?.id===editPost.id) setCurPost(p=>({...p,title:editTitle.trim(),body:editBody.trim()}));
+    setEditModal(false);
+    toast_("게시글이 수정됐어요 ✅");
+  };
+
+  const saveEditWiki=(idx,newTitle,newContent)=>{
+    setWikiItems(prev=>prev.map((w,i)=>i===idx?{...w,title:newTitle,content:newContent}:w));
+    setWikiEditModal(false);
+    toast_("위키가 수정됐어요 ✅");
+  };
+
   const verifyPost=id=>{
     setPosts(p=>p.map(x=>x.id===id?{...x,status:"verified"}:x));
     setVq(q=>q.filter(v=>v.id!==id));
@@ -881,6 +920,12 @@ export default function App(){
                 <div style={{fontSize:13,color:"#991b1b",fontWeight:700,marginBottom:6}}>🚨 사실확인 요청 {curPost.fc}건</div>
                 {curPost.fcR.map((r,i)=><div key={i} style={{fontSize:12,color:"#7f1d1d",background:"rgba(255,255,255,0.5)",borderRadius:5,padding:"5px 9px",marginBottom:3}}>"{r}"</div>)}
               </div>}
+              {isAdmin&&(
+                <div style={{display:"flex",gap:8,marginTop:14}}>
+                  <Btn onClick={()=>openEditPost(curPost)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",fontSize:13}}>✏️ 수정</Btn>
+                  <Btn onClick={()=>deletePost(curPost.id)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#fee2e2",color:"#991b1b",border:"1.5px solid #fecaca",fontSize:13}}>🗑 삭제</Btn>
+                </div>
+              )}
               {curPost.type!=="teacher"&&(
                 isTeacher
                   ?<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{marginTop:14,display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#ede9fe",color:"#5b21b6",border:"1.5px solid #c4b5fd",fontSize:13}}>✅ 사실 확인 체크</Btn>
@@ -920,7 +965,7 @@ export default function App(){
           <div>
             <div style={{marginBottom:16}}><h1 style={{fontSize:21,fontWeight:700}}>교내 위키</h1><p style={{color:SO,fontSize:13,marginTop:3}}>학교의 모든 제도와 자원을 찾아보세요</p></div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {WIKI.map((w,i)=>(
+              {wikiItems.map((w,i)=>(
                 <div key={i} onClick={()=>setCurWiki(w)} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
                   <div style={{fontSize:30,flexShrink:0}}>{w.icon}</div>
                   <div style={{flex:1,minWidth:0}}>
@@ -947,6 +992,11 @@ export default function App(){
               <span style={{display:"inline-block",padding:"3px 9px",borderRadius:5,fontSize:11,fontWeight:700,background:curWiki.ok?MS:"#fef3c7",color:curWiki.ok?"#0e8a5f":"#92400e",marginBottom:10}}>{curWiki.ok?"✅ 교사 인증":"📝 학생 작성"}</span>
               <p style={{fontSize:13,color:SO,marginBottom:16}}>{curWiki.desc}</p>
               <div style={{borderTop:`1px solid ${BO}`,paddingTop:16,fontSize:14,lineHeight:1.9,color:TX,whiteSpace:"pre-line"}}>{curWiki.content}</div>
+              {isAdmin&&(
+                <Btn onClick={()=>{setEditWiki({...curWiki,idx:WIKI.indexOf(curWiki)});setWikiEditModal(true);}} style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:14,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:600}}>
+                  ✏️ 위키 수정
+                </Btn>
+              )}
               {curWiki.link&&(
                 <a href={curWiki.link.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:14,background:N,color:"#fff",borderRadius:9,padding:"10px 18px",fontSize:13,fontWeight:600,textDecoration:"none"}}>
                   🔗 {curWiki.link.label}
@@ -1249,7 +1299,41 @@ export default function App(){
         </div>
       </Modal>
 
-      {/* 사실확인 모달 */}
+      {/* 게시글 수정 모달 */}
+      <Modal open={editModal} onClose={()=>setEditModal(false)} title="✏️ 게시글 수정">
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:12,color:SO,marginBottom:6}}>제목</div>
+          <input value={editTitle} onChange={e=>setEditTitle(e.target.value)} style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:9,padding:"10px 12px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{marginBottom:4}}>
+          <div style={{fontSize:12,color:SO,marginBottom:6}}>내용</div>
+          <textarea value={editBody} onChange={e=>setEditBody(e.target.value)} rows={8} style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:9,padding:"10px 12px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",resize:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}>
+          <Btn onClick={()=>setEditModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
+          <Btn onClick={saveEditPost} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>저장</Btn>
+        </div>
+      </Modal>
+
+      {/* 위키 수정 모달 */}
+      <Modal open={wikiEditModal} onClose={()=>setWikiEditModal(false)} title="✏️ 위키 수정">
+        {editWiki&&<>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:12,color:SO,marginBottom:6}}>제목</div>
+            <input value={editWiki.title} onChange={e=>setEditWiki(w=>({...w,title:e.target.value}))} style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:9,padding:"10px 12px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          </div>
+          <div style={{marginBottom:4}}>
+            <div style={{fontSize:12,color:SO,marginBottom:6}}>내용</div>
+            <textarea value={editWiki.content} onChange={e=>setEditWiki(w=>({...w,content:e.target.value}))} rows={10} style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:9,padding:"10px 12px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}>
+            <Btn onClick={()=>setWikiEditModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
+            <Btn onClick={()=>saveEditWiki(editWiki.idx,editWiki.title,editWiki.content)} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>저장</Btn>
+          </div>
+        </>}
+      </Modal>
+
+      {/* 사실확인 모달 */}}
       <Modal open={fcModal} onClose={()=>setFcModal(false)} title={isTeacher?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}>
         <p style={{fontSize:13,color:SO,marginBottom:16}}>{isTeacher?"이 게시글의 내용이 사실임을 확인합니다. 추가로 전달할 내용이 있다면 아래에 입력해주세요.":"사실과 다르다고 생각하시나요? 구체적인 사유를 입력해주세요. 총관리자가 요청 수와 내용을 확인 후 직접 처리합니다."}</p>
         <div style={{fontSize:12,color:SO,marginBottom:6}}>사실과 다른 내용 *</div>
