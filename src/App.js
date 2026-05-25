@@ -225,7 +225,9 @@ function Register({onDone,onBack}) {
   const [role,setRole]=useState(null);
   const [name,setName]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
   const [grade,setGrade]=useState("1"); const [room,setRoom]=useState("1"); const [num,setNum]=useState("1");
-  const [preview,setPreview]=useState(null); const [agreed,setAgreed]=useState(false);
+  const [preview,setPreview]=useState(null); const [previewB64,setPreviewB64]=useState(null);
+  const [agreed,setAgreed]=useState(false);
+  const [aiStatus,setAiStatus]=useState(null); // null | "checking" | "ok" | "fail"
   const [sub,setSub]=useState("국어"); const [code,setCode]=useState("");
   const SUBS=["국어","영어","수학","과학","사회","역사","도덕","체육","음악","미술","기술·가정","정보","한문","제2외국어","진로"];
   const sid=makeSid(grade,room,num);
@@ -236,6 +238,8 @@ function Register({onDone,onBack}) {
     if(!name.trim()){setErr("이름을 입력해주세요");return;}
     if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
+    if(aiStatus==="checking"){setErr("AI가 학생증을 확인 중이에요. 잠시만 기다려주세요.");return;}
+    if(aiStatus==="fail"){setErr("학생증으로 인식되지 않은 사진이에요. 올바른 학생증 사진을 첨부해주세요.");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
     setErr(""); onDone({role:"student",name,sid,grade,room,pw});
   };
@@ -288,15 +292,48 @@ function Register({onDone,onBack}) {
         <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
           {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
             :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
-          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)setPreview(URL.createObjectURL(f));}}/>
+          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+            const f=e.target.files[0]; if(!f) return;
+            setPreview(URL.createObjectURL(f));
+            setAiStatus("checking");
+            // base64 변환
+            const reader=new FileReader();
+            reader.onload=async ev=>{
+              const b64=ev.target.result.split(",")[1];
+              setPreviewB64(b64);
+              // Claude API로 학생증 검증
+              try{
+                const res=await fetch("https://api.anthropic.com/v1/messages",{
+                  method:"POST",
+                  headers:{"Content-Type":"application/json"},
+                  body:JSON.stringify({
+                    model:"claude-sonnet-4-20250514",
+                    max_tokens:200,
+                    messages:[{role:"user",content:[
+                      {type:"image",source:{type:"base64",media_type:f.type||"image/jpeg",data:b64}},
+                      {type:"text",text:"이 이미지가 경기창조고등학교 학생증인지 판단해주세요. 학생증에는 '학생증', '경기창조고등학교' 또는 'ggcj-h.goean.kr' 등의 텍스트가 있어야 합니다. 맞으면 YES, 아니면 NO로만 답해주세요."}
+                    ]}]
+                  })
+                });
+                const data=await res.json();
+                const answer=(data.content?.[0]?.text||"").trim().toUpperCase();
+                setAiStatus(answer.includes("YES")?"ok":"fail");
+              }catch{setAiStatus("fail");}
+            };
+            reader.readAsDataURL(f);
+          }}/>
         </label>
+        {aiStatus==="checking"&&<div style={{marginTop:8,fontSize:12,color:"rgba(255,255,255,0.6)",display:"flex",alignItems:"center",gap:6}}>⏳ AI가 학생증을 확인하고 있어요...</div>}
+        {aiStatus==="ok"&&<div style={{marginTop:8,fontSize:12,color:"#2dd4a0",display:"flex",alignItems:"center",gap:6}}>✅ 학생증이 확인됐어요!</div>}
+        {aiStatus==="fail"&&<div style={{marginTop:8,fontSize:12,color:"#ff8a8a",display:"flex",alignItems:"center",gap:6}}>⚠️ 학생증으로 인식되지 않아요. 다시 첨부해주세요.</div>}
       </div>
       <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"14px",marginBottom:14}}>
         <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
         <div style={{color:"rgba(255,255,255,0.5)",fontSize:11,lineHeight:1.7,marginBottom:10}}>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 목적:</strong> 재학생 여부 확인<br/>
-          <strong style={{color:"rgba(255,255,255,0.7)"}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
+          <strong style={{color:"rgba(255,255,255,0.7)"}}>보유 기간:</strong> AI 검증 및 총관리자 검토 완료 즉시 삭제<br/>
+          <strong style={{color:"rgba(255,255,255,0.7)"}}>AI 검증:</strong> 학생증 여부 자동 확인 후 즉시 파기<br/>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>제3자 제공:</strong> 없음
         </div>
         <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
