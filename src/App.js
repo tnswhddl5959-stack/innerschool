@@ -451,6 +451,39 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate}) {
           <Btn onClick={savePw} style={{width:"100%",background:N,color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>비밀번호 변경</Btn>
         </div>
       )}
+      {tab==="delete"&&(
+        <div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+          <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:10,padding:"14px",marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#991b1b",marginBottom:6}}>⚠️ 계정 삭제 주의사항</div>
+            <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.7}}>
+              • 삭제한 계정은 복구할 수 없어요<br/>
+              • 작성한 게시글과 댓글은 삭제되지 않아요<br/>
+              • 재가입 시 동일 학번으로 가입 가능해요
+            </div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={lbl1}>삭제 이유 선택 *</label>
+            <select value={deleteReason} onChange={e=>setDeleteReason(e.target.value)} style={inp1}>
+              <option value="">선택해주세요</option>
+              {["졸업 또는 전학","개인정보 보호","사이트 이용 안 함","기타"].map(r=><option key={r}>{r}</option>)}
+            </select>
+          </div>
+          {deleteReason==="기타"&&(
+            <div style={{marginBottom:14}}>
+              <label style={lbl1}>기타 이유 입력</label>
+              <textarea value={deleteReasonText} onChange={e=>setDeleteReasonText(e.target.value)} rows={3} placeholder="삭제 이유를 입력해주세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/>
+            </div>
+          )}
+          <div style={{marginBottom:16}}>
+            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
+              <input type="checkbox" checked={deleteConfirm} onChange={e=>setDeleteConfirm(e.target.checked)} style={{accentColor:"#ef4444",width:16,height:16}}/>
+              계정을 삭제하면 복구할 수 없음을 이해했어요
+            </label>
+          </div>
+          {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:10,background:"#fff7ed",borderRadius:7,padding:"7px 11px"}}>{err}</div>}
+          <Btn onClick={doDelete} style={{width:"100%",background:"#ef4444",color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>계정 삭제하기</Btn>
+        </div>
+      )}
     </div>
   );
 }
@@ -481,37 +514,6 @@ function InquiryTab({db,onSnapshot,collection}){
           <div style={{fontSize:13,color:"#1a2540",lineHeight:1.6,background:"#f4f6fb",borderRadius:8,padding:"10px 12px"}}>{item.text}</div>
         </div>
       ))}
-      {tab==="delete"&&(
-        <div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
-          <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:10,padding:"14px",marginBottom:16}}>
-            <div style={{fontSize:14,fontWeight:700,color:"#991b1b",marginBottom:6}}>⚠️ 계정 삭제 주의사항</div>
-            <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.7}}>
-              • 삭제한 계정은 복구할 수 없어요<br/>
-              • 작성한 게시글과 댓글은 삭제되지 않아요<br/>
-              • 재가입 시 동일 학번으로 가입 가능해요
-            </div>
-          </div>
-          <div style={{marginBottom:14}}>
-            <label style={lbl1}>삭제 이유 선택 *</label>
-            <select value={deleteReason} onChange={e=>setDeleteReason(e.target.value)} style={inp1}>
-              <option value="">선택해주세요</option>
-              {["졸업 또는 전학","개인정보 보호","사이트 이용 안 함","기타"].map(r=><option key={r}>{r}</option>)}
-            </select>
-          </div>
-          {deleteReason==="기타"&&<div style={{marginBottom:14}}>
-            <label style={lbl1}>기타 이유 입력</label>
-            <textarea value={deleteReasonText} onChange={e=>setDeleteReasonText(e.target.value)} rows={3} placeholder="삭제 이유를 입력해주세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/>
-          </div>}
-          <div style={{marginBottom:16}}>
-            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
-              <input type="checkbox" checked={deleteConfirm} onChange={e=>setDeleteConfirm(e.target.checked)} style={{accentColor:"#ef4444",width:16,height:16}}/>
-              계정을 삭제하면 복구할 수 없음을 이해했어요
-            </label>
-          </div>
-          {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:10,background:"#fff7ed",borderRadius:7,padding:"7px 11px"}}>{err}</div>}
-          <Btn onClick={doDelete} style={{width:"100%",background:"#ef4444",color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>계정 삭제하기</Btn>
-        </div>
-      )}
     </div>
   );
 }
@@ -1216,8 +1218,7 @@ export default function App() {
 
       {/* 관리자 문의 모달 */}
       <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-        <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
-        <div style={{background:BG,border:`1px solid ${BO}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:SO,marginBottom:14}}>총관리자(11025 이윤진)가 확인 후 처리할게요</div>
+        <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
         <div style={{marginBottom:12}}>
           <label style={lbl1}>문의 유형</label>
           <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
