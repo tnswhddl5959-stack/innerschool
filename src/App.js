@@ -26,19 +26,9 @@ const POSTS=[
   {id:5,title:"체육대회 날짜 10월 25일 맞나요?",cat:"📅 행사·일정",type:"unverified",status:"unverified",author:"정다현",grade:"1",date:"2025.10.04",views:201,source:"",body:"단톡방에서 10월 25일이라고 하는 사람도 있고 11월 1일이라고 하는 사람도 있어서요. 정확한 날짜 아시는 분 알려주세요!",fc:1,fcR:["학교 홈페이지에는 11월 1일로 나와있어요"]},
 ];
 
-const INIT_CMT={
-  1:[{id:1,author:"박지수",anon:false,text:"감사해요! 4단원도 포함인 줄 몰랐어요",time:"2시간 전"},{id:2,author:"익명",anon:true,text:"서술형 배점도 아시나요?",time:"1시간 전"},{id:3,author:"김민준",anon:false,text:"서술형은 각 10점 3문제래요!",time:"45분 전"}],
-  2:[{id:1,author:"이하은",anon:false,text:"신청할게요! 이하은 20240023",time:"3시간 전"}],
-  3:[{id:1,author:"익명",anon:true,text:"저도 궁금해요ㅠ",time:"1일 전"},{id:2,author:"최준혁",anon:false,text:"담임 선생님한테 여쭤봤는데 아직 공식 발표 전이래요",time:"20시간 전"}],
-};
+const INIT_CMT={};
 
-const ID_LIST=[
-  {id:"10208",name:"정하늘",grade:"1학년 2반",date:"2025.10.08",status:"pending"},
-  {id:"10412",name:"오지민",grade:"1학년 4반",date:"2025.10.08",status:"pending"},
-  {id:"20107",name:"한도현",grade:"2학년 1반",date:"2025.10.07",status:"pending"},
-  {id:"20315",name:"김예린",grade:"2학년 3반",date:"2025.10.06",status:"ok"},
-  {id:"30203",name:"박찬영",grade:"3학년 2반",date:"2025.10.05",status:"blocked"},
-];
+const ID_LIST=[];
 
 
 const MEAL={
@@ -99,10 +89,7 @@ const CAL={
   29:"👨‍👩‍👧 학부모 진로 진학 컨설팅",
 };
 
-const VQ_INIT=[
-  {id:4,title:"이번 주 목요일 급식 메뉴 변경 안내",author:"이유나",cat:"🍱 급식·학교생활",source:"급식실 앞 공지판에서 직접 확인했습니다."},
-  {id:999,title:"1학년 영어 수행평가 제출 기한 변경",author:"강민서",cat:"📚 학업·시험",source:"영어 선생님께서 오늘 수업 중에 공지해주셨어요."},
-];
+const VQ_INIT=[];
 
 function Chip({type,status}){
   if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩‍🏫 선생님 인증 정보</span>;
@@ -559,8 +546,8 @@ export default function App(){
   const [sidebar,setSidebar]=useState(false);
   const [isTeacher,setIsTeacher]=useState(false);
   const [accounts,setAccounts]=useState(INIT_ACCOUNTS);
-  const [posts,setPosts]=useState(POSTS);
-  const [cmts,setCmts]=useState(INIT_CMT);
+  const [posts,setPosts]=useState([]);
+  const [cmts,setCmts]=useState({});
   const [idList,setIdList]=useState(ID_LIST);
   const [vq,setVq]=useState(VQ_INIT);
   const [gradTab,setGradTab]=useState("전체");
@@ -619,12 +606,16 @@ export default function App(){
     })();
   },[]);
 
-  // Firestore에서 게시글 실시간 구독
+  // Firestore에서 게시글 실시간 구독 (항상 Firebase 데이터 사용)
   useEffect(()=>{
     const unsub=onSnapshot(collection(db,"posts"),(snapshot)=>{
       const loaded=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      loaded.sort((a,b)=>b.date>a.date?1:-1);
-      if(loaded.length>0) setPosts(loaded);
+      loaded.sort((a,b)=>{
+        if(b.date>a.date) return 1;
+        if(b.date<a.date) return -1;
+        return 0;
+      });
+      setPosts(loaded); // 조건 없이 항상 반영 (빈 배열도 반영)
     });
     return()=>unsub();
   },[]);
@@ -638,7 +629,7 @@ export default function App(){
         if(!loaded[data.postId]) loaded[data.postId]=[];
         loaded[data.postId].push({id:d.id,...data});
       });
-      if(Object.keys(loaded).length>0) setCmts(loaded);
+      setCmts(loaded); // 조건 없이 항상 반영
     });
     return()=>unsub();
   },[]);
@@ -722,6 +713,7 @@ export default function App(){
 
   const submitCmt=async()=>{
     if(!cText.trim()){toast_("댓글을 입력해주세요");return;}
+    if(hasBadWord(cText)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
     const nc={postId:curPost.id,author:user.name,anon,text:cText.trim(),time:"방금 전"};
     try{
       await addDoc(collection(db,"comments"),nc);
@@ -729,13 +721,15 @@ export default function App(){
     setCText("");toast_("댓글이 등록됐어요!");
   };
 
-  const submitFc=()=>{
+  const submitFc=async()=>{
     if(!isTeacher&&!fcText.trim()){toast_("사유를 입력해주세요");return;}
     const entry=isTeacher
       ?`[👩‍🏫 ${user.name} 선생님 확인]${fcText.trim()?" "+fcText.trim():""}`
       :fcText.trim();
-    setPosts(p=>p.map(x=>x.id===fcTarget?{...x,fc:x.fc+1,fcR:[...x.fcR,entry]}:x));
-    if(curPost?.id===fcTarget) setCurPost(p=>({...p,fc:p.fc+1,fcR:[...(p.fcR||[]),entry]}));
+    const targetPost=posts.find(x=>x.id===fcTarget);
+    if(!targetPost) return;
+    const newFcR=[...(targetPost.fcR||[]),entry];
+    try{await updateDoc(doc(db,"posts",fcTarget),{fc:(targetPost.fc||0)+1,fcR:newFcR});}catch(e){console.error(e);}
     setFcModal(false);setFcText("");
     toast_(isTeacher?"사실 확인이 등록됐어요 ✅":"사실 확인 요청이 접수됐어요");
   };
@@ -772,8 +766,8 @@ export default function App(){
     toast_("위키가 수정됐어요 ✅");
   };
 
-  const verifyPost=id=>{
-    setPosts(p=>p.map(x=>x.id===id?{...x,status:"verified"}:x));
+  const verifyPost=async(id)=>{
+    try{await updateDoc(doc(db,"posts",id),{status:"verified"});}catch(e){console.error(e);}
     setVq(q=>q.filter(v=>v.id!==id));
     toast_("✅ 확인된 정보 배지가 부여됐어요!");
   };
@@ -942,7 +936,7 @@ export default function App(){
                     <div style={{width:26,height:26,borderRadius:"50%",background:c.anon?"linear-gradient(135deg,#94a3b8,#64748b)":"linear-gradient(135deg,#667eea,#764ba2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",flexShrink:0}}>{c.anon?"익":c.author[0]}</div>
                     <span style={{fontSize:13,fontWeight:600}}>{c.anon?"익명":c.author}</span>
                     <span style={{fontSize:11,color:LI,marginLeft:"auto"}}>{c.time}</span>
-                    {isAdmin&&<Btn onClick={()=>{setCmts(p=>({...p,[curPost.id]:(p[curPost.id]||[]).filter(x=>x.id!==c.id)}));toast_("댓글 삭제됐어요");}} style={{fontSize:11,color:AC,background:"none",padding:0}}>🗑</Btn>}
+                    {isAdmin&&<Btn onClick={async()=>{try{await deleteDoc(doc(db,"comments",c.id));}catch(e){}toast_("댓글 삭제됐어요");}}  style={{fontSize:11,color:AC,background:"none",padding:0}}>🗑</Btn>}
                   </div>
                   <div style={{fontSize:13,color:TX,lineHeight:1.6,paddingLeft:33}}>{c.text}</div>
                 </div>
@@ -1214,8 +1208,8 @@ export default function App(){
                     <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:6}}>요청 {p.fc}건</div>
                     {p.fcR.map((r,i)=><div key={i} style={{fontSize:12,color:SO,background:BG,borderRadius:6,padding:"5px 9px",marginBottom:4}}>· {r}</div>)}
                     <div style={{display:"flex",gap:8,marginTop:10}}>
-                      <Btn onClick={()=>{setPosts(q=>q.map(x=>x.id===p.id?{...x,status:"blinded",fc:0,fcR:[]}:x));toast_("블라인드 처리됐어요");}} style={{flex:1,background:"#fff7ed",color:"#c2410c",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🙈 블라인드</Btn>
-                      <Btn onClick={()=>{setPosts(q=>q.map(x=>x.id===p.id?{...x,fc:0,fcR:[]}:x));toast_("정상 처리됐어요 ✅");}} style={{flex:1,background:MS,color:"#0e8a5f",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 정상 처리</Btn>
+                      <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{status:"blinded",fc:0,fcR:[]});}catch(e){}toast_("블라인드 처리됐어요");}}  style={{flex:1,background:"#fff7ed",color:"#c2410c",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🙈 블라인드</Btn>
+                      <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{fc:0,fcR:[]});}catch(e){}toast_("정상 처리됐어요 ✅");}}  style={{flex:1,background:MS,color:"#0e8a5f",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 정상 처리</Btn>
                     </div>
                   </div>
                 ))}
