@@ -514,28 +514,23 @@ const INIT_ACCOUNTS=[
   {role:"teacher",id:"T0001",name:"테스트",pw:"1234",subject:"도덕"},
 ];
 
+// ── Firebase 기반 Storage 헬퍼 (모든 데이터 Firebase에 저장) ──
 async function storageGet(key){
-  try{const r=await window.storage.get(key);return r?JSON.parse(r.value):null;}catch{return null;}
-}
-async function storageSet(key,val){
-  try{await window.storage.set(key,JSON.stringify(val));}catch{}
-}
-async function storageDel(key){
-  try{await window.storage.delete(key);}catch{}
-}
-
-// ── Firebase Firestore 헬퍼 ──
-async function readStorage(key){
   try{
     const d=await getDoc(doc(db,"storage",key));
     return d.exists()?d.data().value:null;
   }catch{return null;}
 }
-async function writeStorage(key,val){
+async function storageSet(key,val){
   try{
     await setDoc(doc(db,"storage",key),{value:val});
   }catch(e){console.error(e);}
 }
+async function storageDel(key){
+  try{await deleteDoc(doc(db,"storage",key));}catch{}
+}
+const readStorage=storageGet;
+const writeStorage=storageSet;
 
 // ── 메인 앱 ──
 export default function App(){
