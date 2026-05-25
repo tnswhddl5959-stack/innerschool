@@ -402,6 +402,36 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate}) {
   );
 }
 
+// ── 문의 탭 컴포넌트 ──
+function InquiryTab({db,onSnapshot,collection}){
+  const [items,setItems]=useState([]);
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"inquiries"),snap=>{
+      const list=snap.docs.map(d=>({id:d.id,...d.data()}));
+      list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      setItems(list);
+    });
+    return ()=>unsub();
+  },[]);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {items.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"24px",textAlign:"center",color:"#9aa5c0",border:"1px solid #e2e8f4"}}>접수된 문의가 없어요 🎉</div>}
+      {items.map(item=>(
+        <div key={item.id} style={{background:"#fff",borderRadius:12,padding:"14px 16px",border:"1px solid #e2e8f4"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:6}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>{item.type}</span>
+              <span style={{fontSize:12,color:"#5a6a8a"}}>{item.author} · {item.date}</span>
+            </div>
+            <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:5,background:item.status==="미확인"?"#fef3c7":"#dcfce7",color:item.status==="미확인"?"#92400e":"#166534"}}>{item.status}</span>
+          </div>
+          <div style={{fontSize:13,color:"#1a2540",lineHeight:1.6,background:"#f4f6fb",borderRadius:8,padding:"10px 12px"}}>{item.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── 메인 앱 ──
 export default function App() {
   const [scr,setScr]=useState("loading");
@@ -440,6 +470,15 @@ export default function App() {
   const [editBody,setEditBody]=useState("");
   const [wikiEditModal,setWikiEditModal]=useState(false);
   const [editWiki,setEditWiki]=useState(null);
+  const [wikiAddModal,setWikiAddModal]=useState(false);
+  const [inquiryModal,setInquiryModal]=useState(false);
+  const [inquiryText,setInquiryText]=useState("");
+  const [inquiryType,setInquiryType]=useState("오류 신고");
+  const [newWikiIcon,setNewWikiIcon]=useState("📄");
+  const [newWikiTitle,setNewWikiTitle]=useState("");
+  const [newWikiDesc,setNewWikiDesc]=useState("");
+  const [newWikiContent,setNewWikiContent]=useState("");
+  const [newWikiOk,setNewWikiOk]=useState(false);
 
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const goPage = p => { setPage(p); setSidebar(false); setCurWiki(null); };
@@ -587,6 +626,46 @@ export default function App() {
     setEditModal(false); toast_("게시글이 수정됐어요 ✅");
   };
 
+  // ── 관리자 문의 제출 ──
+  const submitInquiry = async() => {
+    if(!inquiryText.trim()){toast_("내용을 입력해주세요");return;}
+    try{
+      await addDoc(collection(db,"inquiries"),{
+        type:inquiryType,
+        text:inquiryText.trim(),
+        author:user.name,
+        userId:user.id,
+        date:new Date().toLocaleDateString("ko-KR"),
+        createdAt:Date.now(),
+        status:"미확인"
+      });
+      setInquiryText("");setInquiryModal(false);
+      toast_("문의가 접수됐어요! 총관리자가 확인할게요 😊");
+    }catch(e){console.error(e);toast_("문의 접수 중 오류가 발생했어요");}
+  };
+
+  // ── 위키 추가 ──
+  const addWiki = async() => {
+    if(!newWikiTitle.trim()||!newWikiContent.trim()){toast_("제목과 내용을 입력해주세요");return;}
+    const newItem={icon:newWikiIcon,title:newWikiTitle.trim(),desc:newWikiDesc.trim(),ok:newWikiOk,content:newWikiContent.trim()};
+    const updated=[...wiki,newItem];
+    setWiki(updated);
+    await fbSet("wiki",updated);
+    setWikiAddModal(false);
+    setNewWikiIcon("📄");setNewWikiTitle("");setNewWikiDesc("");setNewWikiContent("");setNewWikiOk(false);
+    toast_("위키가 추가됐어요 ✅");
+  };
+
+  // ── 위키 삭제 ──
+  const deleteWiki = async(idx) => {
+    if(!window.confirm("이 위키 항목을 삭제할까요?")) return;
+    const updated=wiki.filter((_,i)=>i!==idx);
+    setWiki(updated);
+    await fbSet("wiki",updated);
+    setCurWiki(null);
+    toast_("위키가 삭제됐어요");
+  };
+
   // ── 위키 수정 저장 ──
   const saveWiki = async(idx,newTitle,newContent) => {
     const updated = wiki.map((w,i)=>i===idx?{...w,title:newTitle,content:newContent}:w);
@@ -679,7 +758,8 @@ export default function App() {
             </div>
           </>}
         </nav>
-        <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+        <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",flexDirection:"column",gap:6}}>
+          <Btn onClick={()=>{setInquiryModal(true);setSidebar(false);}} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:8,color:"rgba(255,255,255,0.5)",fontSize:12}}>💬 관리자 문의</Btn>
           <Btn onClick={doLogout} style={{width:"100%",background:"rgba(255,107,107,0.1)",border:"1px solid rgba(255,107,107,0.2)",borderRadius:10,padding:10,color:"#ff8a8a",fontSize:13}}>로그아웃</Btn>
         </div>
       </aside>
@@ -793,7 +873,8 @@ export default function App() {
 
         {/* 교내 위키 목록 */}
         {page==="wiki"&&!curWiki&&<div>
-          <div style={{marginBottom:16}}><h1 style={{fontSize:21,fontWeight:700}}>교내 위키</h1><p style={{color:SO,fontSize:13,marginTop:3}}>학교의 모든 제도와 자원을 찾아보세요</p></div>
+          <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>교내 위키</h1><p style={{color:SO,fontSize:13,marginTop:3}}>학교의 모든 제도와 자원을 찾아보세요</p></div>
+          {isAdmin&&<Btn onClick={()=>setWikiAddModal(true)} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700,marginBottom:14}}>➕ 위키 추가</Btn>}
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {wiki.map((w,i)=>(
               <div key={i} onClick={()=>setCurWiki({...w,idx:i})} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
@@ -822,7 +903,10 @@ export default function App() {
             <div style={{borderTop:`1px solid ${BO}`,paddingTop:16,fontSize:14,lineHeight:1.9,color:TX,whiteSpace:"pre-line"}}>{curWiki.content}</div>
             {curWiki.link&&<a href={curWiki.link.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:14,background:N,color:"#fff",borderRadius:9,padding:"10px 18px",fontSize:13,fontWeight:600,textDecoration:"none"}}>🔗 {curWiki.link.label}</a>}
             {curWiki.ok&&<div style={{marginTop:16,background:MS,border:`1px solid ${MM}`,borderRadius:9,padding:"11px 14px",fontSize:12,color:"#0e7a5a"}}>✅ 교사가 직접 검토하고 인증한 공식 정보입니다.</div>}
-            {isAdmin&&<Btn onClick={()=>setWikiEditModal(true)} style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:14,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:600}}>✏️ 위키 수정</Btn>}
+            {isAdmin&&<div style={{display:"flex",gap:8,marginTop:14}}>
+              <Btn onClick={()=>setWikiEditModal(true)} style={{display:"inline-flex",alignItems:"center",gap:6,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:600}}>✏️ 수정</Btn>
+              <Btn onClick={()=>deleteWiki(curWiki.idx)} style={{display:"inline-flex",alignItems:"center",gap:6,background:"#fee2e2",color:"#991b1b",border:"1.5px solid #fecaca",borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:600}}>🗑 삭제</Btn>
+            </div>}
           </div>
         </div>}
 
@@ -906,7 +990,7 @@ export default function App() {
             ))}
           </div>
           <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16,overflowX:"auto"}}>
-            {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"}].map(t=>(
+            {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"}].map(t=>(
               <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 4px",textAlign:"center",borderRadius:8,fontSize:12,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",whiteSpace:"nowrap"}}>
                 {t.l}
               </Btn>
@@ -969,6 +1053,8 @@ export default function App() {
               </div>
             ))}
           </div>}
+        </div>}
+          {adminTab==="inquiry"&&<InquiryTab db={db} onSnapshot={onSnapshot} collection={collection}/>}
         </div>}
       </main>
 
@@ -1044,6 +1130,55 @@ export default function App() {
             <Btn onClick={()=>saveWiki(curWiki.idx,curWiki.title,curWiki.content)} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>저장</Btn>
           </div>
         </>}
+      </Modal>
+
+      {/* 관리자 문의 모달 */}
+      <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
+        <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>문의 유형</label>
+          <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
+            {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={lbl1}>내용 *</label>
+          <textarea value={inquiryText} onChange={e=>setInquiryText(e.target.value)} rows={5} placeholder="문의 내용을 자세히 입력해주세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <Btn onClick={()=>setInquiryModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
+          <Btn onClick={submitInquiry} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>문의 접수</Btn>
+        </div>
+      </Modal>
+
+      {/* 위키 추가 모달 */}
+      <Modal open={wikiAddModal} onClose={()=>setWikiAddModal(false)} title="➕ 위키 항목 추가">
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>아이콘 (이모지)</label>
+          <input value={newWikiIcon} onChange={e=>setNewWikiIcon(e.target.value)} placeholder="예: 📄" style={inp1}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>제목 *</label>
+          <input value={newWikiTitle} onChange={e=>setNewWikiTitle(e.target.value)} placeholder="위키 제목" style={inp1}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>설명 (목록에 표시)</label>
+          <input value={newWikiDesc} onChange={e=>setNewWikiDesc(e.target.value)} placeholder="간단한 설명" style={inp1}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>내용 *</label>
+          <textarea value={newWikiContent} onChange={e=>setNewWikiContent(e.target.value)} rows={8} placeholder="위키 내용을 입력하세요" style={{...inp1,resize:"vertical",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
+            <input type="checkbox" checked={newWikiOk} onChange={e=>setNewWikiOk(e.target.checked)} style={{accentColor:M,width:16,height:16}}/>
+            ✅ 교사 인증 배지 부여
+          </label>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <Btn onClick={()=>setWikiAddModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
+          <Btn onClick={addWiki} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>추가하기</Btn>
+        </div>
       </Modal>
 
       <Toast msg={toast}/>
