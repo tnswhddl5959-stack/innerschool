@@ -1,5 +1,20 @@
 /* eslint-disable */
 import { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDJQ003TtRZwL9LQM0YMPH9GKaqSmMnh_g",
+  authDomain: "innerschool-9589a.firebaseapp.com",
+  projectId: "innerschool-9589a",
+  storageBucket: "innerschool-9589a.firebasestorage.app",
+  messagingSenderId: "877561889584",
+  appId: "1:877561889584:web:a6f04a0f32e1548a5d3ef5",
+  measurementId: "G-4JM3FQFG6L"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 const N="#0f1f3d", M="#2dd4a0", MS="#e6faf4", MM="#a8edcf", AC="#ff6b6b", BG="#f4f6fb", CA="#fff", TX="#1a2540", SO="#5a6a8a", LI="#9aa5c0", BO="#e2e8f4";
 
@@ -522,15 +537,17 @@ async function storageDel(key){
   try{await window.storage.delete(key);}catch{}
 }
 
-// ── Storage 직접 읽기/쓰기 ──
+// ── Firebase Firestore 헬퍼 ──
 async function readStorage(key){
-  try{const r=await window.storage.get(key);return r?JSON.parse(r.value):null;}catch{return null;}
+  try{
+    const d=await getDoc(doc(db,"storage",key));
+    return d.exists()?d.data().value:null;
+  }catch{return null;}
 }
 async function writeStorage(key,val){
   try{
-    await window.storage.delete(key);
-    await window.storage.set(key,JSON.stringify(val));
-  }catch{}
+    await setDoc(doc(db,"storage",key),{value:val});
+  }catch(e){console.error(e);}
 }
 
 // ── 메인 앱 ──
@@ -567,7 +584,7 @@ export default function App(){
 
   const toast_=msg=>{setToast(msg);setTimeout(()=>setToast(""),2600);};
 
-  // 앱 시작: Storage에서 accounts + 세션 복원
+  // 앱 시작: Firebase에서 accounts + 세션 복원
   useEffect(()=>{
     (async()=>{
       const savedAcc=await readStorage("accs");
@@ -576,7 +593,6 @@ export default function App(){
 
       const sess=await readStorage("sess");
       if(sess&&sess.userId){
-        // 세션의 userId로 최신 계정 찾기
         const acc=list.find(a=>a.id===sess.userId);
         if(acc){
           setIsAdmin(acc.id==="11025");
@@ -587,11 +603,37 @@ export default function App(){
             setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반"});
           }
           setScr("app");
-          return;
+        } else {
+          setScr("login");
         }
+      } else {
+        setScr("login");
       }
-      setScr("login");
     })();
+  },[]);
+
+  // Firestore에서 게시글 실시간 구독
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"posts"),(snapshot)=>{
+      const loaded=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      loaded.sort((a,b)=>b.date>a.date?1:-1);
+      if(loaded.length>0) setPosts(loaded);
+    });
+    return()=>unsub();
+  },[]);
+
+  // Firestore에서 댓글 실시간 구독
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"comments"),(snapshot)=>{
+      const loaded={};
+      snapshot.docs.forEach(d=>{
+        const data=d.data();
+        if(!loaded[data.postId]) loaded[data.postId]=[];
+        loaded[data.postId].push({id:d.id,...data});
+      });
+      if(Object.keys(loaded).length>0) setCmts(loaded);
+    });
+    return()=>unsub();
   },[]);
 
   const goPage=p=>{setPage(p);setSidebar(false);setCurWiki(null);};
@@ -671,10 +713,12 @@ export default function App(){
     toast_(isTeacher?"게시됐어요! 선생님 인증 배지가 자동으로 부여됩니다 👩\u200d🏫":wType==="verified"?"게시됐어요! 총관리자 검토 후 배지가 부여됩니다 ✅":"게시됐어요! 미검증 배너가 표시됩니다");
   };
 
-  const submitCmt=()=>{
+  const submitCmt=async()=>{
     if(!cText.trim()){toast_("댓글을 입력해주세요");return;}
-    const nc={id:Date.now(),author:user.name,anon,text:cText.trim(),time:"방금 전"};
-    setCmts(p=>({...p,[curPost.id]:[...(p[curPost.id]||[]),nc]}));
+    const nc={postId:curPost.id,author:user.name,anon,text:cText.trim(),time:"방금 전"};
+    try{
+      await addDoc(collection(db,"comments"),nc);
+    }catch(e){console.error(e);}
     setCText("");toast_("댓글이 등록됐어요!");
   };
 
