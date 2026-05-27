@@ -37,8 +37,8 @@ const hasBad = (t) => { if(!t) return false; const s=t.toLowerCase().replace(/ /
 
 // ── 정적 데이터 ──
 const INIT_ACCOUNTS = [
-  {role:"student", id:"11025", name:"이윤진", pw:"100130", grade:"1", room:"10"},
-  {role:"teacher", id:"T0001", name:"테스트",  pw:"1234",   subject:"도덕"},
+  {role:"student", id:"11025", name:"이윤진", pw:"100130", grade:"1", room:"10", status:"ok"},
+  {role:"teacher", id:"T0001", name:"테스트",  pw:"1234",   subject:"도덕", status:"ok"},
 ];
 
 const INIT_WIKI = [
@@ -223,12 +223,12 @@ function makeSid(g,r,n){ return g+String(r).padStart(2,"0")+String(n).padStart(2
 
 function Register({onDone,onBack}) {
   const [role,setRole]=useState(null);
-  const [name,setName]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
+  const [name,setName]=useState(""); const [pw,setPw]=useState(""); const [pwConfirm,setPwConfirm]=useState(""); const [err,setErr]=useState("");
+  const [showPw,setShowPw]=useState(false); const [showPwConfirm,setShowPwConfirm]=useState(false);
   const [grade,setGrade]=useState("1"); const [room,setRoom]=useState("1"); const [num,setNum]=useState("1");
-  const [preview,setPreview]=useState(null); const [previewB64,setPreviewB64]=useState(null);
+  const [preview,setPreview]=useState(null);
   const [agreed,setAgreed]=useState(false);
-  const [aiStatus,setAiStatus]=useState(null); // null | "checking" | "ok" | "fail"
-  const [sub,setSub]=useState("국어"); const [code,setCode]=useState("");
+  const [sub,setSub]=useState("국어"); const [code,setCode]=useState(""); const [showCode,setShowCode]=useState(false);
   const SUBS=["국어","영어","수학","과학","사회","역사","도덕","체육","음악","미술","기술·가정","정보","한문","제2외국어","진로"];
   const sid=makeSid(grade,room,num);
   const rooms=Array.from({length:10},(_,i)=>i+1);
@@ -237,15 +237,17 @@ function Register({onDone,onBack}) {
   const doStudent=()=>{
     if(!name.trim()){setErr("이름을 입력해주세요");return;}
     if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}
+    if(pw.length<4){setErr("비밀번호는 4자 이상이어야 해요");return;}
+    if(pw!==pwConfirm){setErr("비밀번호가 일치하지 않아요");return;}
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
-    if(aiStatus==="checking"){setErr("AI가 학생증을 확인 중이에요. 잠시만 기다려주세요.");return;}
-    if(aiStatus==="fail"){setErr("학생증으로 인식되지 않은 사진이에요. 올바른 학생증 사진을 첨부해주세요.");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
     setErr(""); onDone({role:"student",name,sid,grade,room,pw});
   };
   const doTeacher=()=>{
     if(!name.trim()){setErr("이름을 입력해주세요");return;}
     if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}
+    if(pw.length<4){setErr("비밀번호는 4자 이상이어야 해요");return;}
+    if(pw!==pwConfirm){setErr("비밀번호가 일치하지 않아요");return;}
     if(code!==TEACHER_CODE){setErr("인증코드가 올바르지 않습니다");return;}
     setErr(""); onDone({role:"teacher",name,subject:sub,pw});
   };
@@ -286,54 +288,40 @@ function Register({onDone,onBack}) {
       <div style={{background:"rgba(45,212,160,0.08)",border:"1px solid rgba(45,212,160,0.15)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
         <span>🪪</span><span>자동 생성된 학번: <strong style={{color:M,fontSize:14}}>{sid}</strong></span>
       </div>
-      <div style={{marginBottom:14}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} style={inp0}/></div>
+      <div style={{marginBottom:12}}>
+        <label style={lbl0}>비밀번호</label>
+        <div style={{position:"relative"}}>
+          <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={{...inp0,paddingRight:42}}/>
+          <span onClick={()=>setShowPw(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPw?"🙈":"👁"}</span>
+        </div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <label style={lbl0}>비밀번호 확인</label>
+        <div style={{position:"relative"}}>
+          <input type={showPwConfirm?"text":"password"} value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,paddingRight:42,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
+          <span onClick={()=>setShowPwConfirm(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPwConfirm?"🙈":"👁"}</span>
+        </div>
+        {pwConfirm&&pw!==pwConfirm&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+        {pwConfirm&&pw===pwConfirm&&<div style={{fontSize:11,color:"#2dd4a0",marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+      </div>
       <div style={{marginBottom:14}}>
         <label style={lbl0}>학생증 사진 <span style={{color:M}}>*필수</span></label>
         <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
           {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
             :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
-          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
             const f=e.target.files[0]; if(!f) return;
             setPreview(URL.createObjectURL(f));
-            setAiStatus("checking");
-            // base64 변환
-            const reader=new FileReader();
-            reader.onload=async ev=>{
-              const b64=ev.target.result.split(",")[1];
-              setPreviewB64(b64);
-              // Claude API로 학생증 검증
-              try{
-                const res=await fetch("https://api.anthropic.com/v1/messages",{
-                  method:"POST",
-                  headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({
-                    model:"claude-sonnet-4-20250514",
-                    max_tokens:200,
-                    messages:[{role:"user",content:[
-                      {type:"image",source:{type:"base64",media_type:f.type||"image/jpeg",data:b64}},
-                      {type:"text",text:"이 이미지가 경기창조고등학교 학생증인지 판단해주세요. 학생증에는 '학생증', '경기창조고등학교' 또는 'ggcj-h.goean.kr' 등의 텍스트가 있어야 합니다. 맞으면 YES, 아니면 NO로만 답해주세요."}
-                    ]}]
-                  })
-                });
-                const data=await res.json();
-                const answer=(data.content?.[0]?.text||"").trim().toUpperCase();
-                setAiStatus(answer.includes("YES")?"ok":"fail");
-              }catch{setAiStatus("fail");}
-            };
-            reader.readAsDataURL(f);
           }}/>
         </label>
-        {aiStatus==="checking"&&<div style={{marginTop:8,fontSize:12,color:"rgba(255,255,255,0.6)",display:"flex",alignItems:"center",gap:6}}>⏳ AI가 학생증을 확인하고 있어요...</div>}
-        {aiStatus==="ok"&&<div style={{marginTop:8,fontSize:12,color:"#2dd4a0",display:"flex",alignItems:"center",gap:6}}>✅ 학생증이 확인됐어요!</div>}
-        {aiStatus==="fail"&&<div style={{marginTop:8,fontSize:12,color:"#ff8a8a",display:"flex",alignItems:"center",gap:6}}>⚠️ 학생증으로 인식되지 않아요. 다시 첨부해주세요.</div>}
+
       </div>
       <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"14px",marginBottom:14}}>
         <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
         <div style={{color:"rgba(255,255,255,0.5)",fontSize:11,lineHeight:1.7,marginBottom:10}}>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 목적:</strong> 재학생 여부 확인<br/>
-          <strong style={{color:"rgba(255,255,255,0.7)"}}>보유 기간:</strong> AI 검증 및 총관리자 검토 완료 즉시 삭제<br/>
-          <strong style={{color:"rgba(255,255,255,0.7)"}}>AI 검증:</strong> 학생증 여부 자동 확인 후 즉시 파기<br/>
+          <strong style={{color:"rgba(255,255,255,0.7)"}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
           <strong style={{color:"rgba(255,255,255,0.7)"}}>제3자 제공:</strong> 없음
         </div>
         <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
@@ -357,7 +345,22 @@ function Register({onDone,onBack}) {
       <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label>
         <select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select>
       </div>
-      <div style={{marginBottom:14}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} style={inp0}/></div>
+      <div style={{marginBottom:12}}>
+        <label style={lbl0}>비밀번호</label>
+        <div style={{position:"relative"}}>
+          <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={{...inp0,paddingRight:42}}/>
+          <span onClick={()=>setShowPw(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPw?"🙈":"👁"}</span>
+        </div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <label style={lbl0}>비밀번호 확인</label>
+        <div style={{position:"relative"}}>
+          <input type={showPwConfirm?"text":"password"} value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,paddingRight:42,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
+          <span onClick={()=>setShowPwConfirm(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPwConfirm?"🙈":"👁"}</span>
+        </div>
+        {pwConfirm&&pw!==pwConfirm&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+        {pwConfirm&&pw===pwConfirm&&<div style={{fontSize:11,color:"#2dd4a0",marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+      </div>
       <div style={{marginBottom:6}}><label style={lbl0}>교사 인증코드 <span style={{color:M}}>*필수</span></label><input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="인증코드를 입력하세요" style={inp0}/></div>
       {err&&<div style={{color:"#ff8a8a",fontSize:12,marginBottom:12,background:"rgba(255,107,107,0.1)",borderRadius:7,padding:"8px 12px"}}>{err}</div>}
       <button onClick={doTeacher} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>가입하기</button>
@@ -630,8 +633,9 @@ export default function App() {
     if(roleOrSub==="student") {
       acc = list.find(a=>a.role==="student"&&a.id===idOrName&&a.pw===pw);
       if(!acc){alert("학번 또는 비밀번호가 일치하지 않습니다.");return;}
+      if(acc.status==="blocked"){alert("차단된 계정이에요. 총관리자에게 문의해주세요.");return;}
       setIsAdmin(acc.id==="11025"); setIsTeacher(false);
-      setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반"});
+      setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반",status:acc.status||"pending"});
     } else {
       acc = list.find(a=>a.role==="teacher"&&a.name===idOrName&&a.pw===pw&&a.subject===roleOrSub);
       if(!acc){alert("이름, 비밀번호 또는 교과목이 일치하지 않습니다.");return;}
@@ -649,12 +653,12 @@ export default function App() {
     let updated, newUser;
     if(info.role==="teacher") {
       const tid="T"+Date.now().toString().slice(-4);
-      const newAcc={role:"teacher",id:tid,name:info.name,pw:info.pw,subject:info.subject};
+      const newAcc={role:"teacher",id:tid,name:info.name,pw:info.pw,subject:info.subject,status:"ok"};
       updated=[...base,newAcc];
       newUser={name:info.name,id:tid,grade:"교사",room:info.subject};
       setIsTeacher(true); setIsAdmin(false);
     } else {
-      const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room};
+      const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room,status:"pending"};
       updated=[...base,newAcc];
       newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반"};
       setIsTeacher(false); setIsAdmin(false);
@@ -867,6 +871,22 @@ export default function App() {
         {/* 게시판 */}
         {page==="board"&&<div>
           <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>정보 게시판</h1><p style={{color:SO,fontSize:13,marginTop:3}}>우리 학교의 모든 정보를 한 곳에서</p></div>
+          {!isAdmin&&!isTeacher&&user.status==="pending"&&(
+            <div style={{background:"#fef3c7",border:"1px solid #fde047",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
+              <div style={{fontSize:36,marginBottom:12}}>🔒</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#92400e",marginBottom:8}}>승인 대기 중이에요</div>
+              <div style={{fontSize:13,color:"#a16207",lineHeight:1.7}}>총관리자가 학생증을 확인 후 승인하면<br/>게시판을 이용할 수 있어요.<br/><br/>승인까지 보통 1~2일 소요됩니다.</div>
+            </div>
+          )}
+          {!isAdmin&&!isTeacher&&user.status==="blocked"&&(
+            <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
+              <div style={{fontSize:36,marginBottom:12}}>🚫</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#991b1b",marginBottom:8}}>차단된 계정이에요</div>
+              <div style={{fontSize:13,color:"#7f1d1d",lineHeight:1.7}}>이 계정은 총관리자에 의해 차단됐어요.<br/>문의사항이 있으면 관리자에게 연락해주세요.</div>
+              <Btn onClick={()=>setInquiryModal(true)} style={{marginTop:16,background:"#991b1b",color:"#fff",borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600}}>💬 관리자 문의</Btn>
+            </div>
+          )}
+          {(!(!isAdmin&&!isTeacher&&user.status==="pending"))&&<>
           {/* 학년 탭 */}
           <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
             {["전체","1학년","2학년","3학년","공통"].map(g=>(
@@ -905,6 +925,8 @@ export default function App() {
               </div>
             ))}
           </div>
+          </>
+          }
         </div>}
 
         {/* 게시글 상세 */}
@@ -1044,10 +1066,13 @@ export default function App() {
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {w.days.map(({d,day})=>{
                     const menu=MEAL[d];
-                    return <div key={d} style={{background:CA,border:`1px solid ${BO}`,borderRadius:12,padding:"12px 14px"}}>
+                    const today=new Date();
+                    const isToday=today.getMonth()===4&&today.getDate()===parseInt(d.split("/")[1]);
+                    return <div key={d} style={{background:isToday?"#f0fdf9":CA,border:`1.5px solid ${isToday?M:BO}`,borderRadius:12,padding:"12px 14px"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?8:0}}>
-                        <span style={{background:N,color:"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
-                        <span style={{fontSize:13,fontWeight:700,color:TX}}>5월 {d.split("/")[1]}일</span>
+                        <span style={{background:isToday?M:N,color:isToday?N:"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
+                        <span style={{fontSize:13,fontWeight:700,color:isToday?M:TX}}>5월 {d.split("/")[1]}일</span>
+                        {isToday&&<span style={{fontSize:11,fontWeight:700,color:M,background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
                       </div>
                       {menu?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                         {menu.map((item,i)=><span key={i} style={{background:BG,border:`1px solid ${BO}`,borderRadius:5,padding:"3px 8px",fontSize:12,color:TX}}>{item.replace(/[\d.]+$/,"")}</span>)}
@@ -1097,8 +1122,20 @@ export default function App() {
                 </div>
                 <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0,cursor:"pointer"}}>🪪 학생증 사진 보기</div>
                 {r.status==="pending"&&<div style={{display:"flex",gap:8}}>
-                  <Btn onClick={()=>{setIdList(p=>p.map(x=>x.id===r.id?{...x,status:"ok"}:x));toast_(`${r.name} 승인됐어요 ✅`);}} style={{flex:1,background:"#dcfce7",color:"#166534",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 승인</Btn>
-                  <Btn onClick={()=>{setIdList(p=>p.map(x=>x.id===r.id?{...x,status:"blocked"}:x));toast_(`${r.name} 차단됐어요 🚫`);}} style={{flex:1,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🚫 차단</Btn>
+                  <Btn onClick={async()=>{
+                    setIdList(p=>p.map(x=>x.id===r.id?{...x,status:"ok"}:x));
+                    const updated=accounts.map(a=>a.id===r.id?{...a,status:"ok"}:a);
+                    setAccounts(updated);
+                    await fbSet("accounts",updated);
+                    toast_(`${r.name} 승인됐어요 ✅`);
+                  }} style={{flex:1,background:"#dcfce7",color:"#166534",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 승인</Btn>
+                  <Btn onClick={async()=>{
+                    setIdList(p=>p.map(x=>x.id===r.id?{...x,status:"blocked"}:x));
+                    const updated=accounts.map(a=>a.id===r.id?{...a,status:"blocked"}:a);
+                    setAccounts(updated);
+                    await fbSet("accounts",updated);
+                    toast_(`${r.name} 차단됐어요 🚫`);
+                  }} style={{flex:1,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🚫 차단</Btn>
                 </div>}
               </div>
             ))}
