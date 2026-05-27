@@ -509,6 +509,89 @@ function InquiryTab({db,onSnapshot,collection}){
   );
 }
 
+// ── 캘린더 페이지 ──
+function CalendarPage(){
+  const [curMonth,setCurMonth]=useState(5);
+  const N2="#0f1f3d",M2="#2dd4a0",CA2="#fff",BO2="#e2e8f4",SO2="#5a6a8a",TX2="#1a2540";
+  const MONTHS={
+    5:{
+      year:2026,month:5,days:31,startDay:4,
+      events:{1:"재량휴업",4:"재량휴업",7:"학력평가",15:"체육대회",18:"진로컨설팅",19:"진로컨설팅",20:"진로컨설팅",21:"진로컨설팅",22:"진로컨설팅",23:"진로컨설팅",24:"진로컨설팅",25:"진로컨설팅",26:"진로컨설팅",27:"진로컨설팅",28:"진로컨설팅",29:"진로컨설팅"},
+      holidays:[1,4],
+      list:[
+        {d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},
+        {d:"5월 7일",l:"📝 고3 전국연합학력평가"},
+        {d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},
+        {d:"5월 18~29일",l:"👨‍👩‍👧 학부모 진로 진학 컨설팅"},
+      ]
+    },
+    6:{
+      year:2026,month:6,days:30,startDay:0,
+      events:{3:"지방선거 휴일",4:"전국연합·모의평가",30:"2차 지필평가"},
+      holidays:[3],
+      list:[
+        {d:"6월 3일",l:"🗳 지방선거 (공휴일)"},
+        {d:"6월 4일",l:"📝 고1·2 전국연합학력평가 / 고3 대수능 모의평가"},
+        {d:"6월 30일~7월 3일",l:"📋 2차 지필평가"},
+      ]
+    },
+    7:{
+      year:2026,month:7,days:31,startDay:3,
+      events:{1:"2차 지필평가",2:"2차 지필평가",3:"2차 지필평가",8:"고3 학력평가",9:"진로진학탐방",10:"SLAT·자율과정",16:"성적사정회",21:"방학식"},
+      holidays:[],
+      list:[
+        {d:"7월 1~3일",l:"📋 2차 지필평가"},
+        {d:"7월 8일",l:"📝 고3 전국연합학력평가"},
+        {d:"7월 9일",l:"🗺 1·2학년 진로진학탐방프로그램 / 3학년 자율과정"},
+        {d:"7월 10일",l:"📊 SLAT - 1·2학년 졸업생멘토링 / 자율과정 - 3학년 교과융합프로젝트"},
+        {d:"7월 16일",l:"📋 성적사정회"},
+        {d:"7월 21일",l:"🏖 방학식"},
+      ]
+    }
+  };
+  const m=MONTHS[curMonth];
+  const today=new Date();
+  const monthKeys=Object.keys(MONTHS).map(Number);
+  const cellSt={padding:"5px 0 4px",minHeight:52,background:CA2,borderRight:`1px solid ${BO2}`,borderBottom:`1px solid ${BO2}`,display:"flex",flexDirection:"column",alignItems:"center",gap:3};
+  return(
+    <div>
+      <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>공유 캘린더</h1></div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:CA2,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO2}`}}>
+        <button onClick={()=>setCurMonth(v=>Math.max(Math.min(...monthKeys),v-1))} style={{background:curMonth>Math.min(...monthKeys)?N2:"#e2e8f4",color:curMonth>Math.min(...monthKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+        <div style={{fontWeight:700,fontSize:16,color:TX2}}>2026년 {curMonth}월</div>
+        <button onClick={()=>setCurMonth(v=>Math.min(Math.max(...monthKeys),v+1))} style={{background:curMonth<Math.max(...monthKeys)?N2:"#e2e8f4",color:curMonth<Math.max(...monthKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+      </div>
+      <div style={{background:CA2,borderRadius:14,border:`1px solid ${BO2}`,overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",background:N2}}>
+          {["일","월","화","수","목","금","토"].map(d=><div key={d} style={{textAlign:"center",padding:"9px 0",fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.75)"}}>{d}</div>)}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
+          {Array.from({length:m.startDay}).map((_,i)=><div key={`b${i}`} style={{...cellSt,background:"#fafafa"}}/>)}
+          {Array.from({length:m.days},(_,i)=>i+1).map(d=>{
+            const ev=m.events[d];
+            const holiday=m.holidays.includes(d);
+            const isToday=today.getFullYear()===m.year&&today.getMonth()+1===m.month&&today.getDate()===d;
+            return(
+              <div key={d} style={{...cellSt,background:isToday?"#f0fdf9":CA2}}>
+                <div style={{fontSize:12,fontWeight:600,color:holiday?"#ef4444":isToday?M2:TX2}}>{d}</div>
+                {ev&&<div style={{background:N2,color:"#fff",borderRadius:3,padding:"1px 4px",fontSize:7,fontWeight:600,lineHeight:1.5,textAlign:"center",width:"90%",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{ev}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:6}}>
+        {m.list.map((x,i)=>(
+          <div key={i} style={{background:CA2,border:`1px solid ${BO2}`,borderRadius:10,padding:"11px 14px",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <div style={{fontSize:12,fontWeight:700,color:N2,whiteSpace:"nowrap",paddingTop:1,minWidth:80}}>{x.d}</div>
+            <div style={{fontSize:13,color:TX2,lineHeight:1.5}}>{x.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── 메인 앱 ──
 export default function App() {
   const [scr,setScr]=useState("loading");
@@ -1008,29 +1091,87 @@ export default function App() {
 
         {/* 캘린더 */}
         {page==="calendar"&&(()=>{
-          const blanks=5;
+          const MONTHS={
+            5:{
+              year:2026, month:5, days:31, startDay:4, // 5월 1일 = 목요일(4)
+              events:{
+                1:"재량휴업", 4:"재량휴업", 7:"학력평가",
+                15:"체육대회",
+                18:"진로컨설팅",19:"진로컨설팅",20:"진로컨설팅",
+                21:"진로컨설팅",22:"진로컨설팅",23:"진로컨설팅",
+                24:"진로컨설팅",25:"진로컨설팅",26:"진로컨설팅",
+                27:"진로컨설팅",28:"진로컨설팅",29:"진로컨설팅",
+              },
+              holidays:[1,4],
+              list:[
+                {d:"5월 1일·4일", l:"🏫 학교장재량휴업일"},
+                {d:"5월 7일",     l:"📝 고3 전국연합학력평가"},
+                {d:"5월 15일",    l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},
+                {d:"5월 18~29일", l:"👨‍👩‍👧 학부모 진로 진학 컨설팅"},
+              ]
+            },
+            6:{
+              year:2026, month:6, days:30, startDay:0, // 6월 1일 = 일요일(0)
+              events:{
+                3:"지방선거 휴일",
+                4:"전국연합·모의평가",
+                30:"2차 지필평가",
+              },
+              holidays:[3],
+              list:[
+                {d:"6월 3일",     l:"🗳 지방선거 (공휴일)"},
+                {d:"6월 4일",     l:"📝 고1·2 전국연합학력평가 / 고3 대수능 모의평가"},
+                {d:"6월 30일~7월 3일", l:"📋 2차 지필평가"},
+              ]
+            },
+            7:{
+              year:2026, month:7, days:31, startDay:3, // 7월 1일 = 수요일(3)
+              events:{
+                1:"2차 지필평가", 2:"2차 지필평가", 3:"2차 지필평가",
+              },
+              holidays:[],
+              list:[
+                {d:"7월 1~3일", l:"📋 2차 지필평가 (계속)"},
+              ]
+            }
+          };
+          const [curMonth,setCurMonth]=useState(5);
+          const m=MONTHS[curMonth];
           const cellSt={padding:"5px 0 4px",minHeight:52,background:CA,borderRight:`1px solid ${BO}`,borderBottom:`1px solid ${BO}`,display:"flex",flexDirection:"column",alignItems:"center",gap:3};
+          const today=new Date();
+          const monthKeys=Object.keys(MONTHS).map(Number);
+          const canPrev=curMonth>Math.min(...monthKeys);
+          const canNext=curMonth<Math.max(...monthKeys);
           return <div>
-            <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>공유 캘린더</h1><p style={{color:SO,fontSize:13,marginTop:3}}>2026년 5월</p></div>
+            <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>공유 캘린더</h1></div>
+            {/* 월 네비게이션 */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:CA,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO}`}}>
+              <Btn onClick={()=>canPrev&&setCurMonth(v=>v-1)} style={{background:canPrev?N:"#e2e8f4",color:canPrev?"#fff":"#9aa5c0",borderRadius:8,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</Btn>
+              <div style={{fontWeight:700,fontSize:16,color:TX}}>2026년 {curMonth}월</div>
+              <Btn onClick={()=>canNext&&setCurMonth(v=>v+1)} style={{background:canNext?N:"#e2e8f4",color:canNext?"#fff":"#9aa5c0",borderRadius:8,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>›</Btn>
+            </div>
             <div style={{background:CA,borderRadius:14,border:`1px solid ${BO}`,overflow:"hidden"}}>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",background:N}}>
                 {["일","월","화","수","목","금","토"].map(d=><div key={d} style={{textAlign:"center",padding:"9px 0",fontSize:12,fontWeight:600,color:"rgba(255,255,255,0.75)"}}>{d}</div>)}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
-                {Array.from({length:blanks}).map((_,i)=><div key={`b${i}`} style={{...cellSt,background:"#fafafa"}}/>)}
-                {Array.from({length:31},(_,i)=>i+1).map(d=>{
-                  const ev=CAL_EV[d], holiday=d===1||d===4;
-                  return <div key={d} style={cellSt}>
-                    <div style={{fontSize:12,fontWeight:600,color:holiday?"#ef4444":TX}}>{d}</div>
+                {Array.from({length:m.startDay}).map((_,i)=><div key={`b${i}`} style={{...cellSt,background:"#fafafa"}}/>)}
+                {Array.from({length:m.days},(_,i)=>i+1).map(d=>{
+                  const ev=m.events[d];
+                  const holiday=m.holidays.includes(d);
+                  const isToday=today.getFullYear()===m.year&&today.getMonth()+1===m.month&&today.getDate()===d;
+                  return <div key={d} style={{...cellSt,background:isToday?"#f0fdf9":CA,border:isToday?`1px solid ${M}`:undefined}}>
+                    <div style={{fontSize:12,fontWeight:600,color:holiday?"#ef4444":isToday?M:TX}}>{d}</div>
                     {ev&&<div style={{background:N,color:"#fff",borderRadius:3,padding:"1px 4px",fontSize:7,fontWeight:600,lineHeight:1.5,textAlign:"center",width:"90%",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{ev}</div>}
                   </div>;
                 })}
               </div>
             </div>
+            {/* 일정 목록 */}
             <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:6}}>
-              {[{d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},{d:"5월 7일",l:"📝 고3 전국연합학력평가"},{d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},{d:"5월 18~29일",l:"👨‍👩‍👧 학부모 진로 진학 컨설팅"}].map((x,i)=>(
+              {m.list.map((x,i)=>(
                 <div key={i} style={{background:CA,border:`1px solid ${BO}`,borderRadius:10,padding:"11px 14px",display:"flex",gap:12,alignItems:"flex-start"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:N,whiteSpace:"nowrap",paddingTop:1,minWidth:72}}>{x.d}</div>
+                  <div style={{fontSize:12,fontWeight:700,color:N,whiteSpace:"nowrap",paddingTop:1,minWidth:80}}>{x.d}</div>
                   <div style={{fontSize:13,color:TX,lineHeight:1.5}}>{x.l}</div>
                 </div>
               ))}
