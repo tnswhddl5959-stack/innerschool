@@ -224,11 +224,10 @@ function makeSid(g,r,n){ return g+String(r).padStart(2,"0")+String(n).padStart(2
 function Register({onDone,onBack}) {
   const [role,setRole]=useState(null);
   const [name,setName]=useState(""); const [pw,setPw]=useState(""); const [pwConfirm,setPwConfirm]=useState(""); const [err,setErr]=useState("");
-  const [showPw,setShowPw]=useState(false); const [showPwConfirm,setShowPwConfirm]=useState(false);
   const [grade,setGrade]=useState("1"); const [room,setRoom]=useState("1"); const [num,setNum]=useState("1");
   const [preview,setPreview]=useState(null);
   const [agreed,setAgreed]=useState(false);
-  const [sub,setSub]=useState("국어"); const [code,setCode]=useState(""); const [showCode,setShowCode]=useState(false);
+  const [sub,setSub]=useState("국어"); const [code,setCode]=useState("");
   const SUBS=["국어","영어","수학","과학","사회","역사","도덕","체육","음악","미술","기술·가정","정보","한문","제2외국어","진로"];
   const sid=makeSid(grade,room,num);
   const rooms=Array.from({length:10},(_,i)=>i+1);
@@ -255,7 +254,8 @@ function Register({onDone,onBack}) {
   if(!role) return (
     <div style={authBox}><div style={authCard}>
       <AuthHeader/>
-      <div style={{color:"#fff",fontSize:16,fontWeight:700,marginBottom:16}}>가입할 계정을 선택해주세요</div>
+      <div style={{color:"#fff",fontSize:20,fontWeight:700,marginBottom:6}}>가입</div>
+      <div style={{color:"rgba(255,255,255,0.45)",fontSize:13,marginBottom:20}}>가입할 계정을 선택해주세요</div>
       <div style={{display:"flex",gap:12,marginBottom:20}}>
         {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
           <div key={r.k} onClick={()=>setRole(r.k)} style={{flex:1,border:"2px solid rgba(45,212,160,0.3)",borderRadius:14,padding:"20px 12px",textAlign:"center",cursor:"pointer",background:"rgba(255,255,255,0.04)"}}>
@@ -275,7 +275,7 @@ function Register({onDone,onBack}) {
       <AuthHeader/>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
         <span onClick={()=>{setRole(null);setErr("");}} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-        <span style={{color:"rgba(255,255,255,0.5)",fontSize:13}}>🎒 학생으로 가입</span>
+<span style={{color:"#fff",fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
       </div>
       <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/></div>
       <div style={{marginBottom:4}}><label style={lbl0}>학년 · 반 · 번호</label>
@@ -290,17 +290,11 @@ function Register({onDone,onBack}) {
       </div>
       <div style={{marginBottom:12}}>
         <label style={lbl0}>비밀번호</label>
-        <div style={{position:"relative"}}>
-          <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={{...inp0,paddingRight:42}}/>
-          <span onClick={()=>setShowPw(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPw?"🙈":"👁"}</span>
-        </div>
+        <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
       </div>
       <div style={{marginBottom:14}}>
         <label style={lbl0}>비밀번호 확인</label>
-        <div style={{position:"relative"}}>
-          <input type={showPwConfirm?"text":"password"} value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,paddingRight:42,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
-          <span onClick={()=>setShowPwConfirm(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPwConfirm?"🙈":"👁"}</span>
-        </div>
+        <input type="password" value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
         {pwConfirm&&pw!==pwConfirm&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
         {pwConfirm&&pw===pwConfirm&&<div style={{fontSize:11,color:"#2dd4a0",marginTop:4}}>✅ 비밀번호가 일치해요</div>}
       </div>
@@ -339,7 +333,7 @@ function Register({onDone,onBack}) {
       <AuthHeader/>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
         <span onClick={()=>{setRole(null);setErr("");}} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-        <span style={{color:"rgba(255,255,255,0.5)",fontSize:13}}>👩‍🏫 선생님으로 가입</span>
+<span style={{color:"#fff",fontSize:18,fontWeight:700}}>👩‍🏫 선생님으로 가입</span>
       </div>
       <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
       <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label>
@@ -347,17 +341,11 @@ function Register({onDone,onBack}) {
       </div>
       <div style={{marginBottom:12}}>
         <label style={lbl0}>비밀번호</label>
-        <div style={{position:"relative"}}>
-          <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={{...inp0,paddingRight:42}}/>
-          <span onClick={()=>setShowPw(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPw?"🙈":"👁"}</span>
-        </div>
+        <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
       </div>
       <div style={{marginBottom:14}}>
         <label style={lbl0}>비밀번호 확인</label>
-        <div style={{position:"relative"}}>
-          <input type={showPwConfirm?"text":"password"} value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,paddingRight:42,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
-          <span onClick={()=>setShowPwConfirm(v=>!v)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:16,color:"rgba(255,255,255,0.5)"}}>{showPwConfirm?"🙈":"👁"}</span>
-        </div>
+        <input type="password" value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwConfirm&&pw!==pwConfirm?"1px solid #ff8a8a":inp0.border}}/>
         {pwConfirm&&pw!==pwConfirm&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
         {pwConfirm&&pw===pwConfirm&&<div style={{fontSize:11,color:"#2dd4a0",marginTop:4}}>✅ 비밀번호가 일치해요</div>}
       </div>
