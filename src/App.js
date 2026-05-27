@@ -581,8 +581,9 @@ export default function App() {
       const savedWiki = await fbGet("wiki");
       if(savedWiki&&savedWiki.length>0) setWiki(savedWiki);
 
-      // 3. 세션 확인 (userId로 자동 로그인)
-      const sess = await fbGet("sess");
+      // 3. 세션 확인 (userId로 자동 로그인) - 각자 브라우저에 저장
+      const sessStr = localStorage.getItem("innerschool_sess");
+      const sess = sessStr ? JSON.parse(sessStr) : null;
       if(sess&&sess.userId) {
         const acc = accList.find(a=>a.id===sess.userId);
         if(acc) {
@@ -637,7 +638,7 @@ export default function App() {
       setIsAdmin(false); setIsTeacher(true);
       setUser({name:acc.name,id:acc.id,grade:"교사",room:acc.subject||""});
     }
-    await fbSet("sess",{userId:acc.id});
+    localStorage.setItem("innerschool_sess", JSON.stringify({userId:acc.id}));
     setScr("app"); setPage("board");
   };
 
@@ -660,7 +661,7 @@ export default function App() {
       setIdList(prev=>[{id:info.sid,name:info.name,grade:info.grade+"학년 "+info.room+"반",date:"방금 전",status:"pending",isTeacher:false},...prev]);
     }
     await fbSet("accounts",updated);
-    await fbSet("sess",{userId:newUser.id});
+    localStorage.setItem("innerschool_sess", JSON.stringify({userId:newUser.id}));
     setAccounts(updated);
     setUser(newUser);
     setScr("app"); setPage("board");
@@ -668,13 +669,13 @@ export default function App() {
   };
 
   // ── 로그아웃 ──
-  const doLogout = async() => { await fbDel("sess"); setScr("login"); };
+  const doLogout = async() => { localStorage.removeItem("innerschool_sess"); setScr("login"); };
 
   // ── 계정 정보 업데이트 (프로필 페이지에서 호출) ──
   const onAccountUpdate = (newAccounts, newUser) => {
     setAccounts(newAccounts);
     setUser(newUser);
-    fbSet("sess",{userId:newUser.id}); // 세션 유지
+    localStorage.setItem("innerschool_sess", JSON.stringify({userId:newUser.id})); // 세션 유지
   };
 
   // ── 게시글 작성 ──
