@@ -29,18 +29,15 @@ const uploadImage = async (file) => {
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
   formData.append("folder", "innerschool");
-  try {
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: "POST",
-      body: formData
-    });
-    const data = await res.json();
-    if(data.secure_url) return data.secure_url;
-    throw new Error(data.error?.message||"업로드 실패");
-  } catch(e) {
-    console.error(e);
-    throw e;
-  }
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+    method: "POST",
+    body: formData
+  });
+  const data = await res.json();
+  if(data.secure_url) return data.secure_url;
+  const msg = data.error?.message || "업로드 실패";
+  if(msg.includes("preset")) throw new Error("Cloudinary preset 설정이 필요해요. 관리자에게 문의해주세요.");
+  throw new Error(msg);
 };
 
 // ── 비속어 필터 ──
@@ -216,15 +213,6 @@ function Register({onDone,onBack}) {
   };
 
   const ErrBox = () => err ? <div style={{color:"#ff8a8a",fontSize:12,marginBottom:12,background:"rgba(255,107,107,0.1)",borderRadius:7,padding:"8px 12px"}}>{err}</div> : null;
-  const PwFields = () => <>
-    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
-    <div style={{marginBottom:14}}>
-      <label style={lbl0}>비밀번호 확인</label>
-      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
-      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
-      {pwC&&pw===pwC&&<div style={{fontSize:11,color:M,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
-    </div>
-  </>;
 
   if(!role) return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
@@ -260,7 +248,13 @@ function Register({onDone,onBack}) {
     <div style={{background:"rgba(45,212,160,0.08)",border:"1px solid rgba(45,212,160,0.15)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
       <span>🪪</span><span>자동 생성된 학번: <strong style={{color:M,fontSize:14}}>{sid}</strong></span>
     </div>
-    <PwFields/>
+    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
+    <div style={{marginBottom:14}}>
+      <label style={lbl0}>비밀번호 확인</label>
+      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
+      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:M,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+    </div>
     <div style={{marginBottom:14}}>
       <label style={lbl0}>학생증 사진 <span style={{color:M}}>*필수</span></label>
       <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
@@ -294,7 +288,13 @@ function Register({onDone,onBack}) {
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
     <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label><select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>
-    <PwFields/>
+    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
+    <div style={{marginBottom:14}}>
+      <label style={lbl0}>비밀번호 확인</label>
+      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
+      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:M,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+    </div>
     <div style={{marginBottom:6}}><label style={lbl0}>교사 인증코드 <span style={{color:M}}>*필수</span></label><input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="인증코드를 입력하세요" style={inp0}/></div>
     <ErrBox/>
     <button onClick={doTeacher} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:12}}>가입하기</button>
@@ -1085,7 +1085,7 @@ export default function App() {
           <span style={{fontSize:13,color:SO}}>{wImgLoading?"업로드 중...":wImages.length>=3?"최대 3장까지 첨부 가능":"이미지 선택"}</span>
           <input type="file" accept="image/*" style={{display:"none"}} disabled={wImages.length>=3||wImgLoading} onChange={async e=>{
             const f=e.target.files[0]; if(!f)return;
-            if(f.size>10*1024*1024){alert("이미지는 10MB 이하만 가능해요");return;}
+            if(f.size>20*1024*1024){alert("이미지는 20MB 이하만 가능해요");return;}
             setWImgLoading(true);
             try{ const url=await uploadImage(f); setWImages(prev=>[...prev,url]); }
             catch{ alert("이미지 업로드에 실패했어요. 다시 시도해주세요."); }
@@ -1140,7 +1140,7 @@ export default function App() {
             <span style={{fontSize:13,color:SO}}>{wikiEditImgLoading?"업로드 중...":"이미지 추가"}</span>
             <input type="file" accept="image/*" style={{display:"none"}} disabled={wikiEditImgLoading} onChange={async e=>{
               const f=e.target.files[0]; if(!f)return;
-              if(f.size>10*1024*1024){alert("이미지는 10MB 이하만 가능해요");return;}
+              if(f.size>20*1024*1024){alert("이미지는 20MB 이하만 가능해요");return;}
               setWikiEditImgLoading(true);
               try{ const url=await uploadImage(f); setCurWiki(w=>({...w,images:[...(w.images||[]),url]})); }
               catch{ alert("이미지 업로드에 실패했어요."); }
@@ -1175,7 +1175,7 @@ export default function App() {
           <span style={{fontSize:13,color:SO}}>{nwImgLoading?"업로드 중...":nwImages.length>=5?"최대 5장까지 첨부 가능":"이미지 선택"}</span>
           <input type="file" accept="image/*" style={{display:"none"}} disabled={nwImages.length>=5||nwImgLoading} onChange={async e=>{
             const f=e.target.files[0]; if(!f)return;
-            if(f.size>10*1024*1024){alert("이미지는 10MB 이하만 가능해요");return;}
+            if(f.size>20*1024*1024){alert("이미지는 20MB 이하만 가능해요");return;}
             setNwImgLoading(true);
             try{ const url=await uploadImage(f); setNwImages(prev=>[...prev,url]); }
             catch{ alert("이미지 업로드에 실패했어요."); }
