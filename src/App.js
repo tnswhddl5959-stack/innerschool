@@ -192,17 +192,28 @@ function Register({onDone,onBack}) {
   const [role,setRole]=useState(null);
   const [name,setName]=useState(""); const [pw,setPw]=useState(""); const [pwC,setPwC]=useState(""); const [err,setErr]=useState("");
   const [grade,setGrade]=useState("1"); const [room,setRoom]=useState("1"); const [num,setNum]=useState("1");
-  const [preview,setPreview]=useState(null); const [agreed,setAgreed]=useState(false);
+  const [preview,setPreview]=useState(null); const [previewFile,setPreviewFile]=useState(null); const [agreed,setAgreed]=useState(false); const [uploading,setUploading]=useState(false);
   const [sub,setSub]=useState("국어"); const [code,setCode]=useState("");
   const sid=makeSid(grade,room,num);
 
-  const doStudent=()=>{
+  const doStudent=async()=>{
     if(!name.trim()){setErr("이름을 입력해주세요");return;}
     if(pw.length<4){setErr("비밀번호는 4자 이상이어야 해요");return;}
     if(pw!==pwC){setErr("비밀번호가 일치하지 않아요");return;}
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
-    setErr(""); onDone({role:"student",name,sid,grade,room,pw});
+    setErr("");
+    // 학생증 사진 업로드
+    if(preview&&previewFile){
+      try{
+        const url=await uploadImage(previewFile);
+        onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});
+      }catch{
+        onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
+      }
+    } else {
+      onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
+    }
   };
   const doTeacher=()=>{
     if(!name.trim()){setErr("이름을 입력해주세요");return;}
@@ -260,7 +271,7 @@ function Register({onDone,onBack}) {
       <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
         {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
           :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
-        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)setPreview(URL.createObjectURL(f));}}/>
+        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
       </label>
     </div>
     <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"14px",marginBottom:14}}>
@@ -615,7 +626,7 @@ export default function App() {
       const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room,status:"pending"};
       updated=[...base,newAcc]; newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
       setIsTeacher(false); setIsAdmin(false);
-      const newItem={id:info.sid,name:info.name,grade:info.grade+"학년 "+info.room+"반",date:new Date().toLocaleDateString("ko-KR"),status:"pending",isTeacher:false};
+      const newItem={id:info.sid,name:info.name,grade:info.grade+"학년 "+info.room+"반",date:new Date().toLocaleDateString("ko-KR"),status:"pending",isTeacher:false,idPhoto:info.idPhoto||null};
       const savedIdList=await fbGet("idList");
       const newIdList=[newItem,...(savedIdList||[])];
       setIdList(newIdList); await fbSet("idList",newIdList);
@@ -753,7 +764,7 @@ export default function App() {
         {!isAdmin&&!isTeacher&&user.status==="pending"&&<div style={{background:"#fef3c7",border:"1px solid #fde047",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
           <div style={{fontSize:36,marginBottom:12}}>🔒</div>
           <div style={{fontSize:16,fontWeight:700,color:"#92400e",marginBottom:8}}>승인 대기 중이에요</div>
-          <div style={{fontSize:13,color:"#a16207",lineHeight:1.7}}>총관리자가 학생증을 확인 후 승인하면<br/>게시판을 이용할 수 있어요.<br/><br/>승인까지 보통 1~2일 소요됩니다.</div>
+          <div style={{fontSize:13,color:"#a16207",lineHeight:1.7}}>총관리자가 학생증을 확인 후 승인하면<br/>게시판을 이용할 수 있어요.</div>
         </div>}
 
         {/* 차단 */}
@@ -986,7 +997,10 @@ export default function App() {
                   {r.status==="pending"?"검토 대기":r.status==="ok"?"승인됨":"차단됨"}
                 </span>
               </div>
-              <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>🪪 학생증 사진 보기</div>
+              {r.idPhoto
+                ? <img src={r.idPhoto} alt="학생증" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:8,border:`1px solid ${BO}`,marginBottom:r.status==="pending"?10:0,cursor:"pointer"}} onClick={()=>window.open(r.idPhoto,"_blank")}/>
+                : <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>🪪 학생증 사진 없음</div>
+              }
               {r.status==="pending"&&<div style={{display:"flex",gap:8}}>
                 <Btn onClick={async()=>{
                   const newIdList=idList.map(x=>x.id===r.id?{...x,status:"ok"}:x);
