@@ -563,7 +563,14 @@ export default function App() {
   useEffect(()=>{
     (async()=>{
       const savedAcc=await fbGet("accounts");
-      const accList=(savedAcc&&savedAcc.length>0)?savedAcc:INIT_ACCOUNTS;
+      // status 보정 - 없거나 이상한 값이면 role에 따라 기본값 설정
+      const rawList=(savedAcc&&savedAcc.length>0)?savedAcc:INIT_ACCOUNTS;
+      const accList=rawList.map(a=>({
+        ...a,
+        status: a.id==="11025" ? "ok" :
+                a.role==="teacher" ? "ok" :
+                (a.status==="ok"||a.status==="pending"||a.status==="blocked") ? a.status : "pending"
+      }));
       setAccounts(accList);
       const savedWiki=await fbGet("wiki");
       if(savedWiki&&savedWiki.length>0) setWiki(savedWiki);
@@ -598,7 +605,8 @@ export default function App() {
       if(!acc){alert("학번 또는 비밀번호가 일치하지 않습니다.");return;}
       if(acc.status==="blocked"){alert("차단된 계정이에요. 총관리자에게 문의해주세요.");return;}
       setIsAdmin(acc.id==="11025"); setIsTeacher(false);
-      setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반",status:acc.status||"pending"});
+      const stu_status = acc.id==="11025" ? "ok" : (acc.status||"pending");
+      setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반",status:stu_status});
     } else {
       acc=list.find(a=>a.role==="teacher"&&a.name===idOrName&&a.pw===pw&&a.subject===roleOrSub);
       if(!acc){alert("이름, 비밀번호 또는 교과목이 일치하지 않습니다.");return;}
@@ -1051,7 +1059,7 @@ export default function App() {
               <div>
                 <div style={{fontSize:14,fontWeight:700}}>{u.name}</div>
                 <div style={{fontSize:12,color:SO}}>{u.role==="teacher"?u.subject+" 선생님":u.grade+"학년 "+u.room+"반"} · {u.id}</div>
-                <span style={{display:"inline-block",marginTop:4,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:700,background:u.status==="ok"?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:u.status==="ok"?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>{u.status==="ok"?"정상":u.status==="pending"?"검토 중":"차단됨"}</span>
+                <span style={{display:"inline-block",marginTop:4,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:700,background:(!u.status||u.status==="ok"||u.role==="teacher")?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:(!u.status||u.status==="ok"||u.role==="teacher")?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>{(!u.status||u.status==="ok"||u.role==="teacher")?"정상":u.status==="pending"?"검토 중":"차단됨"}</span>
               </div>
               {u.id!=="11025"&&<Btn onClick={async()=>{const updated=accounts.filter(a=>a.id!==u.id);await fbSet("accounts",updated);setAccounts(updated);toast_(`${u.name} 계정이 삭제됐어요`);}} style={{background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600}}>🗑 삭제</Btn>}
             </div>
