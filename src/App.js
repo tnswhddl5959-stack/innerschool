@@ -654,7 +654,8 @@ export default function App() {
   // ── 게시글 ──
   const submitPost=async()=>{
     if(!isTeacher&&!wType){toast_("유형을 선택해주세요");return;}
-    if(!wTitle.trim()||!wBody.trim()){toast_("제목과 내용을 입력해주세요");return;}
+    if(!wTitle.trim()){toast_("제목을 입력해주세요");return;}
+    if(!wBody.trim()&&wImages.length===0){toast_("내용을 입력하거나 이미지를 첨부해주세요");return;}
     if(hasBad(wTitle)||hasBad(wBody)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
     if(!isTeacher&&wType==="verified"&&!wSrc.trim()){toast_("확인 근거를 입력해주세요");return;}
     const grade=isTeacher?wGrade:user.grade.replace("학년","");
@@ -1099,7 +1100,7 @@ export default function App() {
         <select value={wCat} onChange={e=>setWCat(e.target.value)} style={inp1}>{SUB_CATS.map(c=><option key={c}>{c}</option>)}</select>
       </div>
       <div style={{marginBottom:12}}><label style={lbl1}>제목</label><input value={wTitle} onChange={e=>setWTitle(e.target.value)} placeholder="제목을 입력하세요" style={inp1}/></div>
-      <div style={{marginBottom:4}}><label style={lbl1}>내용</label><textarea value={wBody} onChange={e=>setWBody(e.target.value)} rows={5} placeholder="내용을 입력하세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/></div>
+      <div style={{marginBottom:4}}><label style={lbl1}>내용 {wImages.length>0&&<span style={{color:LI,fontWeight:400,fontSize:11}}>(이미지 첨부 시 선택사항)</span>}</label><textarea value={wBody} onChange={e=>setWBody(e.target.value)} rows={5} placeholder={wImages.length>0?"내용을 입력하세요 (선택사항)":"내용을 입력하세요"} style={{...inp1,resize:"none",boxSizing:"border-box"}}/></div>
       {!isTeacher&&<div style={{marginTop:10}}>
         <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
           <input type="checkbox" checked={wAnon} onChange={e=>setWAnon(e.target.checked)} style={{accentColor:N,width:15,height:15}}/>
