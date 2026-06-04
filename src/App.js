@@ -519,6 +519,7 @@ export default function App() {
   const [toast,setToast]=useState("");
   // 글쓰기
   const [wModal,setWModal]=useState(false);
+  const [wAnon,setWAnon]=useState(false);
   const [wType,setWType]=useState(null);
   const [wCat,setWCat]=useState("📝 수행평가");
   const [wGrade,setWGrade]=useState("공통");
@@ -660,12 +661,12 @@ export default function App() {
     const now=new Date();
     const dateStr=now.getFullYear()+"."+String(now.getMonth()+1).padStart(2,"0")+"."+String(now.getDate()).padStart(2,"0");
     const np=isTeacher
-      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,grade,date:dateStr,views:0,source:"",body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()}
-      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:user.name,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()};
+      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,anon:false,grade,date:dateStr,views:0,source:"",body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()}
+      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:wAnon?"익명":user.name,anon:wAnon,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()};
     try{
       const ref=await addDoc(collection(db,"posts"),np);
       if(!isTeacher&&wType==="verified") setVq(q=>[{id:ref.id,title:np.title,author:user.name,cat:wCat,source:np.source},...q]);
-      setWModal(false);setWType(null);setWTitle("");setWBody("");setWSrc("");setWImages([]);
+      setWModal(false);setWType(null);setWTitle("");setWBody("");setWSrc("");setWImages([]);setWAnon(false);
       toast_(isTeacher?"게시됐어요! 👩‍🏫":wType==="verified"?"검토 후 배지가 부여됩니다 ✅":"게시됐어요!");
     }catch(e){console.error(e);toast_("게시 중 오류가 발생했어요.");}
   };
@@ -821,7 +822,7 @@ export default function App() {
                 {p.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 6px 6px 0",padding:"6px 10px",fontSize:11,color:"#92400e",marginBottom:6}}>⚠️ 미검증 정보입니다. 주의하세요.</div>}
                 <div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:LI,flexWrap:"wrap"}}>
                   <span style={{background:BG,padding:"2px 7px",borderRadius:4,color:SO}}>{p.cat}</span>
-                  <span>{p.author} · {p.grade==="공통"?"공통":p.grade+"학년"}</span>
+                  <span>{p.anon?"익명":p.author} · {p.grade==="공통"?"공통":p.grade+"학년"}</span>
                   <span>{p.date}</span>
                   {isAdmin&&p.fc>0&&<span style={{color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
                   <span style={{marginLeft:"auto",display:"flex",gap:6}}>
@@ -842,7 +843,7 @@ export default function App() {
           <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}><Chip type={curPost.type} status={curPost.status}/></div>
           <div style={{fontSize:18,fontWeight:700,color:TX,lineHeight:1.4,marginBottom:10}}>{curPost.title}</div>
           <div style={{display:"flex",gap:12,fontSize:11,color:LI,marginBottom:12,flexWrap:"wrap"}}>
-            <span>👤 {curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
+            <span>👤 {curPost.anon?(isAdmin?`익명 (실명: ${curPost.author})`:'익명'):curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
             <span>📅 {curPost.date}</span><span>👁 {curPost.views||0}</span>
           </div>
           {curPost.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 8px 8px 0",padding:"8px 12px",fontSize:12,color:"#92400e",marginBottom:12}}>⚠️ 미검증 정보입니다. 출처를 직접 확인하세요.</div>}
@@ -1099,6 +1100,13 @@ export default function App() {
       </div>
       <div style={{marginBottom:12}}><label style={lbl1}>제목</label><input value={wTitle} onChange={e=>setWTitle(e.target.value)} placeholder="제목을 입력하세요" style={inp1}/></div>
       <div style={{marginBottom:4}}><label style={lbl1}>내용</label><textarea value={wBody} onChange={e=>setWBody(e.target.value)} rows={5} placeholder="내용을 입력하세요" style={{...inp1,resize:"none",boxSizing:"border-box"}}/></div>
+      {!isTeacher&&<div style={{marginTop:10}}>
+        <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:TX}}>
+          <input type="checkbox" checked={wAnon} onChange={e=>setWAnon(e.target.checked)} style={{accentColor:N,width:15,height:15}}/>
+          익명으로 게시
+        </label>
+        {wAnon&&<div style={{fontSize:11,color:SO,marginTop:5,marginLeft:23}}>작성자 이름이 '익명'으로 표시됩니다. 총관리자에게는 실명이 확인되며, 익명이더라도 비속어 등 부적절한 언행은 삼가주시기 바랍니다.</div>}
+      </div>}
       {/* 이미지 첨부 */}
       <div style={{marginBottom:16}}>
         <label style={lbl1}>이미지 첨부 (선택사항 · 최대 3장)</label>
