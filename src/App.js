@@ -844,7 +844,7 @@ export default function App() {
           <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}><Chip type={curPost.type} status={curPost.status}/></div>
           <div style={{fontSize:18,fontWeight:700,color:TX,lineHeight:1.4,marginBottom:10}}>{curPost.title}</div>
           <div style={{display:"flex",gap:12,fontSize:11,color:LI,marginBottom:12,flexWrap:"wrap"}}>
-            <span>👤 {curPost.anon?(isAdmin?`익명 (실명: ${curPost.author})`:'익명'):curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
+            <span>👤 {curPost.anon?(isAdmin?`익명 (${curPost.author})`:'익명'):curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
             <span>📅 {curPost.date}</span><span>👁 {curPost.views||0}</span>
           </div>
           {curPost.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 8px 8px 0",padding:"8px 12px",fontSize:12,color:"#92400e",marginBottom:12}}>⚠️ 미검증 정보입니다. 출처를 직접 확인하세요.</div>}
