@@ -661,8 +661,8 @@ export default function App() {
     const now=new Date();
     const dateStr=now.getFullYear()+"."+String(now.getMonth()+1).padStart(2,"0")+"."+String(now.getDate()).padStart(2,"0");
     const np=isTeacher
-      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,anon:false,grade,date:dateStr,views:0,source:"",body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()}
-      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:wAnon?"익명":user.name,anon:wAnon,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),fc:0,fcR:[],createdAt:Date.now()};
+      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,anon:false,grade,date:dateStr,views:0,source:"",body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()}
+      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:wAnon?"익명":user.name,anon:wAnon,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()};
     try{
       const ref=await addDoc(collection(db,"posts"),np);
       if(!isTeacher&&wType==="verified") setVq(q=>[{id:ref.id,title:np.title,author:user.name,cat:wCat,source:np.source},...q]);
@@ -814,7 +814,7 @@ export default function App() {
           {filtered.length===0&&<div style={{textAlign:"center",color:LI,padding:"40px 0",fontSize:14}}>아직 게시글이 없어요. 첫 글을 올려보세요!</div>}
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {filtered.map(p=>(
-              <div key={p.id} onClick={async()=>{setCurPost(p);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}} style={{background:CA,borderRadius:12,padding:"16px",border:`1px solid ${BO}`,cursor:"pointer"}}>
+              <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}} style={{background:CA,borderRadius:12,padding:"16px",border:`1px solid ${BO}`,cursor:"pointer"}}>
                 <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:6}}>
                   <Chip type={p.type} status={p.status}/>
                   <div style={{fontSize:14,fontWeight:600,color:TX,flex:1,lineHeight:1.4}}>{p.title}</div>
