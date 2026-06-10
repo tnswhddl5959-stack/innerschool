@@ -516,6 +516,73 @@ function CalendarPage() {
   </div>;
 }
 
+
+// ── 이달의 급식 ──
+function MealPage(){
+  const today = new Date();
+  const curMon = today.getMonth()+1===6?6:5;
+  const [mealMonth,setMealMonth]=useState(curMon);
+  const MEAL_MONTHS={
+    5:{
+      label:"2026년 5월",
+      weeks:[
+        {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
+        {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
+        {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
+        {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
+      ]
+    },
+    6:{
+      label:"2026년 6월",
+      weeks:[
+        {label:"1주차",days:[{d:"6/2",day:"화"},{d:"6/3",day:"수"},{d:"6/4",day:"목"},{d:"6/5",day:"금"}]},
+        {label:"2주차",days:[{d:"6/8",day:"월"},{d:"6/9",day:"화"},{d:"6/10",day:"수"},{d:"6/11",day:"목"},{d:"6/12",day:"금"}]},
+        {label:"3주차",days:[{d:"6/15",day:"월"},{d:"6/16",day:"화"},{d:"6/17",day:"수"},{d:"6/18",day:"목"},{d:"6/19",day:"금"}]},
+        {label:"4주차",days:[{d:"6/22",day:"월"},{d:"6/23",day:"화"},{d:"6/24",day:"수"},{d:"6/25",day:"목"},{d:"6/26",day:"금"}]},
+        {label:"5주차",days:[{d:"6/29",day:"월"},{d:"6/30",day:"화"}]},
+      ]
+    }
+  };
+  const mealKeys=Object.keys(MEAL_MONTHS).map(Number);
+  const weeks=MEAL_MONTHS[mealMonth].weeks;
+  return(
+    <div>
+      <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:"#5a6a8a",fontSize:13,marginTop:3}}>세종캐터링 제공</p></div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:"#fff",borderRadius:12,padding:"10px 16px",border:"1px solid #e2e8f4"}}>
+        <button onClick={()=>setMealMonth(v=>Math.max(Math.min(...mealKeys),v-1))} style={{background:mealMonth>Math.min(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth>Math.min(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
+        <div style={{fontWeight:700,fontSize:15,color:"#1a2540"}}>{MEAL_MONTHS[mealMonth].label}</div>
+        <button onClick={()=>setMealMonth(v=>Math.min(Math.max(...mealKeys),v+1))} style={{background:mealMonth<Math.max(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth<Math.max(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
+      </div>
+      {weeks.map((w,wi)=>(
+        <div key={wi} style={{marginBottom:16}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#5a6a8a",marginBottom:8,paddingLeft:2}}>{w.label}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {w.days.map(({d,day})=>{
+              const menu=MEAL[d];
+              const isToday=today.getMonth()+1===parseInt(d.split("/")[0])&&today.getDate()===parseInt(d.split("/")[1]);
+              return(
+                <div key={d} style={{background:isToday?"#f0fdf9":"#fff",border:`1.5px solid ${isToday?"#2dd4a0":"#e2e8f4"}`,borderRadius:12,padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?8:0}}>
+                    <span style={{background:isToday?"#2dd4a0":"#0f1f3d",color:isToday?"#0f1f3d":"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:isToday?"#2dd4a0":"#1a2540"}}>{d.split("/")[0]}월 {d.split("/")[1]}일</span>
+                    {isToday&&<span style={{fontSize:11,fontWeight:700,color:"#2dd4a0",background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
+                  </div>
+                  {menu
+                    ?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {menu.map((item,i)=><span key={i} style={{background:"#f4f6fb",border:"1px solid #e2e8f4",borderRadius:5,padding:"3px 8px",fontSize:12,color:"#1a2540"}}>{item}</span>)}
+                    </div>
+                    :<div style={{fontSize:12,color:"#9aa5c0"}}>휴업일</div>
+                  }
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── 메인 앱 ──
 export default function App() {
   const [scr,setScr]=useState("loading");
@@ -961,63 +1028,7 @@ export default function App() {
       {page==="calendar"&&<CalendarPage/>}
 
       {/* ── 이달의 급식 ── */}
-      {page==="meal"&&(()=>{
-        const MEAL_MONTHS={
-          5:{
-            label:"2026년 5월",
-            weeks:[
-              {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
-              {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
-              {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
-              {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
-            ]
-          },
-          6:{
-            label:"2026년 6월",
-            weeks:[
-              {label:"1주차",days:[{d:"6/2",day:"화"},{d:"6/3",day:"수"},{d:"6/4",day:"목"},{d:"6/5",day:"금"}]},
-              {label:"2주차",days:[{d:"6/8",day:"월"},{d:"6/9",day:"화"},{d:"6/10",day:"수"},{d:"6/11",day:"목"},{d:"6/12",day:"금"}]},
-              {label:"3주차",days:[{d:"6/15",day:"월"},{d:"6/16",day:"화"},{d:"6/17",day:"수"},{d:"6/18",day:"목"},{d:"6/19",day:"금"}]},
-              {label:"4주차",days:[{d:"6/22",day:"월"},{d:"6/23",day:"화"},{d:"6/24",day:"수"},{d:"6/25",day:"목"},{d:"6/26",day:"금"}]},
-              {label:"5주차",days:[{d:"6/29",day:"월"},{d:"6/30",day:"화"}]},
-            ]
-          }
-        };
-        const curMealMonth=new Date().getMonth()+1===6?6:5;
-        const [mealMonth,setMealMonth]=useState(curMealMonth);
-        const mealKeys=Object.keys(MEAL_MONTHS).map(Number);
-        const weeks=MEAL_MONTHS[mealMonth].weeks;
-        return <div>
-          <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:SO,fontSize:13,marginTop:3}}>세종캐터링 제공</p></div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:CA,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO}`}}>
-            <button onClick={()=>setMealMonth(v=>Math.max(Math.min(...mealKeys),v-1))} style={{background:mealMonth>Math.min(...mealKeys)?N:"#e2e8f4",color:mealMonth>Math.min(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
-            <div style={{fontWeight:700,fontSize:15,color:TX}}>{MEAL_MONTHS[mealMonth].label}</div>
-            <button onClick={()=>setMealMonth(v=>Math.min(Math.max(...mealKeys),v+1))} style={{background:mealMonth<Math.max(...mealKeys)?N:"#e2e8f4",color:mealMonth<Math.max(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
-          </div>
-          {(weeks||[]).map((w,wi)=>(
-            <div key={wi} style={{marginBottom:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:SO,marginBottom:8,paddingLeft:2}}>{w.label}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {w.days.map(({d,day})=>{
-                  const menu=MEAL[d];
-                  const today=new Date();
-                  const isToday=today.getMonth()===4&&today.getDate()===parseInt(d.split("/")[1]);
-                  return <div key={d} style={{background:isToday?"#f0fdf9":CA,border:`1.5px solid ${isToday?M:BO}`,borderRadius:12,padding:"12px 14px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?8:0}}>
-                      <span style={{background:isToday?M:N,color:isToday?N:"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
-                      <span style={{fontSize:13,fontWeight:700,color:isToday?M:TX}}>5월 {d.split("/")[1]}일</span>
-                      {isToday&&<span style={{fontSize:11,fontWeight:700,color:M,background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
-                    </div>
-                    {menu?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                      {menu.map((item,i)=><span key={i} style={{background:BG,border:`1px solid ${BO}`,borderRadius:5,padding:"3px 8px",fontSize:12,color:TX}}>{item}</span>)}
-                    </div>:<div style={{fontSize:12,color:LI}}>휴업일</div>}
-                  </div>;
-                })}
-              </div>
-            </div>
-          ))}
-        </div>;
-      })()}
+      {page==="meal"&&<MealPage/>}
 
       {/* ── 내 계정 ── */}
       {page==="profile"&&<ProfilePage user={user} isTeacher={isTeacher} isAdmin={isAdmin} accounts={accounts} onUpdate={onAccountUpdate} onDelete={onAccountDelete}/>}
