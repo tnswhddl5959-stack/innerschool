@@ -64,6 +64,27 @@ const INIT_WIKI = [
 ];
 
 const MEAL = {
+  "6/2":["흑미밥","소고기미역국","닭갈비","콩나물베이비채소무침","열무김치","한컵오렌지주스"],
+  "6/3":["차조밥","돈육김치찌개","대구생선까스/소스","어묵잡채","도토리묵/양념장","깍두기","짜요짜요"],
+  "6/4":["수수밥","근대된장국","수제닭강정","두부조림","포기김치","수박"],
+  "6/5":["찹쌀밥","순두부맑은국","김치사태찜","매추리알감자조림","김말이떡갈조림","총각김치","오렌지"],
+  "6/8":["찹쌀밥","콩나물국","고메함박/소스","김자반볶음","진미채고추장볶음","깍두기","단칸도넛"],
+  "6/9":["수수밥","곤약어묵국","오삼불고기(대패)","아채계란찜","연근조림","포기김치","서울초코우유"],
+  "6/10":["찹쌀밥","팽이미소국","스팸마요덮밥재료","청양마요소스","닭꼬지","포기김치"],
+  "6/11":["기장밥","황태해장국","돼지갈비찜","아란치니","매운떡볶이","청경채나물","총각김치"],
+  "6/12":["찹쌀밥","닭개장국","가자미소스구이","매운떡볶이","청경채나물","총각김치"],
+  "6/15":["흑미밥","뼈없는순살감자탕","멘치까스/소스","감자튀김/케찹","열무김치","마카롱"],
+  "6/16":["보리밥","청국장찌개","당면소불고기","김치전","깻순나물들깨볶음","포기김치","수박"],
+  "6/17":["찹쌀밥","나가사끼짬뽕국","진미짜장야채볶음","스크램블에그","깍두기","딸바라데"],
+  "6/18":["기장밥","배추된장국","목살찹스테이크","멕시칸샐러드","뮤즐리열지볶음","총각김치","미니바나나우유"],
+  "6/19":["차조밥","사골우거지국","목은지찜","알감자조림","새우튀김","열무김치","방울토마토(학교지원)"],
+  "6/22":["수수밥","닭곰탕","고추장불고기","통살포튀김","마늘쫑베이컨볶음","깍두기"],
+  "6/23":["찹쌀밥","소고기육개장","꼬치없는갈떡볶음","비름나물무침","구이김","포기김치","한국야쿠르트"],
+  "6/24":["보리밥","유부숙주우동국물","야채비빔밥재료","김가루/약고추장","팝콘치킨","볶음김치","프룻프룻주스"],
+  "6/25":["현미밥","참치김치찌개","훈제오리야채볶음","부추적채무침","허니버터연근튀김","포기김치","포카리스웨트"],
+  "6/26":["보조밥","쇠고기스프","스파게티/소스","황교만두구이(고기/김치)","비트무오이피클","포기김치","블루베리(학교지원)"],
+  "6/29":["현미밥","우렁된장국","동심돈까스/소스","쫄면야채무침","청포묵김가루무침","열무김치","요플레"],
+  "6/30":["보리밥","북어채무국","닭조림","시금치나물","참치김치볶음","수박"],
   "5/6":["참쌀밥","배추된장국","제육볶음","계란말이","진미채도라지무침","깍두기","대추방울토마토"],
   "5/7":["김치볶음밥","핫도그/케첩","스크램블에그","들기름막국수","백김치","쥬시쿨에이드"],
   "5/8":["현미밥","비지찌개","봉추ST.찜닭","가마보꼬볶음","검정콩조림","열무김치","상하목장요구르트"],
@@ -662,8 +683,8 @@ export default function App() {
     const now=new Date();
     const dateStr=now.getFullYear()+"."+String(now.getMonth()+1).padStart(2,"0")+"."+String(now.getDate()).padStart(2,"0");
     const np=isTeacher
-      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,anon:false,grade,date:dateStr,views:0,source:"",body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()}
-      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:wAnon?"익명":user.name,anon:wAnon,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()};
+      ?{title:wTitle.trim(),cat:wCat,type:"teacher",status:"teacher",author:user.name,realAuthor:user.name,anon:false,grade,date:dateStr,views:0,source:"",body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()}
+      :{title:wTitle.trim(),cat:wCat,type:wType,status:wType==="verified"?"pending":"unverified",author:wAnon?"익명":user.name,realAuthor:user.name,anon:wAnon,grade,date:dateStr,views:0,source:wSrc.trim(),body:wBody.trim(),images:wImages,fc:0,fcR:[],createdAt:Date.now()};
     try{
       const ref=await addDoc(collection(db,"posts"),np);
       if(!isTeacher&&wType==="verified") setVq(q=>[{id:ref.id,title:np.title,author:user.name,cat:wCat,source:np.source},...q]);
@@ -844,7 +865,7 @@ export default function App() {
           <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}><Chip type={curPost.type} status={curPost.status}/></div>
           <div style={{fontSize:18,fontWeight:700,color:TX,lineHeight:1.4,marginBottom:10}}>{curPost.title}</div>
           <div style={{display:"flex",gap:12,fontSize:11,color:LI,marginBottom:12,flexWrap:"wrap"}}>
-            <span>👤 {curPost.anon?(isAdmin?`익명 (${curPost.author})`:'익명'):curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
+            <span>👤 {curPost.anon?(isAdmin?`익명 (${curPost.realAuthor||curPost.author})`:'익명'):curPost.author} · {curPost.grade==="공통"?"공통":curPost.grade+"학년"}</span>
             <span>📅 {curPost.date}</span><span>👁 {curPost.views||0}</span>
           </div>
           {curPost.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 8px 8px 0",padding:"8px 12px",fontSize:12,color:"#92400e",marginBottom:12}}>⚠️ 미검증 정보입니다. 출처를 직접 확인하세요.</div>}
@@ -941,15 +962,39 @@ export default function App() {
 
       {/* ── 이달의 급식 ── */}
       {page==="meal"&&(()=>{
-        const weeks=[
-          {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
-          {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
-          {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
-          {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
-        ];
+        const MEAL_MONTHS={
+          5:{
+            label:"2026년 5월",
+            weeks:[
+              {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
+              {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
+              {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
+              {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
+            ]
+          },
+          6:{
+            label:"2026년 6월",
+            weeks:[
+              {label:"1주차",days:[{d:"6/2",day:"화"},{d:"6/3",day:"수"},{d:"6/4",day:"목"},{d:"6/5",day:"금"}]},
+              {label:"2주차",days:[{d:"6/8",day:"월"},{d:"6/9",day:"화"},{d:"6/10",day:"수"},{d:"6/11",day:"목"},{d:"6/12",day:"금"}]},
+              {label:"3주차",days:[{d:"6/15",day:"월"},{d:"6/16",day:"화"},{d:"6/17",day:"수"},{d:"6/18",day:"목"},{d:"6/19",day:"금"}]},
+              {label:"4주차",days:[{d:"6/22",day:"월"},{d:"6/23",day:"화"},{d:"6/24",day:"수"},{d:"6/25",day:"목"},{d:"6/26",day:"금"}]},
+              {label:"5주차",days:[{d:"6/29",day:"월"},{d:"6/30",day:"화"}]},
+            ]
+          }
+        };
+        const curMealMonth=new Date().getMonth()+1===6?6:5;
+        const [mealMonth,setMealMonth]=useState(curMealMonth);
+        const mealKeys=Object.keys(MEAL_MONTHS).map(Number);
+        const weeks=MEAL_MONTHS[mealMonth].weeks;
         return <div>
-          <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:SO,fontSize:13,marginTop:3}}>2026년 5월 · 세종캐터링 제공</p></div>
-          {weeks.map((w,wi)=>(
+          <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:SO,fontSize:13,marginTop:3}}>세종캐터링 제공</p></div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:CA,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO}`}}>
+            <button onClick={()=>setMealMonth(v=>Math.max(Math.min(...mealKeys),v-1))} style={{background:mealMonth>Math.min(...mealKeys)?N:"#e2e8f4",color:mealMonth>Math.min(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
+            <div style={{fontWeight:700,fontSize:15,color:TX}}>{MEAL_MONTHS[mealMonth].label}</div>
+            <button onClick={()=>setMealMonth(v=>Math.min(Math.max(...mealKeys),v+1))} style={{background:mealMonth<Math.max(...mealKeys)?N:"#e2e8f4",color:mealMonth<Math.max(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
+          </div>
+          {(weeks||[]).map((w,wi)=>(
             <div key={wi} style={{marginBottom:16}}>
               <div style={{fontSize:13,fontWeight:700,color:SO,marginBottom:8,paddingLeft:2}}>{w.label}</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
