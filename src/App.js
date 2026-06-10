@@ -648,6 +648,9 @@ export default function App() {
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const [deferredPrompt,setDeferredPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
+  const [showIosGuide,setShowIosGuide]=useState(false);
+  const isIos=()=>/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  const isInStandaloneMode=()=>window.matchMedia('(display-mode: standalone)').matches;
 
   useEffect(()=>{
     const handler=e=>{ e.preventDefault(); setDeferredPrompt(e); setShowInstall(true); };
@@ -854,6 +857,7 @@ export default function App() {
       </nav>
       <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",flexDirection:"column",gap:6}}>
         {showInstall&&<Btn onClick={installApp} style={{width:"100%",background:"rgba(45,212,160,0.15)",border:"1px solid rgba(45,212,160,0.3)",borderRadius:10,padding:8,color:"#2dd4a0",fontSize:12,marginBottom:4}}>📲 앱으로 설치하기</Btn>}
+        {!showInstall&&isIos()&&!isInStandaloneMode()&&<Btn onClick={()=>{setShowIosGuide(true);setSidebar(false);}} style={{width:"100%",background:"rgba(45,212,160,0.15)",border:"1px solid rgba(45,212,160,0.3)",borderRadius:10,padding:8,color:"#2dd4a0",fontSize:12,marginBottom:4}}>📲 홈 화면에 추가</Btn>}
         <Btn onClick={()=>{setInquiryModal(true);setSidebar(false);}} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:8,color:"rgba(255,255,255,0.5)",fontSize:12}}>💬 관리자 문의</Btn>
         <Btn onClick={doLogout} style={{width:"100%",background:"rgba(255,107,107,0.1)",border:"1px solid rgba(255,107,107,0.2)",borderRadius:10,padding:10,color:"#ff8a8a",fontSize:13}}>로그아웃</Btn>
       </div>
@@ -867,6 +871,7 @@ export default function App() {
       <div style={{fontFamily:"serif",fontSize:16,fontWeight:800,color:M,marginLeft:12}}>INNERSCHOOL</div>
       <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
         {showInstall&&<Btn onClick={installApp} style={{background:"rgba(45,212,160,0.2)",border:"1px solid rgba(45,212,160,0.4)",borderRadius:8,padding:"5px 10px",color:"#2dd4a0",fontSize:11,fontWeight:600}}>📲 앱 설치</Btn>}
+        {!showInstall&&isIos()&&!isInStandaloneMode()&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"rgba(45,212,160,0.2)",border:"1px solid rgba(45,212,160,0.4)",borderRadius:8,padding:"5px 10px",color:"#2dd4a0",fontSize:11,fontWeight:600}}>📲 앱 추가</Btn>}
         {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10}}>{pending}건 대기</span>}
       </div>
     </div>
