@@ -932,8 +932,10 @@ export default function App() {
                 <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:6}}>
                   <Chip type={p.type} status={p.status}/>
                   <div style={{fontSize:14,fontWeight:600,color:TX,flex:1,lineHeight:1.4}}>{p.title}</div>
+                  {p.images&&p.images.length>0&&<img src={p.images[0]} alt="" style={{width:56,height:56,objectFit:"cover",borderRadius:8,border:`1px solid ${BO}`,flexShrink:0}}/>}
                 </div>
                 {p.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 6px 6px 0",padding:"6px 10px",fontSize:11,color:"#92400e",marginBottom:6}}>⚠️ 미검증 정보입니다. 주의하세요.</div>}
+
                 <div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:LI,flexWrap:"wrap"}}>
                   <span style={{background:BG,padding:"2px 7px",borderRadius:4,color:SO}}>{p.cat}</span>
                   <span>{p.anon?"익명":p.author} · {p.grade==="공통"?"공통":p.grade+"학년"}</span>
