@@ -649,8 +649,8 @@ export default function App() {
   const [deferredPrompt,setDeferredPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
   const [showIosGuide,setShowIosGuide]=useState(false);
-  const isIos=/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-  const isStandalone=window.matchMedia('(display-mode: standalone)').matches;
+  const [isIos]=useState(()=>/iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()));
+  const [isStandalone]=useState(()=>window.matchMedia('(display-mode: standalone)').matches);
 
   useEffect(()=>{
     const handler=e=>{ e.preventDefault(); setDeferredPrompt(e); setShowInstall(true); };
@@ -980,7 +980,7 @@ export default function App() {
               <Btn onClick={()=>{setEditPost(curPost);setEditTitle(curPost.title);setEditBody(curPost.body);setEditModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",fontSize:13}}>✏️ 수정</Btn>
               <Btn onClick={()=>deletePost(curPost.id)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#fee2e2",color:"#991b1b",border:"1.5px solid #fecaca",fontSize:13}}>🗑 삭제</Btn>
             </>}
-            {curPost.type!=="teacher"&&<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:isTeacher?"#ede9fe":"#fff7ed",color:isTeacher?"#5b21b6":"#c2410c",border:`1.5px solid ${isTeacher?"#c4b5fd":"#fed7aa"}`,fontSize:13}}>{isTeacher?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}</Btn>}
+            {curPost.type!=="teacher"&&<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:(isTeacher||isAdmin)?"#ede9fe":"#fff7ed",color:(isTeacher||isAdmin)?"#5b21b6":"#c2410c",border:`1.5px solid ${(isTeacher||isAdmin)?"#c4b5fd":"#fed7aa"}`,fontSize:13}}>{(isTeacher||isAdmin)?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}</Btn>}
           </div>
         </div>
         {/* 댓글 */}
