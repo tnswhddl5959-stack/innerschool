@@ -598,7 +598,7 @@ export default function App() {
   const [wiki,setWiki]=useState(INIT_WIKI);
   const [idList,setIdList]=useState([]);
   const [vq,setVq]=useState([]);
-  const [page,setPage]=useState("home");
+  const [page,setPage]=useState("board");
   const [sidebar,setSidebar]=useState(false);
   const [gradTab,setGradTab]=useState("전체");
   const [cat,setCat]=useState("전체");
@@ -647,26 +647,6 @@ export default function App() {
   const [inquiryModal,setInquiryModal]=useState(false);
   const [inquiryType,setInquiryType]=useState("오류 신고");
   const [inquiryText,setInquiryText]=useState("");
-
-
-  // 오늘 급식 가져오기
-  const getTodayMeal = () => {
-    const t = new Date();
-    const key = `${t.getMonth()+1}/${t.getDate()}`;
-    return MEAL[key] || null;
-  };
-  const todayMeal = getTodayMeal();
-
-  // D-day 계산 (2차 지필평가 6월 30일)
-  const getDday = () => {
-    const target = new Date(2026, 5, 30);
-    const today2 = new Date();
-    today2.setHours(0,0,0,0);
-    target.setHours(0,0,0,0);
-    const diff = Math.ceil((target - today2) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-  const dday = getDday();
 
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const [deferredPrompt,setDeferredPrompt]=useState(null);
@@ -773,7 +753,7 @@ export default function App() {
     await fbSet("accounts",updated);
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:newUser.id}));
     setAccounts(updated); setUser(newUser);
-    setScr("app"); setPage("home");
+    setScr("app"); setPage("board");
     toast_(info.role==="teacher"?"가입 완료! 👩‍🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
   };
 
@@ -839,7 +819,7 @@ export default function App() {
   if(scr==="login") return <Login onLogin={doLogin} onReg={()=>setScr("register")}/>;
   if(scr==="register") return <Register onDone={doReg} onBack={()=>setScr("login")}/>;
 
-  const navs=[{k:"home",i:"🏠",l:"홈"},{k:"board",i:"📋",l:"게시판"},{k:"wiki",i:"📖",l:"위키"},{k:"calendar",i:"📅",l:"캘린더"},{k:"meal",i:"🍱",l:"급식"},{k:"profile",i:"👤",l:"MY"}];
+  const navs=[{k:"board",i:"📋",l:"정보 공유 게시판"},{k:"wiki",i:"📖",l:"교내 위키"},{k:"calendar",i:"📅",l:"공유 캘린더"},{k:"meal",i:"🍱",l:"이달의 급식"},{k:"profile",i:"👤",l:"내 계정"}];
 
   return <div style={{minHeight:"100vh",background:BG,color:TX,fontFamily:"'Pretendard','Noto Sans KR',sans-serif"}}>
     {/* 워터마크 */}
@@ -901,80 +881,6 @@ export default function App() {
 
     {/* 콘텐츠 */}
     <main style={{padding:"68px 14px 32px",minHeight:"100vh",maxWidth:680,margin:"0 auto"}}>
-
-      {/* ── 홈 ── */}
-      {page==="home"&&<div>
-        {/* 헤더 영역 */}
-        <div style={{background:N,margin:"-68px -14px 0",padding:"68px 14px 16px"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>안녕하세요 👋</div>
-          <div style={{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.5px",marginBottom:16}}>
-            {user.name} <span style={{color:M}}>님</span>
-          </div>
-          {/* D-day + 급식 위젯 */}
-          <div style={{display:"flex",gap:8,marginBottom:16}}>
-            <div style={{flex:1,background:"rgba(45,212,160,.15)",border:"1px solid rgba(45,212,160,.3)",borderRadius:12,padding:"10px 12px",textAlign:"center"}}>
-              <div style={{fontSize:9,color:M,fontWeight:700,marginBottom:3}}>📅 지필평가</div>
-              <div style={{fontSize:22,fontWeight:800,color:M,lineHeight:1}}>{dday>0?`D-${dday}`:dday===0?"D-DAY":"종료"}</div>
-              <div style={{fontSize:8,color:"rgba(255,255,255,.4)",marginTop:2}}>6월 30일 시작</div>
-            </div>
-            <div style={{flex:1.6,background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"10px 12px"}}>
-              <div style={{fontSize:9,color:M,fontWeight:700,marginBottom:4}}>🍱 오늘 급식</div>
-              {todayMeal
-                ? <div style={{fontSize:9,color:"rgba(255,255,255,.75)",lineHeight:1.6}}>{todayMeal.slice(0,4).join(" · ")}{todayMeal.length>4&&" ···"}</div>
-                : <div style={{fontSize:9,color:"rgba(255,255,255,.35)"}}>오늘은 급식이 없어요</div>
-              }
-            </div>
-          </div>
-        </div>
-
-        {/* 메뉴 그리드 */}
-        <div style={{padding:"16px 0 0"}}>
-          <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10}}>메뉴</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
-            {[
-              {k:"board",ico:"📋",title:"정보 공유 게시판",desc:"수행·시험·입시 정보",badge:`NEW ${posts.filter(p=>{const d=new Date();const t=new Date(p.createdAt||0);return (d-t)<86400000;}).length}`,primary:true},
-              {k:"wiki",ico:"📖",title:"교내 위키",desc:"학교 시설·제도 안내",badge:`${wiki.length}개 항목`},
-              {k:"calendar",ico:"📅",title:"공유 캘린더",desc:"학사 일정 한눈에",badge:"6~7월"},
-              {k:"meal",ico:"🍱",title:"이달의 급식",desc:"월간 급식표",badge:"6월"},
-            ].map(m=>(
-              <div key={m.k} onClick={()=>goPage(m.k)}
-                style={{background:m.primary?N:CA,borderRadius:14,padding:"13px 12px",
-                  boxShadow:"0 2px 8px rgba(15,31,61,.07)",border:`0.5px solid ${m.primary?N:BO}`,cursor:"pointer"}}>
-                <div style={{fontSize:22,marginBottom:6}}>{m.ico}</div>
-                <div style={{fontSize:12,fontWeight:700,color:m.primary?"#fff":TX,marginBottom:3}}>{m.title}</div>
-                <div style={{fontSize:10,color:m.primary?"rgba(255,255,255,.4)":LI,lineHeight:1.3,marginBottom:6}}>{m.desc}</div>
-                <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,
-                  background:m.primary?M:"#f0fdf9",color:m.primary?N:"#0f6e56"}}>{m.badge}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* 인기 정보 */}
-          <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            🔥 인기 정보
-            <span onClick={()=>goPage("board")} style={{fontSize:10,color:M,fontWeight:600,cursor:"pointer"}}>게시판 전체보기 →</span>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {[...posts].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,4).map((p,i)=>(
-              <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{background:CA,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
-                  boxShadow:"0 1px 4px rgba(15,31,61,.06)",cursor:"pointer"}}>
-                <div style={{width:3,alignSelf:"stretch",background:p.type==="unverified"?"#f59e0b":M,flexShrink:0}}/>
-                <div style={{padding:"9px 11px",flex:1,minWidth:0}}>
-                  <div style={{fontSize:12,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.title}</div>
-                  <div style={{fontSize:10,color:LI,marginTop:2,display:"flex",gap:6}}>
-                    <span>{p.anon?"익명":p.author}</span>
-                    <span>{p.cat}</span>
-                    <span style={{marginLeft:"auto"}}>👁 {p.views||0}</span>
-                  </div>
-                </div>
-                {p.images&&p.images.length>0&&<img src={p.images[0]} alt="" style={{width:48,height:48,objectFit:"cover",flexShrink:0}}/>}
-              </div>
-            ))}
-            {posts.length===0&&<div style={{textAlign:"center",color:LI,padding:"20px 0",fontSize:13}}>아직 게시글이 없어요</div>}
-          </div>
-        </div>
-      </div>}
 
       {/* ── 게시판 ── */}
       {page==="board"&&<div>
