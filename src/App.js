@@ -1,4 +1,7 @@
 /* eslint-disable */
+/* 💡 index.html <head>에 추가 필요:
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+*/
 import { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
@@ -18,7 +21,7 @@ const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e
 const fbDel = async k => { try { await deleteDoc(doc(db,"kv",k)); } catch {} };
 
 // ── 색상 ──
-const N="#0f1f3d",M="#2dd4a0",MS="#e6faf4",MM="#a8edcf",AC="#ff6b6b",BG="#f4f6fb",CA="#fff",TX="#1a2540",SO="#5a6a8a",LI="#9aa5c0",BO="#e2e8f4";
+const N="#0f1f3d",M="#2dd4a0",MS="#e6faf4",MM="#a8edcf",AC="#ff6b6b",BG="#eef1f8",CA="#fff",TX="#1a2540",SO="#5a6a8a",LI="#9aa5c0",BO="#e2e8f4";
 
 // ── Cloudinary 이미지 업로드 ──
 const CLOUD_NAME = "DM3GF1VXQ";
@@ -783,10 +786,10 @@ export default function App() {
   const verifyPost=async(id)=>{ try{await updateDoc(doc(db,"posts",id),{status:"verified"});}catch(e){console.error(e);} setVq(q=>q.filter(v=>v.id!==id)); toast_("✅ 확인된 정보 배지가 부여됐어요!"); };
   const submitFc=async()=>{
     if(!isTeacher&&!fcText.trim()){toast_("사유를 입력해주세요");return;}
-    const entry=isTeacher?`[👩‍🏫 ${user.name} 선생님 확인]${fcText.trim()?" "+fcText.trim():""}`:fcText.trim();
+    const entry=(isTeacher||isAdmin)?`[✅ ${user.name} ${isAdmin?"총관리자":"선생님"} 확인]${fcText.trim()?" "+fcText.trim():""}`:fcText.trim();
     const p=posts.find(x=>x.id===fcTarget); if(!p)return;
     try{await updateDoc(doc(db,"posts",fcTarget),{fc:(p.fc||0)+1,fcR:[...(p.fcR||[]),entry]});}catch(e){console.error(e);}
-    setFcModal(false);setFcText(""); toast_(isTeacher?"사실 확인이 등록됐어요 ✅":"사실 확인 요청이 접수됐어요");
+    setFcModal(false);setFcText(""); toast_((isTeacher||isAdmin)?"사실 확인이 등록됐어요 ✅":"사실 확인 요청이 접수됐어요");
   };
 
   // ── 댓글 ──
@@ -818,7 +821,7 @@ export default function App() {
 
   const navs=[{k:"board",i:"📋",l:"정보 공유 게시판"},{k:"wiki",i:"📖",l:"교내 위키"},{k:"calendar",i:"📅",l:"공유 캘린더"},{k:"meal",i:"🍱",l:"이달의 급식"},{k:"profile",i:"👤",l:"내 계정"}];
 
-  return <div style={{minHeight:"100vh",background:BG,color:TX,fontFamily:"'Noto Sans KR',sans-serif"}}>
+  return <div style={{minHeight:"100vh",background:BG,color:TX,fontFamily:"'Pretendard','Noto Sans KR',sans-serif"}}>
     {/* 워터마크 */}
     <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9990,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{fontSize:13,color:"rgba(15,31,61,0.05)",transform:"rotate(-35deg)",whiteSpace:"nowrap",letterSpacing:2,fontWeight:600,userSelect:"none"}}>{user.id} {user.name} · INNERSCHOOL 교내전용</div>
@@ -877,7 +880,7 @@ export default function App() {
     </div>
 
     {/* 콘텐츠 */}
-    <main style={{padding:"68px 14px 32px",minHeight:"100vh"}}>
+    <main style={{padding:"68px 14px 32px",minHeight:"100vh",maxWidth:680,margin:"0 auto"}}>
 
       {/* ── 게시판 ── */}
       {page==="board"&&<div>
@@ -926,25 +929,51 @@ export default function App() {
             {canWrite&&<Btn onClick={()=>{setWType(null);setWTitle("");setWBody("");setWSrc("");setWModal(true);}} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700}}>✏️ 글쓰기</Btn>}
           </div>
           {filtered.length===0&&<div style={{textAlign:"center",color:LI,padding:"40px 0",fontSize:14}}>아직 게시글이 없어요. 첫 글을 올려보세요!</div>}
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
-              <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}} style={{background:CA,borderRadius:12,padding:"16px",border:`1px solid ${BO}`,cursor:"pointer"}}>
-                <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:6}}>
-                  <Chip type={p.type} status={p.status}/>
-                  <div style={{fontSize:14,fontWeight:600,color:TX,flex:1,lineHeight:1.4}}>{p.title}</div>
-                  {p.images&&p.images.length>0&&<img src={p.images[0]} alt="" style={{width:56,height:56,objectFit:"cover",borderRadius:8,border:`1px solid ${BO}`,flexShrink:0}}/>}
-                </div>
-                {p.type==="unverified"&&<div style={{background:"#fff7ed",borderLeft:"3px solid #f59e0b",borderRadius:"0 6px 6px 0",padding:"6px 10px",fontSize:11,color:"#92400e",marginBottom:6}}>⚠️ 미검증 정보입니다. 주의하세요.</div>}
-
-                <div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:LI,flexWrap:"wrap"}}>
-                  <span style={{background:BG,padding:"2px 7px",borderRadius:4,color:SO}}>{p.cat}</span>
-                  <span>{p.anon?"익명":p.author} · {p.grade==="공통"?"공통":p.grade+"학년"}</span>
-                  <span>{p.date}</span>
-                  {isAdmin&&p.fc>0&&<span style={{color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
-                  <span style={{marginLeft:"auto",display:"flex",gap:6}}>
-                    <span style={{background:BG,padding:"2px 7px",borderRadius:6,fontSize:11}}>👁 {p.views||0}</span>
-                    <span style={{background:BG,padding:"2px 7px",borderRadius:6,fontSize:11}}>💬 {(cmts[p.id]||[]).length}</span>
-                  </span>
+              <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
+                style={{background:CA,borderRadius:14,cursor:"pointer",overflow:"hidden",boxShadow:"0 2px 8px rgba(15,31,61,0.08)"}}>
+                {/* 상단 컬러바 */}
+                <div style={{height:3,background:p.type==="unverified"||p.type==="teacher"&&false?"#f59e0b":M}}/>
+                <div style={{padding:"10px 12px",display:"flex",gap:10,alignItems:"center"}}>
+                  {/* 왼쪽 텍스트 */}
+                  <div style={{flex:1,minWidth:0}}>
+                    {/* 작성자 행 */}
+                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                      <div style={{width:20,height:20,borderRadius:"50%",background:p.type==="teacher"?N:p.anon?"#aaa":M,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"#fff",flexShrink:0}}>
+                        {(p.anon?"익":p.author?.[0])||"?"}
+                      </div>
+                      <span style={{fontSize:11,fontWeight:600,color:TX}}>{p.anon?"익명":p.author}</span>
+                      <span style={{fontSize:10,color:LI}}>· {p.grade==="공통"?"공통":p.grade+"학년"}</span>
+                      <span style={{fontSize:10,color:"#c8d0e0",marginLeft:"auto"}}>{p.date}</span>
+                    </div>
+                    {/* 카테고리 태그 */}
+                    <div style={{display:"inline-flex",alignItems:"center",fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:4,marginBottom:4,
+                      background:p.type==="unverified"?"#fff8e6":MS,
+                      color:p.type==="unverified"?"#b45309":"#0f6e56"}}>
+                      {p.cat}
+                    </div>
+                    {/* 제목 */}
+                    <div style={{fontSize:13,fontWeight:700,color:TX,lineHeight:1.35,letterSpacing:"-0.2px"}}>{p.title}</div>
+                    {/* 하단 배지+통계 */}
+                    <div style={{display:"flex",alignItems:"center",gap:5,marginTop:6}}>
+                      {p.type==="teacher"
+                        ?<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:N,color:M}}>👩‍🏫 선생님 인증</span>
+                        :p.type==="verified"||p.status==="verified"
+                          ?<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:MS,color:"#0f6e56"}}>✅ 확인됨</span>
+                          :<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:"#fff8e6",color:"#b45309"}}>⚠️ 미확인</span>
+                      }
+                      {isAdmin&&p.fc>0&&<span style={{fontSize:8,color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
+                      <span style={{fontSize:9,color:LI,marginLeft:"auto",display:"flex",gap:6}}>
+                        <span>👁 {p.views||0}</span>
+                        <span>💬 {(cmts[p.id]||[]).length}</span>
+                      </span>
+                    </div>
+                  </div>
+                  {/* 오른쪽 썸네일 */}
+                  {p.images&&p.images.length>0&&(
+                    <img src={p.images[0]} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:10,flexShrink:0,border:`1px solid ${BO}`}}/>
+                  )}
                 </div>
               </div>
             ))}
@@ -980,7 +1009,8 @@ export default function App() {
               <Btn onClick={()=>{setEditPost(curPost);setEditTitle(curPost.title);setEditBody(curPost.body);setEditModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#f0f9ff",color:"#0369a1",border:"1.5px solid #bae6fd",fontSize:13}}>✏️ 수정</Btn>
               <Btn onClick={()=>deletePost(curPost.id)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#fee2e2",color:"#991b1b",border:"1.5px solid #fecaca",fontSize:13}}>🗑 삭제</Btn>
             </>}
-            {curPost.type!=="teacher"&&<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:(isTeacher||isAdmin)?"#ede9fe":"#fff7ed",color:(isTeacher||isAdmin)?"#5b21b6":"#c2410c",border:`1.5px solid ${(isTeacher||isAdmin)?"#c4b5fd":"#fed7aa"}`,fontSize:13}}>{(isTeacher||isAdmin)?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}</Btn>}
+            {curPost.type!=="teacher"&&(isAdmin||isTeacher)&&<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#ede9fe",color:"#5b21b6",border:"1.5px solid #c4b5fd",fontSize:13}}>✅ 사실 확인 체크</Btn>}
+            {curPost.type!=="teacher"&&!isAdmin&&!isTeacher&&<Btn onClick={()=>{setFcTarget(curPost.id);setFcText("");setFcModal(true);}} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,background:"#fff7ed",color:"#c2410c",border:"1.5px solid #fed7aa",fontSize:13}}>🚨 사실 확인 요청</Btn>}
           </div>
         </div>
         {/* 댓글 */}
@@ -1222,9 +1252,9 @@ export default function App() {
     </Modal>
 
     {/* 사실확인 */}
-    <Modal open={fcModal} onClose={()=>setFcModal(false)} title={isTeacher?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}>
+    <Modal open={fcModal} onClose={()=>setFcModal(false)} title={(isTeacher||isAdmin)?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}>
       <p style={{fontSize:13,color:SO,marginBottom:16}}>{isTeacher?"이 게시글의 내용이 사실임을 확인합니다. 추가로 전달할 내용이 있다면 아래에 입력해주세요.":"사실과 다르다고 생각하시나요? 구체적인 사유를 입력해주세요."}</p>
-      <textarea value={fcText} onChange={e=>setFcText(e.target.value)} rows={4} placeholder={isTeacher?"추가로 할 말이 있으면 입력하세요 (선택사항)":"예: 시험 범위가 실제로는 2단원까지입니다."} style={{...inp1,resize:"none",boxSizing:"border-box",marginBottom:16}}/>
+      <textarea value={fcText} onChange={e=>setFcText(e.target.value)} rows={4} placeholder={(isTeacher||isAdmin)?"추가로 할 말이 있으면 입력하세요 (선택사항)":"예: 시험 범위가 실제로는 2단원까지입니다."} style={{...inp1,resize:"none",boxSizing:"border-box",marginBottom:16}}/>
       <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
         <Btn onClick={()=>setFcModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
         <Btn onClick={submitFc} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>제출</Btn>
