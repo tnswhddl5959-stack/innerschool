@@ -1469,7 +1469,7 @@ export default function App() {
 
     {/* 관리자 문의 */}
     <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
       <div style={{marginBottom:12}}><label style={lbl1}>문의 유형</label>
         <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
           {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
