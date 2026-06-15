@@ -126,34 +126,34 @@ const Chip = ({type,status}) => {
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:"linear-gradient(135deg,#0f1f3d 0%,#233f7a 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:16};
-const authCard = {background:"rgba(255,255,255,0.05)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:22,padding:"40px 32px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto"};
-const inp0 = {width:"100%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
-const inp1 = {width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:10,padding:"11px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
-const lbl0 = {color:"rgba(255,255,255,0.65)",fontSize:12,display:"block",marginBottom:6};
+const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif"};
+const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 28px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
+const inp0 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:".15s"};
+const inp1 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
+const lbl0 = {color:SO,fontSize:12,fontWeight:600,display:"block",marginBottom:6};
 const lbl1 = {fontSize:12,fontWeight:500,color:SO,display:"block",marginBottom:6};
 
 const AuthHeader = () => <>
-  <div style={{fontFamily:"serif",fontSize:22,fontWeight:800,color:M}}>INNERSCHOOL</div>
-  <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,marginBottom:24}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
+  <div style={{fontSize:22,fontWeight:800,color:TX,letterSpacing:"-.4px",marginBottom:4}}>INNER<span style={{color:MD}}>SCHOOL</span></div>
+  <div style={{color:SO,fontSize:12,marginBottom:28}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
 </>;
 
 // ── 로그인 화면 ──
 function LoginRole({onSelect,onReg}) {
   return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
-    <div style={{color:"#fff",fontSize:20,fontWeight:700,marginBottom:6}}>로그인</div>
-    <div style={{color:"rgba(255,255,255,0.45)",fontSize:13,marginBottom:20}}>로그인할 계정을 선택해주세요</div>
+    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>로그인</div>
+    <div style={{color:SO,fontSize:13,marginBottom:20}}>로그인할 계정을 선택해주세요</div>
     <div style={{display:"flex",gap:12,marginBottom:20}}>
       {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
-        <div key={r.k} onClick={()=>onSelect(r.k)} style={{flex:1,border:"2px solid rgba(45,212,160,0.3)",borderRadius:14,padding:"22px 12px",textAlign:"center",cursor:"pointer",background:"rgba(255,255,255,0.04)"}}>
+        <div key={r.k} onClick={()=>onSelect(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"22px 12px",textAlign:"center",cursor:"pointer",background:CHIP,transition:".15s"}}>
           <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
-          <div style={{color:"#fff",fontSize:15,fontWeight:700}}>{r.l}</div>
+          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
         </div>
       ))}
     </div>
     <div style={{textAlign:"center",color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:M,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
 }
@@ -163,8 +163,8 @@ function LoginStudent({onBack,onLogin,onReg}) {
   return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-      <span onClick={onBack} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:"#fff",fontSize:18,fontWeight:700}}>🎒 학생 로그인</span>
+      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생 로그인</span>
     </div>
     <div style={{marginBottom:4}}><label style={lbl0}>학번</label>
       <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0}/>
@@ -173,10 +173,10 @@ function LoginStudent({onBack,onLogin,onReg}) {
     <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label>
       <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
     </div>
-    {err&&<div style={{color:"#ff8a8a",fontSize:12,marginBottom:12,background:"rgba(255,107,107,0.1)",borderRadius:7,padding:"7px 11px"}}>{err}</div>}
+    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
     <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
     <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:M,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
 }
@@ -186,18 +186,18 @@ function LoginTeacher({onBack,onLogin,onReg}) {
   return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-      <span onClick={onBack} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:"#fff",fontSize:18,fontWeight:700}}>👩‍🏫 선생님 로그인</span>
+      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>👩‍🏫 선생님 로그인</span>
     </div>
     <div style={{marginBottom:14}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
     <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label>
       <select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select>
     </div>
     <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/></div>
-    {err&&<div style={{color:"#ff8a8a",fontSize:12,marginBottom:12,background:"rgba(255,107,107,0.1)",borderRadius:7,padding:"7px 11px"}}>{err}</div>}
+    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
     <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
     <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:M,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
 }
@@ -247,30 +247,30 @@ function Register({onDone,onBack}) {
     setErr(""); onDone({role:"teacher",name,subject:sub,pw});
   };
 
-  const ErrBox = () => err ? <div style={{color:"#ff8a8a",fontSize:12,marginBottom:12,background:"rgba(255,107,107,0.1)",borderRadius:7,padding:"8px 12px"}}>{err}</div> : null;
+  const ErrBox = () => err ? <div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"8px 12px",border:"1px solid #fed7aa"}}>{err}</div> : null;
 
   if(!role) return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
-    <div style={{color:"#fff",fontSize:20,fontWeight:700,marginBottom:6}}>가입</div>
-    <div style={{color:"rgba(255,255,255,0.45)",fontSize:13,marginBottom:20}}>가입할 계정을 선택해주세요</div>
+    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>가입</div>
+    <div style={{color:SO,fontSize:13,marginBottom:20}}>가입할 계정을 선택해주세요</div>
     <div style={{display:"flex",gap:12,marginBottom:20}}>
       {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
-        <div key={r.k} onClick={()=>setRole(r.k)} style={{flex:1,border:"2px solid rgba(45,212,160,0.3)",borderRadius:14,padding:"20px 12px",textAlign:"center",cursor:"pointer",background:"rgba(255,255,255,0.04)"}}>
+        <div key={r.k} onClick={()=>setRole(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"20px 12px",textAlign:"center",cursor:"pointer",background:CHIP}}>
           <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
-          <div style={{color:"#fff",fontSize:15,fontWeight:700}}>{r.l}</div>
+          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
         </div>
       ))}
     </div>
     <div style={{textAlign:"center",color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      이미 계정이 있으신가요? <span onClick={onBack} style={{color:M,fontWeight:600,cursor:"pointer"}}>로그인</span>
+      이미 계정이 있으신가요? <span onClick={onBack} style={{color:MD,fontWeight:600,cursor:"pointer"}}>로그인</span>
     </div>
   </div></div>;
 
   if(role==="student") return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
-      <span onClick={()=>{setRole(null);setErr("");}} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:"#fff",fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
+      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/></div>
     <div style={{marginBottom:4}}><label style={lbl0}>학년 · 반 · 번호</label>
@@ -280,31 +280,31 @@ function Register({onDone,onBack}) {
         <select value={num} onChange={e=>setNum(e.target.value)} style={{...inp0,flex:1}}>{Array.from({length:35},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}번</option>)}</select>
       </div>
     </div>
-    <div style={{background:"rgba(45,212,160,0.08)",border:"1px solid rgba(45,212,160,0.15)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-      <span>🪪</span><span>자동 생성된 학번: <strong style={{color:M,fontSize:14}}>{sid}</strong></span>
+    <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"8px 12px",fontSize:12,color:SO,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+      <span>🪪</span><span>자동 생성된 학번: <strong style={{color:MD,fontSize:14}}>{sid}</strong></span>
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
     <div style={{marginBottom:14}}>
       <label style={lbl0}>비밀번호 확인</label>
       <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
       {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
-      {pwC&&pw===pwC&&<div style={{fontSize:11,color:M,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
     </div>
     <div style={{marginBottom:14}}>
-      <label style={lbl0}>학생증 사진 <span style={{color:M}}>*필수</span></label>
+      <label style={lbl0}>학생증 사진 <span style={{color:MD}}>*필수</span></label>
       <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
         {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
           :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
         <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
       </label>
     </div>
-    <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"14px",marginBottom:14}}>
-      <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
-      <div style={{color:"rgba(255,255,255,0.5)",fontSize:11,lineHeight:1.7,marginBottom:10}}>
-        <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
-        <strong style={{color:"rgba(255,255,255,0.7)"}}>수집 목적:</strong> 재학생 여부 확인<br/>
-        <strong style={{color:"rgba(255,255,255,0.7)"}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
-        <strong style={{color:"rgba(255,255,255,0.7)"}}>제3자 제공:</strong> 없음
+    <div style={{background:CHIP,border:`1px solid ${BO}`,borderRadius:10,padding:"14px",marginBottom:14}}>
+      <div style={{color:TX,fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
+      <div style={{color:SO,fontSize:11,lineHeight:1.7,marginBottom:10}}>
+        <strong style={{color:TX}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
+        <strong style={{color:TX}}>수집 목적:</strong> 재학생 여부 확인<br/>
+        <strong style={{color:TX}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
+        <strong style={{color:TX}}>제3자 제공:</strong> 없음
       </div>
       <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
         <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:16,height:16,accentColor:M}}/>
@@ -318,8 +318,8 @@ function Register({onDone,onBack}) {
   return <div style={authBox}><div style={authCard}>
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
-      <span onClick={()=>{setRole(null);setErr("");}} style={{color:M,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:"#fff",fontSize:18,fontWeight:700}}>👩‍🏫 선생님으로 가입</span>
+      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>👩‍🏫 선생님으로 가입</span>
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
     <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label><select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>
@@ -328,7 +328,7 @@ function Register({onDone,onBack}) {
       <label style={lbl0}>비밀번호 확인</label>
       <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
       {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
-      {pwC&&pw===pwC&&<div style={{fontSize:11,color:M,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
     </div>
     <div style={{marginBottom:6}}><label style={lbl0}>교사 인증코드 <span style={{color:M}}>*필수</span></label><input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="인증코드를 입력하세요" style={inp0}/></div>
     <ErrBox/>
@@ -460,7 +460,7 @@ function InquiryTab() {
 
 // ── 캘린더 ──
 function CalendarPage() {
-  const [cur,setCur]=useState(5);
+  const [cur,setCur]=useState(6);
   const N2="#0f1f3d",M2="#2dd4a0",CA2="#fff",BO2="#e2e8f4",TX2="#1a2540";
   const MONTHS={
     5:{year:2026,month:5,days:31,startDay:4,holidays:[1,4],
@@ -672,8 +672,11 @@ export default function App() {
   const [deferredPrompt,setDeferredPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
   const [showIosGuide,setShowIosGuide]=useState(false);
-  const [isIos]=useState(()=>/iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()));
-  const [isStandalone]=useState(()=>window.matchMedia('(display-mode: standalone)').matches);
+  const [isIos]=useState(()=>{
+    const ua=window.navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod/.test(ua)||(navigator.maxTouchPoints>0&&/mac/.test(ua));
+  });
+  const [isStandalone]=useState(()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true);
 
   useEffect(()=>{
     const handler=e=>{ e.preventDefault(); setDeferredPrompt(e); setShowInstall(true); };
@@ -921,7 +924,7 @@ export default function App() {
       {/* ── 홈 ── */}
       {page==="home"&&<div>
         {/* 헤더 영역 */}
-        <div style={{background:N,margin:"-68px -14px 0",padding:"68px 14px 16px"}}>
+        <div style={{background:N,margin:"0 0 0",padding:"20px 18px 16px"}}>
           <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>안녕하세요 👋</div>
           <div style={{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.5px",marginBottom:16}}>
             {user.name} <span style={{color:M}}>님</span>
@@ -1466,7 +1469,7 @@ export default function App() {
 
     {/* 관리자 문의 */}
     <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
       <div style={{marginBottom:12}}><label style={lbl1}>문의 유형</label>
         <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
           {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
