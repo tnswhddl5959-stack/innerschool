@@ -21,7 +21,7 @@ const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e
 const fbDel = async k => { try { await deleteDoc(doc(db,"kv",k)); } catch {} };
 
 // ── 색상 ──
-const N="#0f1f3d",M="#2dd4a0",MS="#e6faf4",MM="#a8edcf",AC="#ff6b6b",BG="#eef1f8",CA="#fff",TX="#1a2540",SO="#5a6a8a",LI="#9aa5c0",BO="#e2e8f4";
+const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",CA="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3",CHIP="#F4F6FB";
 
 // ── Cloudinary 이미지 업로드 ──
 const CLOUD_NAME = "DM3GF1VXQ";
@@ -559,7 +559,7 @@ function MealPage(){
       {weeks.map((w,wi)=>(
         <div key={wi} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:700,color:"#5a6a8a",marginBottom:8,paddingLeft:2}}>{w.label}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
             {w.days.map(({d,day})=>{
               const menu=MEAL[d];
               const isToday=today.getMonth()+1===parseInt(d.split("/")[0])&&today.getDate()===parseInt(d.split("/")[1]);
@@ -598,7 +598,7 @@ export default function App() {
   const [wiki,setWiki]=useState(INIT_WIKI);
   const [idList,setIdList]=useState([]);
   const [vq,setVq]=useState([]);
-  const [page,setPage]=useState("board");
+  const [page,setPage]=useState("home");
   const [sidebar,setSidebar]=useState(false);
   const [gradTab,setGradTab]=useState("전체");
   const [cat,setCat]=useState("전체");
@@ -647,6 +647,26 @@ export default function App() {
   const [inquiryModal,setInquiryModal]=useState(false);
   const [inquiryType,setInquiryType]=useState("오류 신고");
   const [inquiryText,setInquiryText]=useState("");
+
+
+  // 오늘 급식 가져오기
+  const getTodayMeal = () => {
+    const t = new Date();
+    const key = `${t.getMonth()+1}/${t.getDate()}`;
+    return MEAL[key] || null;
+  };
+  const todayMeal = getTodayMeal();
+
+  // D-day 계산 (2차 지필평가 6월 30일)
+  const getDday = () => {
+    const target = new Date(2026, 5, 30);
+    const today2 = new Date();
+    today2.setHours(0,0,0,0);
+    target.setHours(0,0,0,0);
+    const diff = Math.ceil((target - today2) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+  const dday = getDday();
 
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const [deferredPrompt,setDeferredPrompt]=useState(null);
@@ -753,7 +773,7 @@ export default function App() {
     await fbSet("accounts",updated);
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:newUser.id}));
     setAccounts(updated); setUser(newUser);
-    setScr("app"); setPage("board");
+    setScr("app"); setPage("home");
     toast_(info.role==="teacher"?"가입 완료! 👩‍🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
   };
 
@@ -819,15 +839,32 @@ export default function App() {
   if(scr==="login") return <Login onLogin={doLogin} onReg={()=>setScr("register")}/>;
   if(scr==="register") return <Register onDone={doReg} onBack={()=>setScr("login")}/>;
 
-  const navs=[{k:"board",i:"📋",l:"정보 공유 게시판"},{k:"wiki",i:"📖",l:"교내 위키"},{k:"calendar",i:"📅",l:"공유 캘린더"},{k:"meal",i:"🍱",l:"이달의 급식"},{k:"profile",i:"👤",l:"내 계정"}];
+  const navs=[{k:"home",i:"🏠",l:"홈"},{k:"board",i:"📋",l:"게시판"},{k:"wiki",i:"📖",l:"위키"},{k:"calendar",i:"📅",l:"캘린더"},{k:"meal",i:"🍱",l:"급식"},{k:"profile",i:"👤",l:"MY"}];
 
-  return <div style={{minHeight:"100vh",background:BG,color:TX,fontFamily:"'Pretendard','Noto Sans KR',sans-serif"}}>
+  return <div style={{minHeight:"100vh",background:BG,color:TX,fontFamily:"'Pretendard',sans-serif"}}>
     {/* 워터마크 */}
     <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9990,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{fontSize:13,color:"rgba(15,31,61,0.05)",transform:"rotate(-35deg)",whiteSpace:"nowrap",letterSpacing:2,fontWeight:600,userSelect:"none"}}>{user.id} {user.name} · INNERSCHOOL 교내전용</div>
     </div>
 
-    {/* 사이드바 오버레이 */}
+    {/* 바텀탭 */}
+    <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:560,background:"rgba(255,255,255,.94)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderTop:`1px solid ${BO}`,display:"flex",zIndex:40}}>
+      {[
+        {k:"home",i:"🏠",l:"홈"},
+        {k:"board",i:"📋",l:"게시판"},
+        {k:"wiki",i:"📖",l:"위키"},
+        {k:"calendar",i:"📅",l:"캘린더"},
+        {k:"meal",i:"🍱",l:"급식"},
+      ].map(t=>(
+        <div key={t.k} onClick={()=>goPage(t.k)}
+          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"9px 0 11px",
+            color:page===t.k?MD:SO,fontSize:11,fontWeight:600,cursor:"pointer"}}>
+          <span style={{fontSize:20}}>{t.i}</span>{t.l}
+        </div>
+      ))}
+    </nav>
+
+    {/* 사이드바 오버레이 */}}
     {sidebar&&<div onClick={()=>setSidebar(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:99}}/>}
 
     {/* 사이드바 */}
@@ -866,25 +903,117 @@ export default function App() {
       </div>
     </aside>
 
-    {/* 헤더 */}
-    <div style={{position:"fixed",top:0,left:0,right:0,height:52,background:N,display:"flex",alignItems:"center",padding:"0 14px",zIndex:98,boxShadow:"0 2px 10px rgba(15,31,61,0.15)"}}>
-      <Btn onClick={()=>setSidebar(true)} style={{background:"rgba(255,255,255,0.08)",borderRadius:9,width:38,height:38,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5}}>
-        {[0,1,2].map(i=><div key={i} style={{width:18,height:2,background:M,borderRadius:2}}/>)}
-      </Btn>
-      <div style={{fontFamily:"serif",fontSize:16,fontWeight:800,color:M,marginLeft:12}}>INNERSCHOOL</div>
-      <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
-        {showInstall&&<Btn onClick={installApp} style={{background:"rgba(45,212,160,0.2)",border:"1px solid rgba(45,212,160,0.4)",borderRadius:8,padding:"5px 10px",color:"#2dd4a0",fontSize:11,fontWeight:600}}>📲 앱 설치</Btn>}
-        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"rgba(45,212,160,0.2)",border:"1px solid rgba(45,212,160,0.4)",borderRadius:8,padding:"5px 10px",color:"#2dd4a0",fontSize:11,fontWeight:600}}>📲 앱 추가</Btn>}
-        {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10}}>{pending}건 대기</span>}
+    {/* 헤더 — sticky blur */}
+    <div style={{position:"sticky",top:0,zIndex:20,background:"rgba(255,255,255,.88)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:`1px solid ${BO}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
+        <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.4px",color:TX,cursor:"pointer"}} onClick={()=>goPage("home")}>INNER<span style={{color:MD}}>SCHOOL</span></div>
+        <div style={{flex:1}}/>
+        {showInstall&&<Btn onClick={installApp} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
+        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
+        {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10,marginRight:4}}>{pending}</span>}
+        <Btn onClick={()=>setSidebar(true)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:18,background:"none",border:"none"}}>☰</Btn>
       </div>
     </div>
 
     {/* 콘텐츠 */}
-    <main style={{padding:"68px 14px 32px",minHeight:"100vh",maxWidth:680,margin:"0 auto"}}>
+    <main style={{padding:"0 0 80px",minHeight:"100vh",maxWidth:560,margin:"0 auto",borderLeft:`1px solid ${BO}`,borderRight:`1px solid ${BO}`}}>
+
+      {/* ── 홈 ── */}
+      {page==="home"&&<div>
+        {/* 헤더 영역 */}
+        <div style={{background:N,margin:"-68px -14px 0",padding:"68px 14px 16px"}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>안녕하세요 👋</div>
+          <div style={{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.5px",marginBottom:16}}>
+            {user.name} <span style={{color:M}}>님</span>
+          </div>
+          {/* D-day + 급식 위젯 */}
+          <div style={{display:"flex",gap:8,marginBottom:16}}>
+            <div style={{flex:1,background:"rgba(45,212,160,.15)",border:"1px solid rgba(45,212,160,.3)",borderRadius:12,padding:"10px 12px",textAlign:"center"}}>
+              <div style={{fontSize:9,color:M,fontWeight:700,marginBottom:3}}>📅 지필평가</div>
+              <div style={{fontSize:22,fontWeight:800,color:M,lineHeight:1}}>{dday>0?`D-${dday}`:dday===0?"D-DAY":"종료"}</div>
+              <div style={{fontSize:8,color:"rgba(255,255,255,.4)",marginTop:2}}>6월 30일 시작</div>
+            </div>
+            <div style={{flex:1.6,background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"10px 12px"}}>
+              <div style={{fontSize:9,color:M,fontWeight:700,marginBottom:4}}>🍱 오늘 급식</div>
+              {todayMeal
+                ? <div style={{fontSize:9,color:"rgba(255,255,255,.75)",lineHeight:1.6}}>{todayMeal.slice(0,4).join(" · ")}{todayMeal.length>4&&" ···"}</div>
+                : <div style={{fontSize:9,color:"rgba(255,255,255,.35)"}}>오늘은 급식이 없어요</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* 메뉴 그리드 */}
+        <div style={{padding:"16px 0 0"}}>
+          <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10}}>메뉴</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+            {[
+              {k:"board",ico:"📋",title:"정보 공유 게시판",desc:"수행·시험·입시 정보",badge:`NEW ${posts.filter(p=>{const d=new Date();const t=new Date(p.createdAt||0);return (d-t)<86400000;}).length}`,primary:true},
+              {k:"wiki",ico:"📖",title:"교내 위키",desc:"학교 시설·제도 안내",badge:`${wiki.length}개 항목`},
+              {k:"calendar",ico:"📅",title:"공유 캘린더",desc:"학사 일정 한눈에",badge:"6~7월"},
+              {k:"meal",ico:"🍱",title:"이달의 급식",desc:"월간 급식표",badge:"6월"},
+            ].map(m=>(
+              <div key={m.k} onClick={()=>goPage(m.k)}
+                style={{background:m.primary?N:CA,borderRadius:14,padding:"13px 12px",
+                  boxShadow:"0 2px 8px rgba(15,31,61,.07)",border:`0.5px solid ${m.primary?N:BO}`,cursor:"pointer"}}>
+                <div style={{fontSize:22,marginBottom:6}}>{m.ico}</div>
+                <div style={{fontSize:12,fontWeight:700,color:m.primary?"#fff":TX,marginBottom:3}}>{m.title}</div>
+                <div style={{fontSize:10,color:m.primary?"rgba(255,255,255,.4)":LI,lineHeight:1.3,marginBottom:6}}>{m.desc}</div>
+                <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,
+                  background:m.primary?M:"#f0fdf9",color:m.primary?N:"#0f6e56"}}>{m.badge}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* 인기 정보 */}
+          <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            🔥 인기 정보
+            <span onClick={()=>goPage("board")} style={{fontSize:10,color:M,fontWeight:600,cursor:"pointer"}}>게시판 전체보기 →</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {[...posts].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,4).map((p,i)=>(
+              <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
+                style={{background:CA,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
+                  boxShadow:"0 1px 4px rgba(15,31,61,.06)",cursor:"pointer"}}>
+                <div style={{width:3,alignSelf:"stretch",background:p.type==="unverified"?"#f59e0b":M,flexShrink:0}}/>
+                <div style={{padding:"9px 11px",flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.title}</div>
+                  <div style={{fontSize:10,color:LI,marginTop:2,display:"flex",gap:6}}>
+                    <span>{p.anon?"익명":p.author}</span>
+                    <span>{p.cat}</span>
+                    <span style={{marginLeft:"auto"}}>👁 {p.views||0}</span>
+                  </div>
+                </div>
+                {p.images&&p.images.length>0&&<img src={p.images[0]} alt="" style={{width:48,height:48,objectFit:"cover",flexShrink:0}}/>}
+              </div>
+            ))}
+            {posts.length===0&&<div style={{textAlign:"center",color:LI,padding:"20px 0",fontSize:13}}>아직 게시글이 없어요</div>}
+          </div>
+        </div>
+      </div>}
 
       {/* ── 게시판 ── */}
       {page==="board"&&<div>
-        <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>정보 공유 게시판</h1><p style={{color:SO,fontSize:13,marginTop:3}}>우리 학교의 모든 정보를 한 곳에서</p></div>
+        {/* 검색창 */}
+        <div style={{display:"flex",alignItems:"center",gap:8,background:CHIP,border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
+          <span style={{fontSize:15}}>🔍</span>
+          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+            placeholder="수행평가, 시험범위, 급식 검색"
+            style={{border:0,background:"transparent",outline:0,fontFamily:"inherit",flex:1,color:TX,fontSize:14}}/>
+          {searchQ&&<span onClick={()=>setSearchQ("")} style={{cursor:"pointer",color:LI,fontSize:14}}>✕</span>}
+        </div>
+        {/* 카테고리 칩 */}
+        <div style={{display:"flex",gap:8,padding:"0 18px 12px",overflowX:"auto",scrollbarWidth:"none"}}>
+          {["전체","📝 수행평가","📚 학업·시험","🎓 입시","📊 SLAT","🎨 동아리","📅 행사","🍱 급식","📢 공지","🙋 질문"].map(c=>(
+            <Btn key={c} onClick={()=>setCat(c==="전체"?c:c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
+              color:cat===(c==="전체"?"전체":c)?CA:SO,
+              background:cat===(c==="전체"?"전체":c)?TX:CHIP,
+              border:`1px solid ${cat===(c==="전체"?"전체":c)?TX:BO}`,
+              borderRadius:999,padding:"7px 14px",whiteSpace:"nowrap"}}>
+              {c}
+            </Btn>
+          ))}
+        </div>
 
         {/* 승인 대기 */}
         {!isAdmin&&!isTeacher&&user.status==="pending"&&<div style={{background:"#fef3c7",border:"1px solid #fde047",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
@@ -928,53 +1057,41 @@ export default function App() {
             </div>
             {canWrite&&<Btn onClick={()=>{setWType(null);setWTitle("");setWBody("");setWSrc("");setWModal(true);}} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700}}>✏️ 글쓰기</Btn>}
           </div>
-          {filtered.length===0&&<div style={{textAlign:"center",color:LI,padding:"40px 0",fontSize:14}}>아직 게시글이 없어요. 첫 글을 올려보세요!</div>}
+          {filtered.length===0&&<div style={{textAlign:"center",color:SO,padding:"60px 0",fontSize:14}}>아직 게시글이 없어요.<br/>첫 글을 올려보세요!</div>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{background:CA,borderRadius:14,cursor:"pointer",overflow:"hidden",boxShadow:"0 2px 8px rgba(15,31,61,0.08)"}}>
-                {/* 상단 컬러바 */}
-                <div style={{height:3,background:p.type==="unverified"||p.type==="teacher"&&false?"#f59e0b":M}}/>
-                <div style={{padding:"10px 12px",display:"flex",gap:10,alignItems:"center"}}>
-                  {/* 왼쪽 텍스트 */}
-                  <div style={{flex:1,minWidth:0}}>
-                    {/* 작성자 행 */}
-                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
-                      <div style={{width:20,height:20,borderRadius:"50%",background:p.type==="teacher"?N:p.anon?"#aaa":M,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"#fff",flexShrink:0}}>
-                        {(p.anon?"익":p.author?.[0])||"?"}
-                      </div>
-                      <span style={{fontSize:11,fontWeight:600,color:TX}}>{p.anon?"익명":p.author}</span>
-                      <span style={{fontSize:10,color:LI}}>· {p.grade==="공통"?"공통":p.grade+"학년"}</span>
-                      <span style={{fontSize:10,color:"#c8d0e0",marginLeft:"auto"}}>{p.date}</span>
-                    </div>
-                    {/* 카테고리 태그 */}
-                    <div style={{display:"inline-flex",alignItems:"center",fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:4,marginBottom:4,
-                      background:p.type==="unverified"?"#fff8e6":MS,
-                      color:p.type==="unverified"?"#b45309":"#0f6e56"}}>
-                      {p.cat}
-                    </div>
-                    {/* 제목 */}
-                    <div style={{fontSize:13,fontWeight:700,color:TX,lineHeight:1.35,letterSpacing:"-0.2px"}}>{p.title}</div>
-                    {/* 하단 배지+통계 */}
-                    <div style={{display:"flex",alignItems:"center",gap:5,marginTop:6}}>
-                      {p.type==="teacher"
-                        ?<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:N,color:M}}>👩‍🏫 선생님 인증</span>
-                        :p.type==="verified"||p.status==="verified"
-                          ?<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:MS,color:"#0f6e56"}}>✅ 확인됨</span>
-                          :<span style={{fontSize:8,padding:"2px 6px",borderRadius:5,fontWeight:700,background:"#fff8e6",color:"#b45309"}}>⚠️ 미확인</span>
-                      }
-                      {isAdmin&&p.fc>0&&<span style={{fontSize:8,color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
-                      <span style={{fontSize:9,color:LI,marginLeft:"auto",display:"flex",gap:6}}>
-                        <span>👁 {p.views||0}</span>
-                        <span>💬 {(cmts[p.id]||[]).length}</span>
-                      </span>
-                    </div>
+                style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:CA,transition:".12s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#FBFCFE"}
+                onMouseLeave={e=>e.currentTarget.style.background=CA}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <span style={{fontSize:12,fontWeight:700,color:MD}}>{p.cat}</span>
+                    <span style={{width:3,height:3,borderRadius:"50%",background:LI,display:"inline-block"}}/>
+                    <span style={{fontSize:12,color:SO}}>{p.date} · {p.grade==="공통"?"전학년":p.grade+"학년"}</span>
                   </div>
-                  {/* 오른쪽 썸네일 */}
-                  {p.images&&p.images.length>0&&(
-                    <img src={p.images[0]} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:10,flexShrink:0,border:`1px solid ${BO}`}}/>
-                  )}
+                  <div style={{fontSize:16,fontWeight:700,letterSpacing:"-.3px",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:TX}}>{p.title}</div>
+                  <div style={{fontSize:13.5,color:SO,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical",marginBottom:8}}>{p.body}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:14,fontSize:12.5,color:SO}}>
+                    {p.type==="teacher"
+                      ?<span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6,color:MD,background:MS}}>✓ 선생님 인증</span>
+                      :p.type==="verified"||p.status==="verified"
+                        ?<span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6,color:MD,background:MS}}>✓ 확인된 정보</span>
+                        :p.status==="pending"
+                          ?<span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6,color:"#B7791F",background:"#FEF6E3"}}>🔍 검토 중</span>
+                          :<span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6,color:"#7A8194",background:"#F0F2F6"}}>· 미확인</span>
+                    }
+                    {isAdmin&&p.fc>0&&<span style={{color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
+                    <span>♡ {p.views||0}</span>
+                    <span>💬 {(cmts[p.id]||[]).length}</span>
+                  </div>
                 </div>
+                {p.images&&p.images.length>0
+                  ?<img src={p.images[0]} alt="" style={{width:64,height:64,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                  :<div style={{width:64,height:64,borderRadius:10,background:"linear-gradient(135deg,#EEF2F8,#E3E9F2)",flexShrink:0,display:"grid",placeItems:"center",fontSize:22,color:"#A7B0C2"}}>
+                    {p.cat?.split(" ")[0]||"📄"}
+                  </div>
+                }
               </div>
             ))}
           </div>
@@ -1349,7 +1466,7 @@ export default function App() {
 
     {/* 관리자 문의 */}
     <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
       <div style={{marginBottom:12}}><label style={lbl1}>문의 유형</label>
         <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
           {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
