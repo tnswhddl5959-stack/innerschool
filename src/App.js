@@ -18,10 +18,9 @@ const fb = initializeApp({
 const db = getFirestore(fb);
 const fbGet = async k => { try { const d=await getDoc(doc(db,"kv",k)); return d.exists()?d.data().v:null; } catch { return null; }};
 const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e){console.error(e);} };
-const fbDel = async k => { try { await deleteDoc(doc(db,"kv",k)); } catch {} };
 
-// ── 색상 ──
-const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",CA="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3",CHIP="#F4F6FB";
+// ── 색상 ── (N=TX=#1A2540 으로 통일, BG=BG=#ffffff 로 통일)
+const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3";
 
 // ── Cloudinary 이미지 업로드 ──
 const CLOUD_NAME = "DM3GF1VXQ";
@@ -126,10 +125,13 @@ const Chip = ({type,status}) => {
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:"#f0f4fb",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",fontFamily:"'Pretendard',sans-serif"};
+const authBox = {minHeight:"100vh",background:"#f0f4fb",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px",fontFamily:"'Pretendard',sans-serif"};
 const authCard = {background:"#fff",borderRadius:20,padding:"32px 24px",width:"100%",maxWidth:400,maxHeight:"96vh",overflowY:"auto",boxShadow:"0 8px 40px rgba(26,37,64,.10)"};
 const inp0 = {width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:11,padding:"13px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border .15s"};
 const lbl0 = {color:SO,fontSize:12,fontWeight:700,display:"block",marginBottom:6,letterSpacing:".2px"};
+// 모달/프로필용 스타일
+const inp1 = {width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:10,padding:"11px 13px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
+const lbl1 = {fontSize:12,fontWeight:600,color:SO,display:"block",marginBottom:6};
 
 const AuthHeader = ({sub}) => (
   <div style={{marginBottom:28,textAlign:"center"}}>
@@ -270,12 +272,14 @@ function Register({onDone,onBack}) {
     if(pw!==pwC){setErr("비밀번호가 일치하지 않아요");return;}
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
-    setErr("");
-    if(preview&&previewFile){
-      try{const url=await uploadImage(previewFile);onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});}
-      catch{onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});}
-    } else {
+    setErr(""); setUploading(true);
+    try {
+      const url = previewFile ? await uploadImage(previewFile) : null;
+      onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});
+    } catch {
       onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
+    } finally {
+      setUploading(false);
     }
   };
   const doTeacher=()=>{
@@ -406,9 +410,9 @@ function Register({onDone,onBack}) {
         </div>
 
         <ErrBox/>
-        <button onClick={doStudent}
-          style={{width:"100%",background:agreed?N:"#c9cfdb",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit",transition:".2s"}}>
-          가입하기
+        <button onClick={doStudent} disabled={uploading}
+          style={{width:"100%",background:agreed&&!uploading?N:"#c9cfdb",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:agreed&&!uploading?"pointer":"not-allowed",fontFamily:"inherit",transition:".2s"}}>
+          {uploading?"사진 업로드 중...":"가입하기"}
         </button>
       </div>
     </div>
@@ -501,7 +505,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
 
   return <div>
     <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>내 계정</h1><p style={{color:SO,fontSize:13,marginTop:3}}>계정 정보를 확인하고 수정하세요</p></div>
-    <div style={{background:CA,borderRadius:14,padding:"18px",border:`1px solid ${BO}`,marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
+    <div style={{background:BG,borderRadius:14,padding:"18px",border:`1px solid ${BO}`,marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
       <div style={{width:50,height:50,borderRadius:"50%",background:`linear-gradient(135deg,${M},#1a9e76)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:N,flexShrink:0}}>{user.name[0]}</div>
       <div>
         <div style={{fontSize:16,fontWeight:700,color:TX,marginBottom:3}}>{user.name}</div>
@@ -511,12 +515,12 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
     </div>
     <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16}}>
       {[{k:"info",l:"✏️ 정보 수정"},{k:"pw",l:"🔑 비밀번호 변경"},{k:"del",l:"🗑 계정 삭제"}].map(t=>(
-        <Btn key={t.k} onClick={()=>{setTab(t.k);setErr("");setOk("");}} style={{flex:1,padding:"9px 4px",borderRadius:8,fontSize:12,fontWeight:tab===t.k?700:500,color:tab===t.k?N:SO,background:tab===t.k?CA:"transparent",whiteSpace:"nowrap"}}>
+        <Btn key={t.k} onClick={()=>{setTab(t.k);setErr("");setOk("");}} style={{flex:1,padding:"9px 4px",borderRadius:8,fontSize:12,fontWeight:tab===t.k?700:500,color:tab===t.k?N:SO,background:tab===t.k?BG:"transparent",whiteSpace:"nowrap"}}>
           {t.l}
         </Btn>
       ))}
     </div>
-    {tab==="info"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="info"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{marginBottom:14}}><label style={lbl1}>이름</label><input value={newName} onChange={e=>setNewName(e.target.value)} style={inp1}/></div>
       {isTeacher&&<div style={{marginBottom:14}}><label style={lbl1}>담당 교과목</label><select value={newSub} onChange={e=>setNewSub(e.target.value)} style={inp1}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>}
       {!isTeacher&&<div style={{marginBottom:14}}><label style={lbl1}>학번</label><input value={user.id} disabled style={{...inp1,opacity:0.5,cursor:"not-allowed"}}/><div style={{fontSize:11,color:LI,marginTop:4}}>학번은 변경할 수 없어요</div></div>}
@@ -524,7 +528,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
       {ok&&<div style={{color:"#0e8a5f",fontSize:12,marginBottom:10,background:MS,borderRadius:7,padding:"7px 11px"}}>{ok}</div>}
       <Btn onClick={saveInfo} style={{width:"100%",background:N,color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>저장하기</Btn>
     </div>}
-    {tab==="pw"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="pw"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{marginBottom:14}}><label style={lbl1}>현재 비밀번호</label><input type="password" value={curPw} onChange={e=>setCurPw(e.target.value)} placeholder="현재 비밀번호 입력" style={inp1}/></div>
       <div style={{marginBottom:14}}><label style={lbl1}>새 비밀번호</label><input type="password" value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="새 비밀번호 입력 (4자 이상)" style={inp1}/></div>
       <div style={{marginBottom:16}}><label style={lbl1}>새 비밀번호 확인</label><input type="password" value={confirmPw} onChange={e=>setConfirmPw(e.target.value)} placeholder="새 비밀번호 다시 입력" style={inp1}/></div>
@@ -532,7 +536,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
       {ok&&<div style={{color:"#0e8a5f",fontSize:12,marginBottom:10,background:MS,borderRadius:7,padding:"7px 11px"}}>{ok}</div>}
       <Btn onClick={savePw} style={{width:"100%",background:N,color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>비밀번호 변경</Btn>
     </div>}
-    {tab==="del"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="del"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:10,padding:"14px",marginBottom:16}}>
         <div style={{fontSize:14,fontWeight:700,color:"#991b1b",marginBottom:6}}>⚠️ 계정 삭제 주의사항</div>
         <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.7}}>• 삭제한 계정은 복구할 수 없어요<br/>• 작성한 게시글과 댓글은 삭제되지 않아요<br/>• 재가입 시 동일 학번으로 가입 가능해요</div>
@@ -568,9 +572,9 @@ function InquiryTab() {
     return ()=>unsub();
   },[]);
   return <div style={{display:"flex",flexDirection:"column",gap:10}}>
-    {items.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 문의가 없어요 🎉</div>}
+    {items.length===0&&<div style={{background:BG,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 문의가 없어요 🎉</div>}
     {items.map(item=>(
-      <div key={item.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
+      <div key={item.id} style={{background:BG,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:6}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>{item.type}</span>
@@ -779,24 +783,14 @@ export default function App() {
   const [inquiryText,setInquiryText]=useState("");
 
 
-  // 오늘 급식 가져오기
-  const getTodayMeal = () => {
-    const t = new Date();
-    const key = `${t.getMonth()+1}/${t.getDate()}`;
-    return MEAL[key] || null;
-  };
-  const todayMeal = getTodayMeal();
+  // 오늘 급식
+  const _today = new Date();
+  const todayMeal = MEAL[`${_today.getMonth()+1}/${_today.getDate()}`] || null;
 
   // D-day 계산 (2차 지필평가 6월 30일)
-  const getDday = () => {
-    const target = new Date(2026, 5, 30);
-    const today2 = new Date();
-    today2.setHours(0,0,0,0);
-    target.setHours(0,0,0,0);
-    const diff = Math.ceil((target - today2) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-  const dday = getDday();
+  const _target = new Date(2026, 5, 30); _target.setHours(0,0,0,0);
+  const _now = new Date(); _now.setHours(0,0,0,0);
+  const dday = Math.ceil((_target - _now) / (1000 * 60 * 60 * 24));
 
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const [deferredPrompt,setDeferredPrompt]=useState(null);
@@ -890,21 +884,24 @@ export default function App() {
     if(info.role==="student"){
       if(base.find(a=>a.id===info.sid)){alert(`이미 가입된 학번이에요 (${info.sid}).`);return;}
     }
-    let updated,newUser;
+    let updated, newUser;
     if(info.role==="teacher"){
       const tid="T"+Date.now().toString().slice(-4);
       const newAcc={role:"teacher",id:tid,name:info.name,pw:info.pw,subject:info.subject,status:"ok"};
-      updated=[...base,newAcc]; newUser={name:info.name,id:tid,grade:"교사",room:info.subject,status:"ok"};
+      updated=[...base,newAcc];
+      newUser={name:info.name,id:tid,grade:"교사",room:info.subject,status:"ok"};
       setIsTeacher(true); setIsAdmin(false);
     } else {
       const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room,status:"pending"};
-      updated=[...base,newAcc]; newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
+      updated=[...base,newAcc];
+      newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
       setIsTeacher(false); setIsAdmin(false);
       const newItem={id:info.sid,name:info.name,grade:info.grade+"학년 "+info.room+"반",date:new Date().toLocaleDateString("ko-KR"),status:"pending",isTeacher:false,idPhoto:info.idPhoto||null};
       const savedIdList=await fbGet("idList");
       const newIdList=[newItem,...(savedIdList||[])];
       setIdList(newIdList); await fbSet("idList",newIdList);
     }
+    if(!updated||!newUser){toast_("가입 처리 중 오류가 발생했어요");return;}
     await fbSet("accounts",updated);
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:newUser.id}));
     setAccounts(updated); setUser(newUser);
@@ -999,7 +996,7 @@ export default function App() {
       ))}
     </nav>
 
-    {/* 사이드바 오버레이 */}}
+    {/* 사이드바 오버레이 */}
     {sidebar&&<div onClick={()=>setSidebar(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:99}}/>}
 
     {/* 사이드바 */}
@@ -1089,7 +1086,7 @@ export default function App() {
               {k:"meal",ico:"🍱",title:"이달의 급식",desc:"월간 급식표",badge:"6월"},
             ].map(m=>(
               <div key={m.k} onClick={()=>goPage(m.k)}
-                style={{background:m.primary?N:CA,borderRadius:14,padding:"13px 12px",
+                style={{background:m.primary?N:BG,borderRadius:14,padding:"13px 12px",
                   boxShadow:"0 2px 8px rgba(15,31,61,.07)",border:`0.5px solid ${m.primary?N:BO}`,cursor:"pointer"}}>
                 <div style={{fontSize:22,marginBottom:6}}>{m.ico}</div>
                 <div style={{fontSize:12,fontWeight:700,color:m.primary?"#fff":TX,marginBottom:3}}>{m.title}</div>
@@ -1108,7 +1105,7 @@ export default function App() {
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {[...posts].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,4).map((p,i)=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{background:CA,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
+                style={{background:BG,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
                   boxShadow:"0 1px 4px rgba(15,31,61,.06)",cursor:"pointer"}}>
                 <div style={{width:3,alignSelf:"stretch",background:p.type==="unverified"?"#f59e0b":M,flexShrink:0}}/>
                 <div style={{padding:"9px 11px",flex:1,minWidth:0}}>
@@ -1130,7 +1127,7 @@ export default function App() {
       {/* ── 게시판 ── */}
       {page==="board"&&<div>
         {/* 검색창 */}
-        <div style={{display:"flex",alignItems:"center",gap:8,background:CHIP,border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,background:"#f6f8fc",border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
           <span style={{fontSize:15}}>🔍</span>
           <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
             placeholder="수행평가, 시험범위, 급식 검색"
@@ -1140,10 +1137,10 @@ export default function App() {
         {/* 카테고리 칩 */}
         <div style={{display:"flex",gap:8,padding:"0 18px 12px",overflowX:"auto",scrollbarWidth:"none"}}>
           {["전체","📝 수행평가","📚 학업·시험","🎓 입시","📊 SLAT","🎨 동아리","📅 행사","🍱 급식","📢 공지","🙋 질문"].map(c=>(
-            <Btn key={c} onClick={()=>setCat(c==="전체"?c:c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
-              color:cat===(c==="전체"?"전체":c)?CA:SO,
-              background:cat===(c==="전체"?"전체":c)?TX:CHIP,
-              border:`1px solid ${cat===(c==="전체"?"전체":c)?TX:BO}`,
+            <Btn key={c} onClick={()=>setCat(c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
+              color:cat===c?BG:SO,
+              background:cat===c?TX:"#f6f8fc",
+              border:`1px solid ${cat===c?TX:BO}`,
               borderRadius:999,padding:"7px 14px",whiteSpace:"nowrap"}}>
               {c}
             </Btn>
@@ -1169,25 +1166,25 @@ export default function App() {
           {/* 학년 탭 */}
           <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
             {["전체","1학년","2학년","3학년","공통"].map(g=>(
-              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:CA,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{g}</Btn>
+              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:BG,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{g}</Btn>
             ))}
           </div>
           {/* 세부 카테고리 */}
           <div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
             {["전체",...SUB_CATS].map(c=>(
-              <Btn key={c} onClick={()=>setCat(c)} style={{padding:"5px 12px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:CA,color:cat===c?N:SO,fontSize:12,fontWeight:500,whiteSpace:"nowrap",flexShrink:0}}>{c}</Btn>
+              <Btn key={c} onClick={()=>setCat(c)} style={{padding:"5px 12px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:BG,color:cat===c?N:SO,fontSize:12,fontWeight:500,whiteSpace:"nowrap",flexShrink:0}}>{c}</Btn>
             ))}
           </div>
           {/* 검색 */}
           <div style={{position:"relative",marginBottom:10}}>
-            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 제목이나 내용으로 검색하세요" style={{width:"100%",background:CA,border:`1.5px solid ${BO}`,borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
+            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 제목이나 내용으로 검색하세요" style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
             {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
           </div>
           {/* 정렬 + 글쓰기 */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <div style={{display:"flex",gap:6}}>
               {[{k:"latest",l:"🕐 최신순"},{k:"popular",l:"🔥 인기순"}].map(s=>(
-                <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{padding:"6px 12px",borderRadius:18,border:`1.5px solid ${sortBy===s.k?N:BO}`,background:sortBy===s.k?N:CA,color:sortBy===s.k?"#fff":SO,fontSize:12,fontWeight:600}}>{s.l}</Btn>
+                <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{padding:"6px 12px",borderRadius:18,border:`1.5px solid ${sortBy===s.k?N:BO}`,background:sortBy===s.k?N:BG,color:sortBy===s.k?"#fff":SO,fontSize:12,fontWeight:600}}>{s.l}</Btn>
               ))}
             </div>
             {canWrite&&<Btn onClick={()=>{setWType(null);setWTitle("");setWBody("");setWSrc("");setWModal(true);}} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700}}>✏️ 글쓰기</Btn>}
@@ -1196,9 +1193,9 @@ export default function App() {
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:CA,transition:".12s"}}
+                style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:BG,transition:".12s"}}
                 onMouseEnter={e=>e.currentTarget.style.background="#FBFCFE"}
-                onMouseLeave={e=>e.currentTarget.style.background=CA}>
+                onMouseLeave={e=>e.currentTarget.style.background=BG}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                     <span style={{fontSize:12,fontWeight:700,color:MD}}>{p.cat}</span>
@@ -1236,7 +1233,7 @@ export default function App() {
       {/* ── 게시글 상세 ── */}
       {page==="detail"&&curPost&&<div>
         <Btn onClick={()=>setPage("board")} style={{display:"flex",alignItems:"center",gap:4,background:BG,color:SO,border:`1.5px solid ${BO}`,borderRadius:8,padding:"7px 14px",fontSize:13,marginBottom:16}}>← 목록으로</Btn>
-        <div style={{background:CA,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`,marginBottom:12}}>
+        <div style={{background:BG,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`,marginBottom:12}}>
           <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}><Chip type={curPost.type} status={curPost.status}/></div>
           <div style={{fontSize:18,fontWeight:700,color:TX,lineHeight:1.4,marginBottom:10}}>{curPost.title}</div>
           <div style={{display:"flex",gap:12,fontSize:11,color:LI,marginBottom:12,flexWrap:"wrap"}}>
@@ -1266,7 +1263,7 @@ export default function App() {
           </div>
         </div>
         {/* 댓글 */}
-        <div style={{background:CA,borderRadius:12,padding:"18px 16px",border:`1px solid ${BO}`}}>
+        <div style={{background:BG,borderRadius:12,padding:"18px 16px",border:`1px solid ${BO}`}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>💬 댓글 <span style={{color:SO,fontWeight:400,fontSize:12}}>({(cmts[curPost.id]||[]).length}개)</span></div>
           {(cmts[curPost.id]||[]).length===0&&<div style={{color:LI,fontSize:13,paddingBottom:12}}>아직 댓글이 없어요.</div>}
           {(cmts[curPost.id]||[]).map(c=>(
@@ -1298,7 +1295,7 @@ export default function App() {
         {isAdmin&&<Btn onClick={()=>setWikiAddModal(true)} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700,marginBottom:14}}>➕ 위키 추가</Btn>}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {wiki.map((w,i)=>(
-            <div key={i} onClick={()=>setCurWiki({...w,idx:i})} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+            <div key={i} onClick={()=>setCurWiki({...w,idx:i})} style={{background:BG,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
               <div style={{fontSize:30,flexShrink:0}}>{w.icon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:3}}>{w.title}</div>
@@ -1313,7 +1310,7 @@ export default function App() {
       {/* ── 교내 위키 상세 ── */}
       {page==="wiki"&&curWiki&&<div>
         <Btn onClick={()=>setCurWiki(null)} style={{display:"flex",alignItems:"center",gap:4,background:BG,color:SO,border:`1.5px solid ${BO}`,borderRadius:8,padding:"7px 14px",fontSize:13,marginBottom:16}}>← 위키 목록으로</Btn>
-        <div style={{background:CA,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`}}>
+        <div style={{background:BG,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`}}>
           <div style={{fontSize:34,marginBottom:10}}>{curWiki.icon}</div>
           <h1 style={{fontSize:19,fontWeight:700,color:TX,marginBottom:6}}>{curWiki.title}</h1>
           <span style={{display:"inline-block",padding:"3px 9px",borderRadius:5,fontSize:11,fontWeight:700,background:curWiki.ok?MS:"#fef3c7",color:curWiki.ok?"#0e8a5f":"#92400e",marginBottom:14}}>{curWiki.ok?"✅ 교사 인증":"📝 학생 작성"}</span>
@@ -1465,7 +1462,7 @@ export default function App() {
 
           {/* 학생증 목록 */}
           {idList.length===0&&(
-            <div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
               <div style={{fontSize:28,marginBottom:8}}>🎉</div>
               <div style={{fontSize:14,fontWeight:600,color:N,marginBottom:4}}>검토할 학생증이 없어요</div>
               <div style={{fontSize:12,color:LI}}>모든 학생증이 처리됐어요</div>
@@ -1477,7 +1474,7 @@ export default function App() {
             const isOverdue=r.status==="ok"&&daysPassed>=privacyDays&&r.idPhoto&&!r.photoMasked;
             const daysLeft=r.status==="ok"&&daysPassed!=null&&!r.photoMasked&&r.idPhoto?privacyDays-daysPassed:null;
             return (
-              <div key={r.id} style={{background:CA,borderRadius:14,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,overflow:"hidden"}}>
+              <div key={r.id} style={{background:BG,borderRadius:14,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,overflow:"hidden"}}>
                 {/* 카드 헤더 */}
                 <div style={{padding:"13px 16px 0 16px"}}>
                   <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
@@ -1557,12 +1554,12 @@ export default function App() {
 
         {/* ── 인증 탭 ── */}
         {adminTab==="verify"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {vq.length===0&&<div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+          {vq.length===0&&<div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
             <div style={{fontSize:28,marginBottom:8}}>🎉</div>
             <div style={{fontSize:14,fontWeight:600,color:N}}>검토할 항목이 없어요</div>
           </div>}
           {vq.map(v=>(
-            <div key={v.id} style={{background:CA,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
+            <div key={v.id} style={{background:BG,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
               <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{v.title}</div>
               <div style={{fontSize:12,color:SO,marginBottom:10}}>{v.author} · {v.cat}</div>
               <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:"#0e7a5a",marginBottom:12}}>📎 "{v.source}"</div>
@@ -1573,12 +1570,12 @@ export default function App() {
 
         {/* ── 사실확인 탭 ── */}
         {adminTab==="fc"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
             <div style={{fontSize:28,marginBottom:8}}>🎉</div>
             <div style={{fontSize:14,fontWeight:600,color:N}}>접수된 요청이 없어요</div>
           </div>}
           {posts.filter(p=>p.fc>0).map(p=>(
-            <div key={p.id} style={{background:CA,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
+            <div key={p.id} style={{background:BG,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
               <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{p.title}</div>
               <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:8}}>요청 {p.fc}건</div>
               {(p.fcR||[]).map((r2,i)=><div key={i} style={{fontSize:12,color:SO,background:"#f8fafc",borderRadius:7,padding:"6px 10px",marginBottom:4}}>· {r2}</div>)}
@@ -1593,7 +1590,7 @@ export default function App() {
         {/* ── 사용자 탭 ── */}
         {adminTab==="users"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
           {accounts.map(u=>(
-            <div key={u.id} style={{background:CA,borderRadius:14,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",gap:12}}>
+            <div key={u.id} style={{background:BG,borderRadius:14,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:38,height:38,borderRadius:10,background:u.role==="teacher"?"#ede9fe":u.id==="11025"?"#dbeafe":"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
                 {u.role==="teacher"?"👩‍🏫":u.id==="11025"?"👑":"🙍"}
               </div>
@@ -1778,7 +1775,7 @@ export default function App() {
 
     {/* 관리자 문의 */}
     <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
       <div style={{marginBottom:12}}><label style={lbl1}>문의 유형</label>
         <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
           {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
