@@ -19,6 +19,14 @@ const db = getFirestore(fb);
 const fbGet = async k => { try { const d=await getDoc(doc(db,"kv",k)); return d.exists()?d.data().v:null; } catch { return null; }};
 const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e){console.error(e);} };
 
+// ── 비밀번호 SHA-256 해시 ──
+// 평문 여부 판별 (해시는 항상 64자 hex)
+const isHashed = pw => typeof pw==="string" && /^[0-9a-f]{64}$/.test(pw);
+const hashPw = async pw => {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+};
+
 // ── 색상 ── (N=TX=#1A2540 으로 통일, BG=BG=#ffffff 로 통일)
 const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3";
 
@@ -118,7 +126,7 @@ const Modal = ({open,onClose,title,children}) => !open ? null : (
   </div>
 );
 const Chip = ({type,status}) => {
-  if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩‍🏫 선생님 인증</span>;
+  if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩🏫 선생님 인증</span>;
   if(type==="verified"&&status==="verified") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:MS,color:"#0e8a5f"}}>✅ 확인된 정보</span>;
   if(type==="verified"&&status==="pending") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#fef3c7",color:"#92400e"}}>🔍 검토 중</span>;
   return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#fff7ed",color:"#c2410c"}}>⚠️ 미확인</span>;
@@ -157,7 +165,7 @@ function LoginRole({onSelect,onReg}) {
           <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {[{k:"student",i:"🎒",l:"학생",d:"학번으로 로그인"},{k:"teacher",i:"👩‍🏫",l:"선생님",d:"교과목으로 로그인"}].map(r=>(
+          {[{k:"student",i:"🎒",l:"학생",d:"학번으로 로그인"},{k:"teacher",i:"👩🏫",l:"선생님",d:"교과목으로 로그인"}].map(r=>(
             <div key={r.k} onClick={()=>onSelect(r.k)}
               style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc",transition:".15s"}}>
               <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
@@ -304,7 +312,7 @@ function Register({onDone,onBack}) {
           <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {[{k:"student",i:"🎒",l:"학생",d:"재학생으로 가입 (학생증 인증 필요)"},{k:"teacher",i:"👩‍🏫",l:"선생님",d:"교사 인증코드로 가입"}].map(r=>(
+          {[{k:"student",i:"🎒",l:"학생",d:"재학생으로 가입 (학생증 인증 필요)"},{k:"teacher",i:"👩🏫",l:"선생님",d:"교사 인증코드로 가입"}].map(r=>(
             <div key={r.k} onClick={()=>setRole(r.k)}
               style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc"}}>
               <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
@@ -342,7 +350,7 @@ function Register({onDone,onBack}) {
         {/* 학년·반·번호 */}
         <div style={{marginBottom:6}}>
           <label style={lbl0}>학년 · 반 · 번호</label>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             <select value={grade} onChange={e=>setGrade(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
               <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
             </select>
@@ -485,10 +493,14 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
   const savePw=async()=>{
     const acc=accounts.find(a=>a.id===user.id);
     if(!acc){setErr("계정을 찾을 수 없어요");return;}
-    if(acc.pw!==curPw){setErr("현재 비밀번호가 일치하지 않아요");setOk("");return;}
+    // 해시된 비번이면 해시로 비교, 아직 평문이면 평문 비교
+    const curHashed=await hashPw(curPw);
+    const pwMatch=isHashed(acc.pw)?acc.pw===curHashed:acc.pw===curPw;
+    if(!pwMatch){setErr("현재 비밀번호가 일치하지 않아요");setOk("");return;}
     if(newPw.length<4){setErr("비밀번호는 4자 이상이어야 해요");return;}
     if(newPw!==confirmPw){setErr("새 비밀번호가 일치하지 않아요");return;}
-    const updated=[...accounts.filter(a=>a.id!==user.id),{...acc,pw:newPw}];
+    const newHashed=await hashPw(newPw);
+    const updated=[...accounts.filter(a=>a.id!==user.id),{...acc,pw:newHashed}];
     await fbSet("accounts",updated);
     onUpdate(updated,user);
     setCurPw("");setNewPw("");setConfirmPw("");
@@ -596,7 +608,7 @@ function CalendarPage() {
     5:{year:2026,month:5,days:31,startDay:4,holidays:[1,4],
       single:{1:"재량휴업",4:"재량휴업",7:"학력평가",15:"체육대회"},
       ranges:[{from:18,to:29,label:"진로컨설팅",color:N2}],
-      list:[{d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},{d:"5월 7일",l:"📝 고3 전국연합학력평가"},{d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},{d:"5월 18~29일",l:"👨‍👩‍👧 학부모 진로 진학 컨설팅"}]},
+      list:[{d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},{d:"5월 7일",l:"📝 고3 전국연합학력평가"},{d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},{d:"5월 18~29일",l:"👨👩👧 학부모 진로 진학 컨설팅"}]},
     6:{year:2026,month:6,days:30,startDay:0,holidays:[3],
       single:{3:"지방선거",4:"전국연합·모의평가"},
       ranges:[{from:30,to:30,label:"2차 지필평가",color:M2}],
@@ -783,6 +795,9 @@ export default function App() {
   const [inquiryModal,setInquiryModal]=useState(false);
   const [inquiryType,setInquiryType]=useState("오류 신고");
   const [inquiryText,setInquiryText]=useState("");
+  // 알림
+  const [notiList,setNotiList]=useState([]);
+  const [notiOpen,setNotiOpen]=useState(false);
 
 
   // 오늘 급식
@@ -858,6 +873,19 @@ export default function App() {
   // ── 실시간 구독 ──
   useEffect(()=>{ const u=onSnapshot(collection(db,"posts"),snap=>{ const l=snap.docs.map(d=>({id:d.id,...d.data()})); l.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); setPosts(l); }); return()=>u(); },[]);
   useEffect(()=>{ const u=onSnapshot(collection(db,"comments"),snap=>{ const m={}; snap.docs.forEach(d=>{const dt=d.data();if(!m[dt.postId])m[dt.postId]=[];m[dt.postId].push({id:d.id,...dt});}); setCmts(m); }); return()=>u(); },[]);
+  // 알림 실시간 구독 (로그인 후 user.id 확정되면)
+  useEffect(()=>{
+    if(!user.id) return;
+    const u=onSnapshot(collection(db,"notifications"),snap=>{
+      const list=snap.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .filter(n=>n.toUserId===user.id)
+        .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))
+        .slice(0,30); // 최근 30개만
+      setNotiList(list);
+    });
+    return()=>u();
+  },[user.id]);
 
   // ── 로그인 ──
   const doLogin=async(idOrName,pw,roleOrSub)=>{
@@ -865,40 +893,26 @@ export default function App() {
     const list=(savedAcc&&savedAcc.length>0)?savedAcc:INIT_ACCOUNTS;
     setAccounts(list);
     let acc;
+    const hashed=await hashPw(pw);
     if(roleOrSub==="student"){
-      acc=list.find(a=>a.role==="student"&&a.id===idOrName&&a.pw===pw);
+      // 해시 비교 우선, 기존 평문 계정도 허용 (마이그레이션용)
+      acc=list.find(a=>a.role==="student"&&a.id===idOrName&&(a.pw===hashed||(!isHashed(a.pw)&&a.pw===pw)));
       if(!acc){alert("학번 또는 비밀번호가 일치하지 않습니다.");return;}
       if(acc.status==="blocked"){alert("차단된 계정이에요. 총관리자에게 문의해주세요.");return;}
       setIsAdmin(acc.id==="11025"); setIsTeacher(false);
-      const stu_status = acc.id==="11025" ? "ok" : (acc.status||"pending");
+      const stu_status=acc.id==="11025"?"ok":(acc.status||"pending");
       setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반",status:stu_status});
     } else {
-      acc=list.find(a=>a.role==="teacher"&&a.name===idOrName&&a.pw===pw&&a.subject===roleOrSub);
+      acc=list.find(a=>a.role==="teacher"&&a.name===idOrName&&(a.pw===hashed||(!isHashed(a.pw)&&a.pw===pw))&&a.subject===roleOrSub);
       if(!acc){alert("이름, 비밀번호 또는 교과목이 일치하지 않습니다.");return;}
       setIsAdmin(false); setIsTeacher(true);
       setUser({name:acc.name,id:acc.id,grade:"교사",room:acc.subject||"",status:"ok"});
     }
-    // 🔐 계정 도용 감지 — 이미 다른 계정으로 로그인된 세션이 있는데 다른 학번으로 로그인 시도
-    const sessStr=localStorage.getItem("innerschool_sess");
-    if(sessStr){
-      try{
-        const sess=JSON.parse(sessStr);
-        if(sess.userId&&sess.userId!==acc.id){
-          // 다른 계정 세션이 살아있는 상태에서 새 로그인 시도
-          const logEntry={
-            type:"ACCOUNT_HIJACK",
-            detail:`⚠️ 기존 로그인 세션(${sess.userId}) 유지 중 다른 계정(${acc.id} ${acc.name})으로 로그인 시도`,
-            userId:acc.id,
-            userName:acc.name,
-            time:new Date().toLocaleString("ko-KR"),
-            createdAt:Date.now(),
-          };
-          const prev=await fbGet("secLogs")||[];
-          const next=[logEntry,...prev].slice(0,200);
-          setSecLogs(next);
-          await fbSet("secLogs",next);
-        }
-      }catch{}
+    // 평문 비밀번호면 이번 로그인 시점에 해시로 자동 변환
+    if(!isHashed(acc.pw)){
+      const migrated=list.map(a=>a.id===acc.id?{...a,pw:hashed}:a);
+      await fbSet("accounts",migrated);
+      setAccounts(migrated);
     }
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:acc.id}));
     setScr("app"); setPage("board");
@@ -911,15 +925,16 @@ export default function App() {
     if(info.role==="student"){
       if(base.find(a=>a.id===info.sid)){alert(`이미 가입된 학번이에요 (${info.sid}).`);return;}
     }
+    const pwHash=await hashPw(info.pw);
     let updated, newUser;
     if(info.role==="teacher"){
       const tid="T"+Date.now().toString().slice(-4);
-      const newAcc={role:"teacher",id:tid,name:info.name,pw:info.pw,subject:info.subject,status:"ok"};
+      const newAcc={role:"teacher",id:tid,name:info.name,pw:pwHash,subject:info.subject,status:"ok"};
       updated=[...base,newAcc];
       newUser={name:info.name,id:tid,grade:"교사",room:info.subject,status:"ok"};
       setIsTeacher(true); setIsAdmin(false);
     } else {
-      const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room,status:"pending"};
+      const newAcc={role:"student",id:info.sid,name:info.name,pw:pwHash,grade:info.grade,room:info.room,status:"pending"};
       updated=[...base,newAcc];
       newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
       setIsTeacher(false); setIsAdmin(false);
@@ -933,7 +948,7 @@ export default function App() {
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:newUser.id}));
     setAccounts(updated); setUser(newUser);
     setScr("app"); setPage("home");
-    toast_(info.role==="teacher"?"가입 완료! 👩‍🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
+    toast_(info.role==="teacher"?"가입 완료! 👩🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
   };
 
   const doLogout=()=>{ localStorage.removeItem("innerschool_sess"); setScr("login"); };
@@ -941,51 +956,25 @@ export default function App() {
   const onAccountDelete=()=>{ setScr("login"); };
 
   // ── 🛡️ 보안 에이전트 ──
-  // 보안 로그 기록 함수
-  const secLog=async(type,detail,targetUser=null)=>{
-    const entry={
-      type,        // "SPAM","ADMIN_ACCESS","ACCOUNT_HIJACK"
-      detail,
-      userId:user.id||targetUser,
-      userName:user.name||targetUser,
-      time:new Date().toLocaleString("ko-KR"),
-      createdAt:Date.now(),
-    };
+  // 보안 로그 기록
+  const secLog=async(type,detail)=>{
+    const entry={type,detail,userId:user.id,userName:user.name,time:new Date().toLocaleString("ko-KR"),createdAt:Date.now()};
     const prev=await fbGet("secLogs")||[];
-    // 최대 200개 보관
     const next=[entry,...prev].slice(0,200);
-    setSecLogs(next);
-    await fbSet("secLogs",next);
-    return entry;
+    setSecLogs(next); await fbSet("secLogs",next);
   };
 
-  // 도배·스팸 감지 (5분 내 3건 이상 게시 시 차단)
-  const SPAM_WINDOW=5*60*1000; // 5분
-  const SPAM_LIMIT=3;
-  const checkSpam=()=>{
-    const now=Date.now();
-    const recent=posts.filter(p=>
-      p.realAuthor===user.name &&
-      !p.anon &&
-      (now-(p.createdAt||0))<SPAM_WINDOW
-    );
-    // 익명 포함해서 실명 기준으로 체크
-    const recentAll=posts.filter(p=>
-      p.realAuthor===user.name &&
-      (now-(p.createdAt||0))<SPAM_WINDOW
-    );
-    return recentAll.length>=SPAM_LIMIT;
+  // 중복 제목 감지 — 같은 작성자가 동일한 제목으로 이미 올린 경우
+  const checkDupTitle=(title)=>{
+    const t=title.trim().toLowerCase();
+    return posts.some(p=>p.realAuthor===user.name&&p.title.trim().toLowerCase()===t);
   };
 
-  // 관리자 페이지 접근 로그 (goPage 래핑)
+  // 관리자 페이지 접근 로그
   const goPage=p=>{
     setPage(p); setSidebar(false); setCurWiki(null);
-    if(p==="admin"&&isAdmin){
-      secLog("ADMIN_ACCESS",`관리자 페이지 접근`);
-    }
+    if(p==="admin"&&isAdmin) secLog("ADMIN_ACCESS","관리자 페이지 접근");
   };
-
-  // 계정 도용 감지 - doLogin 내부에서 세션 비교로 처리
 
   // ── 게시글 ──
   const submitPost=async()=>{
@@ -994,10 +983,10 @@ export default function App() {
     if(!wBody.trim()&&wImages.length===0){toast_("내용을 입력하거나 이미지를 첨부해주세요");return;}
     if(hasBad(wTitle)||hasBad(wBody)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
     if(!isTeacher&&wType==="verified"&&!wSrc.trim()){toast_("확인 근거를 입력해주세요");return;}
-    // 🚨 도배·스팸 감지 (선생님·관리자 제외) — 차단 없이 경고+로그만
-    if(!isTeacher&&!isAdmin&&checkSpam()){
-      await secLog("SPAM",`도배 감지: 5분 내 ${SPAM_LIMIT}건 이상 게시 시도 ("${wTitle.trim().slice(0,20)}")`);
-      toast_("🚨 짧은 시간에 게시글을 너무 많이 올렸어요. 잠시 후 다시 시도해주세요.");
+    // 🚨 중복 제목 감지 (선생님·관리자 제외)
+    if(!isTeacher&&!isAdmin&&checkDupTitle(wTitle)){
+      await secLog("SPAM",`중복 제목 게시 감지: "${wTitle.trim().slice(0,30)}"`);
+      toast_("🚨 동일한 제목의 게시글이 이미 있어요. 제목을 확인해주세요.");
       return;
     }
     const grade=isTeacher?wGrade:user.grade.replace("학년","");
@@ -1010,7 +999,7 @@ export default function App() {
       const ref=await addDoc(collection(db,"posts"),np);
       if(!isTeacher&&wType==="verified") setVq(q=>[{id:ref.id,title:np.title,author:user.name,cat:wCat,source:np.source},...q]);
       setWModal(false);setWType(null);setWTitle("");setWBody("");setWSrc("");setWImages([]);setWAnon(false);
-      toast_(isTeacher?"게시됐어요! 👩‍🏫":wType==="verified"?"검토 후 배지가 부여됩니다 ✅":"게시됐어요!");
+      toast_(isTeacher?"게시됐어요! 👩🏫":wType==="verified"?"검토 후 배지가 부여됩니다 ✅":"게시됐어요!");
     }catch(e){console.error(e);toast_("게시 중 오류가 발생했어요.");}
   };
   const deletePost=async(id)=>{ if(!window.confirm("이 게시글을 삭제할까요?"))return; try{await deleteDoc(doc(db,"posts",id));}catch(e){console.error(e);} setPage("board"); toast_("게시글이 삭제됐어요"); };
@@ -1025,7 +1014,35 @@ export default function App() {
   };
 
   // ── 댓글 ──
-  const submitCmt=async()=>{ if(!cText.trim()){toast_("댓글을 입력해주세요");return;} if(hasBad(cText)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;} try{await addDoc(collection(db,"comments"),{postId:curPost.id,author:user.name,anon,text:cText.trim(),time:"방금 전",createdAt:Date.now()});}catch(e){console.error(e);} setCText(""); toast_("댓글이 등록됐어요!"); };
+  const submitCmt=async()=>{
+    if(!cText.trim()){toast_("댓글을 입력해주세요");return;}
+    if(hasBad(cText)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
+    try{
+      await addDoc(collection(db,"comments"),{
+        postId:curPost.id,author:user.name,anon,
+        text:cText.trim(),time:"방금 전",createdAt:Date.now()
+      });
+      // 🔔 댓글 알림 — 내가 내 글에 달 때는 제외
+      if(curPost.realAuthor!==user.name){
+        // 게시글 작성자의 userId 찾기
+        const postOwner=accounts.find(a=>a.name===curPost.realAuthor);
+        if(postOwner){
+          await addDoc(collection(db,"notifications"),{
+            toUserId:postOwner.id,
+            toUserName:postOwner.name,
+            fromUserName:anon?"익명":user.name,
+            type:"comment",
+            postId:curPost.id,
+            postTitle:curPost.title,
+            preview:cText.trim().slice(0,40),
+            read:false,
+            createdAt:Date.now(),
+          });
+        }
+      }
+    }catch(e){console.error(e);}
+    setCText(""); toast_("댓글이 등록됐어요!");
+  };
   const deleteCmt=async(cid)=>{ try{await deleteDoc(doc(db,"comments",cid));}catch(e){console.error(e);} toast_("댓글이 삭제됐어요"); };
 
   // ── 위키 ──
@@ -1123,9 +1140,62 @@ export default function App() {
         {showInstall&&<Btn onClick={installApp} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
         {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
         {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10,marginRight:4}}>{pending}</span>}
+        {/* 🔔 알림 버튼 */}
+        <div style={{position:"relative"}}>
+          <Btn onClick={()=>setNotiOpen(v=>!v)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:20,background:"none",border:"none",position:"relative"}}>
+            🔔
+            {notiList.filter(n=>!n.read).length>0&&(
+              <span style={{position:"absolute",top:4,right:4,width:16,height:16,background:AC,borderRadius:"50%",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>
+                {notiList.filter(n=>!n.read).length>9?"9+":notiList.filter(n=>!n.read).length}
+              </span>
+            )}
+          </Btn>
+          {/* 알림 드롭다운 */}
+          {notiOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:46,right:0,width:300,maxHeight:420,overflowY:"auto",background:"#fff",borderRadius:16,boxShadow:"0 8px 32px rgba(26,37,64,.16)",border:`1px solid ${BO}`,zIndex:200}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",borderBottom:`1px solid ${BO}`}}>
+              <div style={{fontSize:14,fontWeight:700,color:N}}>🔔 알림</div>
+              {notiList.some(n=>!n.read)&&<Btn onClick={async()=>{
+                // 전체 읽음 처리
+                const unread=notiList.filter(n=>!n.read);
+                await Promise.all(unread.map(n=>updateDoc(doc(db,"notifications",n.id),{read:true})));
+              }} style={{fontSize:11,color:MD,fontWeight:600,background:"none",border:"none",cursor:"pointer",padding:0}}>전체 읽음</Btn>}
+            </div>
+            {notiList.length===0
+              ?<div style={{padding:"28px 16px",textAlign:"center",color:LI,fontSize:13}}>아직 알림이 없어요</div>
+              :notiList.map(n=>(
+                <div key={n.id} onClick={async()=>{
+                  // 읽음 처리 후 해당 게시글로 이동
+                  if(!n.read) await updateDoc(doc(db,"notifications",n.id),{read:true});
+                  const post=posts.find(p=>p.id===n.postId);
+                  if(post){ setCurPost(post); setPage("detail"); }
+                  setNotiOpen(false);
+                }} style={{padding:"12px 16px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:n.read?"#fff":"#f0fdf9",display:"flex",gap:10,alignItems:"flex-start",transition:".1s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f6f8fc"}
+                  onMouseLeave={e=>e.currentTarget.style.background=n.read?"#fff":"#f0fdf9"}>
+                  <div style={{width:36,height:36,borderRadius:10,background:n.read?"#f6f8fc":MS,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>💬</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:N,marginBottom:2}}>
+                      <span style={{color:MD}}>{n.fromUserName}</span>님이 댓글을 달았어요
+                    </div>
+                    <div style={{fontSize:11,color:SO,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{n.postTitle}"</div>
+                    <div style={{fontSize:12,color:TX,background:"#f6f8fc",borderRadius:6,padding:"4px 8px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{n.preview}</div>
+                  </div>
+                  {!n.read&&<div style={{width:7,height:7,borderRadius:"50%",background:M,flexShrink:0,marginTop:4}}/>}
+                </div>
+              ))
+            }
+            {notiList.length>0&&<Btn onClick={async()=>{
+              if(!window.confirm("알림을 전체 삭제할까요?"))return;
+              await Promise.all(notiList.map(n=>deleteDoc(doc(db,"notifications",n.id))));
+              setNotiOpen(false);
+            }} style={{width:"100%",padding:"11px",fontSize:12,color:SO,background:"none",border:"none",borderTop:`1px solid ${BO}`,cursor:"pointer",fontFamily:"inherit"}}>🗑 알림 전체 삭제</Btn>}
+          </div>}
+        </div>
         <Btn onClick={()=>setSidebar(true)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:18,background:"none",border:"none"}}>☰</Btn>
       </div>
     </div>
+    {/* 알림 드롭다운 외부 클릭 닫기 */}
+    {notiOpen&&<div onClick={()=>setNotiOpen(false)} style={{position:"fixed",inset:0,zIndex:19}}/>}
 
     {/* 콘텐츠 */}
     <main style={{padding:"0 0 80px",minHeight:"100vh",maxWidth:560,margin:"0 auto",borderLeft:`1px solid ${BO}`,borderRight:`1px solid ${BO}`}}>
@@ -1428,7 +1498,7 @@ export default function App() {
             {i:"✅",n:vq.length,l:"인증 대기",c:"#059669",bg:"#ecfdf5",k:"verify"},
             {i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:"#dc2626",bg:"#fff1f2",k:"fc"},
             {i:"👥",n:accounts.length,l:"전체 계정",c:N,bg:"#f0f4ff",k:"users"},
-            {i:"🛡️",n:secLogs.filter(l=>l.type==="SPAM"||l.type==="ACCOUNT_HIJACK").length,l:"보안 이벤트",c:"#7c3aed",bg:"#f5f3ff",k:"security"},
+            {i:"🛡️",n:secLogs.filter(l=>l.type==="SPAM").length,l:"중복 제목 감지",c:"#7c3aed",bg:"#f5f3ff",k:"security"},
             {i:"📋",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,l:"관리자 접근",c:"#0369a1",bg:"#eff6ff",k:"security"},
           ].map((s,i)=>(
             <div key={i} onClick={()=>setAdminTab(s.k)} style={{background:s.bg,borderRadius:14,padding:"16px 14px",cursor:"pointer",border:`1.5px solid ${adminTab===s.k?s.c:"transparent"}`,transition:"border .15s"}}>
@@ -1667,7 +1737,7 @@ export default function App() {
           {accounts.map(u=>(
             <div key={u.id} style={{background:BG,borderRadius:14,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:38,height:38,borderRadius:10,background:u.role==="teacher"?"#ede9fe":u.id==="11025"?"#dbeafe":"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-                {u.role==="teacher"?"👩‍🏫":u.id==="11025"?"👑":"🙍"}
+                {u.role==="teacher"?"👩🏫":u.id==="11025"?"👑":"🙍"}
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:14,fontWeight:700,color:N}}>{u.name}</div>
@@ -1687,10 +1757,9 @@ export default function App() {
         {adminTab==="security"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
 
           {/* 요약 카드 */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[
-              {l:"도배 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
-              {l:"계정 도용 의심",n:secLogs.filter(l=>l.type==="ACCOUNT_HIJACK").length,c:"#7c3aed",bg:"#f5f3ff",i:"🔐"},
+              {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
               {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
             ].map((s,i)=>(
               <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
@@ -1723,8 +1792,7 @@ export default function App() {
           )}
           {secLogs.map((log,i)=>{
             const typeInfo={
-              SPAM:{label:"도배 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
-              ACCOUNT_HIJACK:{label:"계정 도용 의심",bg:"#f5f3ff",color:"#7c3aed",border:"#ddd6fe",icon:"🔐"},
+              SPAM:{label:"중복 제목 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
               ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
             }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
             return(
@@ -1747,10 +1815,9 @@ export default function App() {
         </div>}
 
       </div>}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[
-              {l:"도배 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
-              {l:"계정 도용 의심",n:secLogs.filter(l=>l.type==="ACCOUNT_HIJACK").length,c:"#7c3aed",bg:"#f5f3ff",i:"🔐"},
+              {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
               {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
             ].map((s,i)=>(
               <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
@@ -1783,8 +1850,7 @@ export default function App() {
           )}
           {secLogs.map((log,i)=>{
             const typeInfo={
-              SPAM:{label:"도배 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
-              ACCOUNT_HIJACK:{label:"계정 도용 의심",bg:"#f5f3ff",color:"#7c3aed",border:"#ddd6fe",icon:"🔐"},
+              SPAM:{label:"중복 제목 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
               ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
             }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
             return(
@@ -1811,7 +1877,7 @@ export default function App() {
 
     {/* 글쓰기 */}
     <Modal open={wModal} onClose={()=>setWModal(false)} title="✏️ 새 글 작성">
-      {isTeacher&&<div style={{background:"#ede9fe",border:"1px solid #c4b5fd",borderRadius:9,padding:"10px 14px",fontSize:12,color:"#5b21b6",marginBottom:14}}>👩‍🏫 선생님 계정으로 게시하면 <strong>'선생님 인증'</strong> 배지가 자동으로 부여됩니다.</div>}
+      {isTeacher&&<div style={{background:"#ede9fe",border:"1px solid #c4b5fd",borderRadius:9,padding:"10px 14px",fontSize:12,color:"#5b21b6",marginBottom:14}}>👩🏫 선생님 계정으로 게시하면 <strong>'선생님 인증'</strong> 배지가 자동으로 부여됩니다.</div>}
       {isTeacher&&<div style={{marginBottom:12}}><label style={lbl1}>대상 학년</label>
         <select value={wGrade} onChange={e=>setWGrade(e.target.value)} style={inp1}><option value="공통">공통 (전체 학년)</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
       </div>}
