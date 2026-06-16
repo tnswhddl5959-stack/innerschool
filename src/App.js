@@ -663,67 +663,66 @@ function CalendarPage() {
 
 
 // ── 이달의 급식 ──
-function MealPage(){
+function MealPage({mealData, isAdmin, onEdit}){
   const today = new Date();
-  const curMon = today.getMonth()+1===6?6:5;
-  const [mealMonth,setMealMonth]=useState(curMon);
-  const MEAL_MONTHS={
-    5:{
-      label:"2026년 5월",
-      weeks:[
-        {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
-        {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
-        {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
-        {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
-      ]
-    },
-    6:{
-      label:"2026년 6월",
-      weeks:[
-        {label:"1주차",days:[{d:"6/1",day:"월"},{d:"6/2",day:"화"},{d:"6/3",day:"수"},{d:"6/4",day:"목"},{d:"6/5",day:"금"}]},
-        {label:"2주차",days:[{d:"6/8",day:"월"},{d:"6/9",day:"화"},{d:"6/10",day:"수"},{d:"6/11",day:"목"},{d:"6/12",day:"금"}]},
-        {label:"3주차",days:[{d:"6/15",day:"월"},{d:"6/16",day:"화"},{d:"6/17",day:"수"},{d:"6/18",day:"목"},{d:"6/19",day:"금"}]},
-        {label:"4주차",days:[{d:"6/22",day:"월"},{d:"6/23",day:"화"},{d:"6/24",day:"수"},{d:"6/25",day:"목"},{d:"6/26",day:"금"}]},
-        {label:"5주차",days:[{d:"6/29",day:"월"},{d:"6/30",day:"화"}]},
-      ]
-    }
-  };
-  const mealKeys=Object.keys(MEAL_MONTHS).map(Number);
-  const weeks=MEAL_MONTHS[mealMonth].weeks;
+  const curMon = today.getMonth()+1;
+  const [mealMonth,setMealMonth]=useState(()=>{
+    // 현재 달이 데이터에 있으면 현재 달, 아니면 데이터 중 가장 최근 달
+    const months=[...new Set(Object.keys(mealData).map(k=>parseInt(k.split("/")[0])))].sort((a,b)=>a-b);
+    return months.includes(curMon)?curMon:(months[months.length-1]||curMon);
+  });
+
+  // 선택된 달의 날짜 목록 (정렬)
+  const daysInMonth=Object.keys(mealData)
+    .filter(k=>parseInt(k.split("/")[0])===mealMonth)
+    .sort((a,b)=>{
+      const [am,ad]=a.split("/").map(Number);
+      const [bm,bd]=b.split("/").map(Number);
+      return am!==bm?am-bm:ad-bd;
+    });
+
+  const months=[...new Set(Object.keys(mealData).map(k=>parseInt(k.split("/")[0])))].sort((a,b)=>a-b);
+
   return(
     <div>
-      <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:"#5a6a8a",fontSize:13,marginTop:3}}>세종캐터링 제공</p></div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:"#fff",borderRadius:12,padding:"10px 16px",border:"1px solid #e2e8f4"}}>
-        <button onClick={()=>setMealMonth(v=>Math.max(Math.min(...mealKeys),v-1))} style={{background:mealMonth>Math.min(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth>Math.min(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
-        <div style={{fontWeight:700,fontSize:15,color:"#1a2540"}}>{MEAL_MONTHS[mealMonth].label}</div>
-        <button onClick={()=>setMealMonth(v=>Math.min(Math.max(...mealKeys),v+1))} style={{background:mealMonth<Math.max(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth<Math.max(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
-      </div>
-      {weeks.map((w,wi)=>(
-        <div key={wi} style={{marginBottom:16}}>
-          <div style={{fontSize:13,fontWeight:700,color:"#5a6a8a",marginBottom:8,paddingLeft:2}}>{w.label}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:0}}>
-            {w.days.map(({d,day})=>{
-              const menu=MEAL[d];
-              const isToday=today.getMonth()+1===parseInt(d.split("/")[0])&&today.getDate()===parseInt(d.split("/")[1]);
-              return(
-                <div key={d} style={{background:isToday?"#f0fdf9":"#fff",border:`1.5px solid ${isToday?"#2dd4a0":"#e2e8f4"}`,borderRadius:12,padding:"12px 14px"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?8:0}}>
-                    <span style={{background:isToday?"#2dd4a0":"#0f1f3d",color:isToday?"#0f1f3d":"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:isToday?"#2dd4a0":"#1a2540"}}>{d.split("/")[0]}월 {d.split("/")[1]}일</span>
-                    {isToday&&<span style={{fontSize:11,fontWeight:700,color:"#2dd4a0",background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
-                  </div>
-                  {menu
-                    ?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                      {menu.map((item,i)=><span key={i} style={{background:"#f4f6fb",border:"1px solid #e2e8f4",borderRadius:5,padding:"3px 8px",fontSize:12,color:"#1a2540"}}>{item}</span>)}
-                    </div>
-                    :<div style={{fontSize:12,color:"#9aa5c0"}}>휴업일</div>
-                  }
-                </div>
-              );
-            })}
-          </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div>
+          <h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1>
+          <p style={{color:SO,fontSize:13,marginTop:3}}>세종캐터링 제공</p>
         </div>
-      ))}
+        {isAdmin&&<Btn onClick={onEdit} style={{display:"flex",alignItems:"center",gap:6,background:N,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:12,fontWeight:700}}>✏️ 급식 편집</Btn>}
+      </div>
+      {/* 달 선택 */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:BG,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO}`}}>
+        <button onClick={()=>{const i=months.indexOf(mealMonth);if(i>0)setMealMonth(months[i-1]);}} style={{background:months.indexOf(mealMonth)>0?N:"#e2e8f4",color:months.indexOf(mealMonth)>0?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
+        <div style={{fontWeight:700,fontSize:15,color:TX}}>2026년 {mealMonth}월</div>
+        <button onClick={()=>{const i=months.indexOf(mealMonth);if(i<months.length-1)setMealMonth(months[i+1]);}} style={{background:months.indexOf(mealMonth)<months.length-1?N:"#e2e8f4",color:months.indexOf(mealMonth)<months.length-1?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
+      </div>
+      {daysInMonth.length===0&&<div style={{textAlign:"center",color:LI,padding:"40px 0",fontSize:14}}>이 달의 급식 정보가 없어요</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {daysInMonth.map(d=>{
+          const menu=mealData[d];
+          const [mo,da]=d.split("/").map(Number);
+          const isToday=today.getMonth()+1===mo&&today.getDate()===da;
+          const weekDays=["일","월","화","수","목","금","토"];
+          const day=weekDays[new Date(2026,mo-1,da).getDay()];
+          return(
+            <div key={d} style={{background:isToday?"#f0fdf9":BG,border:`1.5px solid ${isToday?M:BO}`,borderRadius:12,padding:"12px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?.length?8:0}}>
+                <span style={{background:isToday?M:N,color:isToday?N:"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
+                <span style={{fontSize:13,fontWeight:700,color:isToday?MD:TX}}>{mo}월 {da}일</span>
+                {isToday&&<span style={{fontSize:11,fontWeight:700,color:MD,background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
+              </div>
+              {menu?.length
+                ?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {menu.map((item,i)=><span key={i} style={{background:"#f4f6fb",border:`1px solid ${BO}`,borderRadius:5,padding:"3px 8px",fontSize:12,color:TX}}>{item}</span>)}
+                </div>
+                :<div style={{fontSize:12,color:LI}}>휴업일</div>
+              }
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -798,11 +797,18 @@ export default function App() {
   // 알림
   const [notiList,setNotiList]=useState([]);
   const [notiOpen,setNotiOpen]=useState(false);
+  // 급식 데이터 (Firebase에서 로드, 없으면 하드코딩 MEAL 사용)
+  const [mealData,setMealData]=useState(MEAL);
+  // 급식 편집 모달
+  const [mealEditModal,setMealEditModal]=useState(false);
+  const [mealEditDate,setMealEditDate]=useState(""); // "7/1" 형식
+  const [mealEditItems,setMealEditItems]=useState(""); // 줄바꿈 구분 텍스트
+  const [mealEditTarget,setMealEditTarget]=useState(null); // 편집 중인 날짜 키
 
 
   // 오늘 급식
   const _today = new Date();
-  const todayMeal = MEAL[`${_today.getMonth()+1}/${_today.getDate()}`] || null;
+  const todayMeal = mealData[`${_today.getMonth()+1}/${_today.getDate()}`] || null;
 
   // D-day 계산 (2차 지필평가 6월 30일)
   const _target = new Date(2026, 5, 30); _target.setHours(0,0,0,0);
@@ -853,6 +859,9 @@ export default function App() {
       if(savedIdList&&savedIdList.length>0) setIdList(savedIdList);
       const savedPrivacyDays=await fbGet("privacyDays");
       if(savedPrivacyDays!=null){ setPrivacyDays(savedPrivacyDays); setPrivacyDaysInput(String(savedPrivacyDays)); } else { setPrivacyDays(7); setPrivacyDaysInput("7"); }
+      // 급식 데이터 로드 (없으면 하드코딩 MEAL 유지)
+      const savedMeal=await fbGet("mealData");
+      if(savedMeal&&Object.keys(savedMeal).length>0) setMealData(savedMeal);
       // 보안 로그 로드
       const savedSecLogs=await fbGet("secLogs");
       if(savedSecLogs&&savedSecLogs.length>0) setSecLogs(savedSecLogs);
@@ -1477,7 +1486,7 @@ export default function App() {
       {page==="calendar"&&<CalendarPage/>}
 
       {/* ── 이달의 급식 ── */}
-      {page==="meal"&&<MealPage/>}
+      {page==="meal"&&<MealPage mealData={mealData} isAdmin={isAdmin} onEdit={()=>setMealEditModal(true)}/>}
 
       {/* ── 내 계정 ── */}
       {page==="profile"&&<ProfilePage user={user} isTeacher={isTeacher} isAdmin={isAdmin} accounts={accounts} onUpdate={onAccountUpdate} onDelete={onAccountDelete}/>}
@@ -2048,6 +2057,83 @@ export default function App() {
       <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
         <Btn onClick={()=>setInquiryModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
         <Btn onClick={submitInquiry} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>문의 접수</Btn>
+      </div>
+    </Modal>
+
+    {/* 🍱 급식 편집 모달 */}
+    <Modal open={mealEditModal} onClose={()=>setMealEditModal(false)} title="🍱 급식 편집">
+      {/* 날짜별 목록 */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:N,marginBottom:10}}>등록된 급식 날짜</div>
+        <div style={{maxHeight:240,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+          {Object.keys(mealData).sort((a,b)=>{
+            const [am,ad]=a.split("/").map(Number);
+            const [bm,bd]=b.split("/").map(Number);
+            return am!==bm?am-bm:ad-bd;
+          }).map(dateKey=>(
+            <div key={dateKey} style={{display:"flex",alignItems:"center",gap:8,background:"#f6f8fc",borderRadius:8,padding:"8px 10px",border:`1px solid ${BO}`}}>
+              <span style={{fontSize:12,fontWeight:700,color:N,minWidth:36}}>{dateKey}</span>
+              <span style={{fontSize:11,color:SO,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{mealData[dateKey].join(", ")}</span>
+              <Btn onClick={()=>{
+                setMealEditTarget(dateKey);
+                setMealEditDate(dateKey);
+                setMealEditItems(mealData[dateKey].join("\n"));
+              }} style={{padding:"3px 9px",background:MS,color:"#0e8a5f",borderRadius:5,fontSize:11,fontWeight:600,flexShrink:0}}>수정</Btn>
+              <Btn onClick={async()=>{
+                if(!window.confirm(`${dateKey} 급식을 삭제할까요?`))return;
+                const updated={...mealData};
+                delete updated[dateKey];
+                setMealData(updated);
+                await fbSet("mealData",updated);
+                toast_(`${dateKey} 급식이 삭제됐어요`);
+              }} style={{padding:"3px 9px",background:"#fee2e2",color:"#991b1b",borderRadius:5,fontSize:11,fontWeight:600,flexShrink:0}}>삭제</Btn>
+            </div>
+          ))}
+          {Object.keys(mealData).length===0&&<div style={{textAlign:"center",color:LI,fontSize:13,padding:"16px 0"}}>등록된 급식이 없어요</div>}
+        </div>
+      </div>
+
+      {/* 날짜 추가/수정 입력 */}
+      <div style={{borderTop:`1px solid ${BO}`,paddingTop:14}}>
+        <div style={{fontSize:13,fontWeight:700,color:N,marginBottom:10}}>
+          {mealEditTarget?"✏️ 급식 수정":"➕ 급식 추가"}
+        </div>
+        <div style={{marginBottom:10}}>
+          <label style={lbl1}>날짜 <span style={{color:SO,fontWeight:400}}>(예: 7/1)</span></label>
+          <input
+            value={mealEditDate}
+            onChange={e=>setMealEditDate(e.target.value)}
+            placeholder="월/일 형식 (예: 7/1)"
+            style={inp1}
+            disabled={!!mealEditTarget}
+          />
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={lbl1}>메뉴 항목 <span style={{color:SO,fontWeight:400}}>(한 줄에 하나씩)</span></label>
+          <textarea
+            value={mealEditItems}
+            onChange={e=>setMealEditItems(e.target.value)}
+            rows={6}
+            placeholder={"흑미밥\n소고기미역국\n닭갈비\n포기김치"}
+            style={{...inp1,resize:"vertical",boxSizing:"border-box"}}
+          />
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          {mealEditTarget&&<Btn onClick={()=>{setMealEditTarget(null);setMealEditDate("");setMealEditItems("");}} style={{padding:"9px 14px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>}
+          <Btn onClick={async()=>{
+            const dateKey=mealEditDate.trim();
+            if(!dateKey||!/^\d+\/\d+$/.test(dateKey)){toast_("날짜를 월/일 형식으로 입력해주세요 (예: 7/1)");return;}
+            const items=mealEditItems.split("\n").map(s=>s.trim()).filter(Boolean);
+            if(items.length===0){toast_("메뉴 항목을 하나 이상 입력해주세요");return;}
+            const updated={...mealData,[dateKey]:items};
+            setMealData(updated);
+            await fbSet("mealData",updated);
+            setMealEditTarget(null);setMealEditDate("");setMealEditItems("");
+            toast_(`${dateKey} 급식이 ${mealEditTarget?"수정":"등록"}됐어요 🍱`);
+          }} style={{flex:1,padding:"9px 0",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>
+            {mealEditTarget?"저장":"추가하기"}
+          </Btn>
+        </div>
       </div>
     </Modal>
 
