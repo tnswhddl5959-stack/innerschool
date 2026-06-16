@@ -738,9 +738,11 @@ export default function App() {
   const [curWiki,setCurWiki]=useState(null);
   const [adminTab,setAdminTab]=useState("id");
   // 개인정보 보호 설정
-  const [privacyDays,setPrivacyDays]=useState(7); // 승인 후 N일 뒤 자동 마스킹
+  const [privacyDays,setPrivacyDays]=useState(7);
   const [privacyDaysInput,setPrivacyDaysInput]=useState("7");
   const [privacySettingsOpen,setPrivacySettingsOpen]=useState(false);
+  // 보안 로그
+  const [secLogs,setSecLogs]=useState([]);
   const [toast,setToast]=useState("");
   // 글쓰기
   const [wModal,setWModal]=useState(false);
@@ -815,7 +817,7 @@ export default function App() {
     if(result.outcome==="accepted") toast_("앱이 설치됐어요! 😊");
     setDeferredPrompt(null); setShowInstall(false);
   };
-  const goPage = p => { setPage(p); setSidebar(false); setCurWiki(null); };
+  
 
   // ── 초기 로드 ──
   useEffect(()=>{
@@ -836,6 +838,9 @@ export default function App() {
       if(savedIdList&&savedIdList.length>0) setIdList(savedIdList);
       const savedPrivacyDays=await fbGet("privacyDays");
       if(savedPrivacyDays!=null){ setPrivacyDays(savedPrivacyDays); setPrivacyDaysInput(String(savedPrivacyDays)); } else { setPrivacyDays(7); setPrivacyDaysInput("7"); }
+      // 보안 로그 로드
+      const savedSecLogs=await fbGet("secLogs");
+      if(savedSecLogs&&savedSecLogs.length>0) setSecLogs(savedSecLogs);
       const sessStr=localStorage.getItem("innerschool_sess");
       const sess=sessStr?JSON.parse(sessStr):null;
       if(sess&&sess.userId){
@@ -872,6 +877,28 @@ export default function App() {
       if(!acc){alert("이름, 비밀번호 또는 교과목이 일치하지 않습니다.");return;}
       setIsAdmin(false); setIsTeacher(true);
       setUser({name:acc.name,id:acc.id,grade:"교사",room:acc.subject||"",status:"ok"});
+    }
+    // 🔐 계정 도용 감지 — 이미 다른 계정으로 로그인된 세션이 있는데 다른 학번으로 로그인 시도
+    const sessStr=localStorage.getItem("innerschool_sess");
+    if(sessStr){
+      try{
+        const sess=JSON.parse(sessStr);
+        if(sess.userId&&sess.userId!==acc.id){
+          // 다른 계정 세션이 살아있는 상태에서 새 로그인 시도
+          const logEntry={
+            type:"ACCOUNT_HIJACK",
+            detail:`⚠️ 기존 로그인 세션(${sess.userId}) 유지 중 다른 계정(${acc.id} ${acc.name})으로 로그인 시도`,
+            userId:acc.id,
+            userName:acc.name,
+            time:new Date().toLocaleString("ko-KR"),
+            createdAt:Date.now(),
+          };
+          const prev=await fbGet("secLogs")||[];
+          const next=[logEntry,...prev].slice(0,200);
+          setSecLogs(next);
+          await fbSet("secLogs",next);
+        }
+      }catch{}
     }
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:acc.id}));
     setScr("app"); setPage("board");
@@ -913,6 +940,53 @@ export default function App() {
   const onAccountUpdate=(newAcc,newUser)=>{ setAccounts(newAcc); setUser(newUser); };
   const onAccountDelete=()=>{ setScr("login"); };
 
+  // ── 🛡️ 보안 에이전트 ──
+  // 보안 로그 기록 함수
+  const secLog=async(type,detail,targetUser=null)=>{
+    const entry={
+      type,        // "SPAM","ADMIN_ACCESS","ACCOUNT_HIJACK"
+      detail,
+      userId:user.id||targetUser,
+      userName:user.name||targetUser,
+      time:new Date().toLocaleString("ko-KR"),
+      createdAt:Date.now(),
+    };
+    const prev=await fbGet("secLogs")||[];
+    // 최대 200개 보관
+    const next=[entry,...prev].slice(0,200);
+    setSecLogs(next);
+    await fbSet("secLogs",next);
+    return entry;
+  };
+
+  // 도배·스팸 감지 (5분 내 3건 이상 게시 시 차단)
+  const SPAM_WINDOW=5*60*1000; // 5분
+  const SPAM_LIMIT=3;
+  const checkSpam=()=>{
+    const now=Date.now();
+    const recent=posts.filter(p=>
+      p.realAuthor===user.name &&
+      !p.anon &&
+      (now-(p.createdAt||0))<SPAM_WINDOW
+    );
+    // 익명 포함해서 실명 기준으로 체크
+    const recentAll=posts.filter(p=>
+      p.realAuthor===user.name &&
+      (now-(p.createdAt||0))<SPAM_WINDOW
+    );
+    return recentAll.length>=SPAM_LIMIT;
+  };
+
+  // 관리자 페이지 접근 로그 (goPage 래핑)
+  const goPage=p=>{
+    setPage(p); setSidebar(false); setCurWiki(null);
+    if(p==="admin"&&isAdmin){
+      secLog("ADMIN_ACCESS",`관리자 페이지 접근`);
+    }
+  };
+
+  // 계정 도용 감지 - doLogin 내부에서 세션 비교로 처리
+
   // ── 게시글 ──
   const submitPost=async()=>{
     if(!isTeacher&&!wType){toast_("유형을 선택해주세요");return;}
@@ -920,6 +994,12 @@ export default function App() {
     if(!wBody.trim()&&wImages.length===0){toast_("내용을 입력하거나 이미지를 첨부해주세요");return;}
     if(hasBad(wTitle)||hasBad(wBody)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
     if(!isTeacher&&wType==="verified"&&!wSrc.trim()){toast_("확인 근거를 입력해주세요");return;}
+    // 🚨 도배·스팸 감지 (선생님·관리자 제외) — 차단 없이 경고+로그만
+    if(!isTeacher&&!isAdmin&&checkSpam()){
+      await secLog("SPAM",`도배 감지: 5분 내 ${SPAM_LIMIT}건 이상 게시 시도 ("${wTitle.trim().slice(0,20)}")`);
+      toast_("🚨 짧은 시간에 게시글을 너무 많이 올렸어요. 잠시 후 다시 시도해주세요.");
+      return;
+    }
     const grade=isTeacher?wGrade:user.grade.replace("학년","");
     const now=new Date();
     const dateStr=now.getFullYear()+"."+String(now.getMonth()+1).padStart(2,"0")+"."+String(now.getDate()).padStart(2,"0");
@@ -1125,27 +1205,7 @@ export default function App() {
       </div>}
 
       {/* ── 게시판 ── */}
-      {page==="board"&&<div>
-        {/* 검색창 */}
-        <div style={{display:"flex",alignItems:"center",gap:8,background:"#f6f8fc",border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
-          <span style={{fontSize:15}}>🔍</span>
-          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
-            placeholder="수행평가, 시험범위, 급식 검색"
-            style={{border:0,background:"transparent",outline:0,fontFamily:"inherit",flex:1,color:TX,fontSize:14}}/>
-          {searchQ&&<span onClick={()=>setSearchQ("")} style={{cursor:"pointer",color:LI,fontSize:14}}>✕</span>}
-        </div>
-        {/* 카테고리 칩 */}
-        <div style={{display:"flex",gap:8,padding:"0 18px 12px",overflowX:"auto",scrollbarWidth:"none"}}>
-          {["전체","📝 수행평가","📚 학업·시험","🎓 입시","📊 SLAT","🎨 동아리","📅 행사","🍱 급식","📢 공지","🙋 질문"].map(c=>(
-            <Btn key={c} onClick={()=>setCat(c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
-              color:cat===c?BG:SO,
-              background:cat===c?TX:"#f6f8fc",
-              border:`1px solid ${cat===c?TX:BO}`,
-              borderRadius:999,padding:"7px 14px",whiteSpace:"nowrap"}}>
-              {c}
-            </Btn>
-          ))}
-        </div>
+      {page==="board"&&<div style={{padding:"0 18px"}}>
 
         {/* 승인 대기 */}
         {!isAdmin&&!isTeacher&&user.status==="pending"&&<div style={{background:"#fef3c7",border:"1px solid #fde047",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
@@ -1163,22 +1223,35 @@ export default function App() {
         </div>}
 
         {(isAdmin||isTeacher||user.status==="ok")&&<>
-          {/* 학년 탭 */}
-          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
+          {/* ── 검색창 (1개) ── */}
+          <div style={{position:"relative",margin:"14px 0 12px"}}>
+            <span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
+            <input
+              value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+              placeholder="제목이나 내용으로 검색하세요"
+              style={{width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:12,padding:"11px 38px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}
+            />
+            {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
+          </div>
+
+          {/* ── 학년 탭 ── */}
+          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",scrollbarWidth:"none"}}>
             {["전체","1학년","2학년","3학년","공통"].map(g=>(
-              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:BG,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{g}</Btn>
+              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}}
+                style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:BG,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>
+                {g}
+              </Btn>
             ))}
           </div>
-          {/* 세부 카테고리 */}
-          <div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
+
+          {/* ── 카테고리 칩 (1줄) ── */}
+          <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,scrollbarWidth:"none",paddingBottom:2}}>
             {["전체",...SUB_CATS].map(c=>(
-              <Btn key={c} onClick={()=>setCat(c)} style={{padding:"5px 12px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:BG,color:cat===c?N:SO,fontSize:12,fontWeight:500,whiteSpace:"nowrap",flexShrink:0}}>{c}</Btn>
+              <Btn key={c} onClick={()=>setCat(c)}
+                style={{padding:"6px 13px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:BG,color:cat===c?N:SO,fontSize:12,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>
+                {c}
+              </Btn>
             ))}
-          </div>
-          {/* 검색 */}
-          <div style={{position:"relative",marginBottom:10}}>
-            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 제목이나 내용으로 검색하세요" style={{width:"100%",background:BG,border:`1.5px solid ${BO}`,borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
-            {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
           </div>
           {/* 정렬 + 글쓰기 */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
@@ -1348,13 +1421,15 @@ export default function App() {
           <p style={{color:SO,fontSize:12,marginTop:4}}>총관리자 전용 페이지</p>
         </div>
 
-        {/* 통계 카드 2×2 */}
+        {/* 통계 카드 2×2 + 보안 */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
           {[
             {i:"🪪",n:idList.filter(r=>r.status==="pending").length,l:"학생증 대기",c:"#d97706",bg:"#fffbeb",k:"id"},
             {i:"✅",n:vq.length,l:"인증 대기",c:"#059669",bg:"#ecfdf5",k:"verify"},
             {i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:"#dc2626",bg:"#fff1f2",k:"fc"},
             {i:"👥",n:accounts.length,l:"전체 계정",c:N,bg:"#f0f4ff",k:"users"},
+            {i:"🛡️",n:secLogs.filter(l=>l.type==="SPAM"||l.type==="ACCOUNT_HIJACK").length,l:"보안 이벤트",c:"#7c3aed",bg:"#f5f3ff",k:"security"},
+            {i:"📋",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,l:"관리자 접근",c:"#0369a1",bg:"#eff6ff",k:"security"},
           ].map((s,i)=>(
             <div key={i} onClick={()=>setAdminTab(s.k)} style={{background:s.bg,borderRadius:14,padding:"16px 14px",cursor:"pointer",border:`1.5px solid ${adminTab===s.k?s.c:"transparent"}`,transition:"border .15s"}}>
               <div style={{fontSize:22,marginBottom:6}}>{s.i}</div>
@@ -1365,8 +1440,8 @@ export default function App() {
         </div>
 
         {/* 탭 네비게이션 */}
-        <div style={{display:"flex",gap:4,background:"#f1f3f8",padding:4,borderRadius:12,marginBottom:16}}>
-          {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"}].map(t=>(
+        <div style={{display:"flex",gap:4,background:"#f1f3f8",padding:4,borderRadius:12,marginBottom:16,overflowX:"auto"}}>
+          {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"},{k:"security",l:"🛡️ 보안"}].map(t=>(
             <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 2px",textAlign:"center",borderRadius:8,fontSize:11,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",boxShadow:adminTab===t.k?"0 1px 4px rgba(0,0,0,.08)":"none",whiteSpace:"nowrap",transition:"all .15s"}}>{t.l}</Btn>
           ))}
         </div>
@@ -1607,7 +1682,129 @@ export default function App() {
         </div>}
 
         {adminTab==="inquiry"&&<InquiryTab/>}
+
+        {/* ── 🛡️ 보안 탭 ── */}
+        {adminTab==="security"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+          {/* 요약 카드 */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[
+              {l:"도배 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
+              {l:"계정 도용 의심",n:secLogs.filter(l=>l.type==="ACCOUNT_HIJACK").length,c:"#7c3aed",bg:"#f5f3ff",i:"🔐"},
+              {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
+            ].map((s,i)=>(
+              <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
+                <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
+                <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
+                <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 필터 + 로그 초기화 */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+            <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
+            <Btn onClick={async()=>{
+              if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
+              setSecLogs([]); await fbSet("secLogs",[]);
+              toast_("보안 로그가 초기화됐어요");
+            }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
+              🗑 전체 초기화
+            </Btn>
+          </div>
+
+          {/* 로그 목록 */}
+          {secLogs.length===0&&(
+            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
+              <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
+              <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
+            </div>
+          )}
+          {secLogs.map((log,i)=>{
+            const typeInfo={
+              SPAM:{label:"도배 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
+              ACCOUNT_HIJACK:{label:"계정 도용 의심",bg:"#f5f3ff",color:"#7c3aed",border:"#ddd6fe",icon:"🔐"},
+              ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
+            }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
+            return(
+              <div key={i} style={{background:typeInfo.bg,borderRadius:12,padding:"13px 16px",border:`1.5px solid ${typeInfo.border}`}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:16}}>{typeInfo.icon}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:typeInfo.color,background:"#fff",padding:"2px 8px",borderRadius:5,border:`1px solid ${typeInfo.border}`}}>{typeInfo.label}</span>
+                  </div>
+                  <span style={{fontSize:11,color:SO}}>{log.time}</span>
+                </div>
+                <div style={{fontSize:13,color:N,fontWeight:500,marginBottom:4}}>{log.detail}</div>
+                <div style={{fontSize:11,color:SO}}>
+                  {log.userName&&<span>👤 {log.userName}</span>}
+                  {log.userId&&<span style={{marginLeft:8}}>ID: {log.userId}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>}
+
       </div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[
+              {l:"도배 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
+              {l:"계정 도용 의심",n:secLogs.filter(l=>l.type==="ACCOUNT_HIJACK").length,c:"#7c3aed",bg:"#f5f3ff",i:"🔐"},
+              {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
+            ].map((s,i)=>(
+              <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
+                <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
+                <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
+                <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 필터 + 로그 초기화 */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+            <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
+            <Btn onClick={async()=>{
+              if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
+              setSecLogs([]); await fbSet("secLogs",[]);
+              toast_("보안 로그가 초기화됐어요");
+            }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
+              🗑 전체 초기화
+            </Btn>
+          </div>
+
+          {/* 로그 목록 */}
+          {secLogs.length===0&&(
+            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
+              <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
+              <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
+            </div>
+          )}
+          {secLogs.map((log,i)=>{
+            const typeInfo={
+              SPAM:{label:"도배 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
+              ACCOUNT_HIJACK:{label:"계정 도용 의심",bg:"#f5f3ff",color:"#7c3aed",border:"#ddd6fe",icon:"🔐"},
+              ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
+            }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
+            return(
+              <div key={i} style={{background:typeInfo.bg,borderRadius:12,padding:"13px 16px",border:`1.5px solid ${typeInfo.border}`}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:16}}>{typeInfo.icon}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:typeInfo.color,background:"#fff",padding:"2px 8px",borderRadius:5,border:`1px solid ${typeInfo.border}`}}>{typeInfo.label}</span>
+                  </div>
+                  <span style={{fontSize:11,color:SO}}>{log.time}</span>
+                </div>
+                <div style={{fontSize:13,color:N,fontWeight:500,marginBottom:4}}>{log.detail}</div>
+                <div style={{fontSize:11,color:SO}}>
+                  {log.userName&&<span>👤 {log.userName}</span>}
+                  {log.userId&&<span style={{marginLeft:8}}>ID: {log.userId}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>}
     </main>
 
     {/* ── 모달들 ── */}
