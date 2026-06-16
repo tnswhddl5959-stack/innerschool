@@ -126,80 +126,124 @@ const Chip = ({type,status}) => {
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif"};
-const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 28px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
-const inp0 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:".15s"};
-const inp1 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
-const lbl0 = {color:SO,fontSize:12,fontWeight:600,display:"block",marginBottom:6};
-const lbl1 = {fontSize:12,fontWeight:500,color:SO,display:"block",marginBottom:6};
+const authBox = {minHeight:"100vh",background:"#f0f4fb",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",fontFamily:"'Pretendard',sans-serif"};
+const authCard = {background:"#fff",borderRadius:20,padding:"32px 24px",width:"100%",maxWidth:400,maxHeight:"96vh",overflowY:"auto",boxShadow:"0 8px 40px rgba(26,37,64,.10)"};
+const inp0 = {width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:11,padding:"13px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border .15s"};
+const lbl0 = {color:SO,fontSize:12,fontWeight:700,display:"block",marginBottom:6,letterSpacing:".2px"};
 
-const AuthHeader = () => <>
-  <div style={{fontSize:22,fontWeight:800,color:TX,letterSpacing:"-.4px",marginBottom:4}}>INNER<span style={{color:MD}}>SCHOOL</span></div>
-  <div style={{color:SO,fontSize:12,marginBottom:28}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
-</>;
+const AuthHeader = ({sub}) => (
+  <div style={{marginBottom:28,textAlign:"center"}}>
+    {/* 로고 아이콘 */}
+    <div style={{width:56,height:56,borderRadius:16,background:N,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",boxShadow:"0 4px 16px rgba(26,37,64,.18)"}}>
+      <span style={{fontSize:24,fontWeight:900,color:M,fontFamily:"'Pretendard',sans-serif",letterSpacing:"-1px",lineHeight:1}}>IS</span>
+    </div>
+    <div style={{fontSize:20,fontWeight:900,color:N,letterSpacing:"-.5px",marginBottom:4}}>
+      INNER<span style={{color:MD}}>SCHOOL</span>
+    </div>
+    <div style={{color:SO,fontSize:11,lineHeight:1.5}}>{sub||"교육기회 공정성 실현을 위한 정보 공유 시스템"}</div>
+  </div>
+);
 
 // ── 로그인 화면 ──
 function LoginRole({onSelect,onReg}) {
-  return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>로그인</div>
-    <div style={{color:SO,fontSize:13,marginBottom:20}}>로그인할 계정을 선택해주세요</div>
-    <div style={{display:"flex",gap:12,marginBottom:20}}>
-      {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
-        <div key={r.k} onClick={()=>onSelect(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"22px 12px",textAlign:"center",cursor:"pointer",background:CHIP,transition:".15s"}}>
-          <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
-          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
+  return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader/>
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:17,fontWeight:800,color:N,marginBottom:4}}>로그인</div>
+          <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
         </div>
-      ))}
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+          {[{k:"student",i:"🎒",l:"학생",d:"학번으로 로그인"},{k:"teacher",i:"👩‍🏫",l:"선생님",d:"교과목으로 로그인"}].map(r=>(
+            <div key={r.k} onClick={()=>onSelect(r.k)}
+              style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc",transition:".15s"}}>
+              <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:700,color:N}}>{r.l}</div>
+                <div style={{fontSize:12,color:SO,marginTop:1}}>{r.d}</div>
+              </div>
+              <div style={{marginLeft:"auto",color:LI,fontSize:16}}>›</div>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",fontSize:13,color:SO}}>
+          계정이 없으신가요?{" "}
+          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
+        </div>
+      </div>
     </div>
-    <div style={{textAlign:"center",color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
-    </div>
-  </div></div>;
+  );
 }
 
 function LoginStudent({onBack,onLogin,onReg}) {
   const [id,setId]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
-  return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생 로그인</span>
+  return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader sub="학생 로그인"/>
+        {/* 뒤로가기 */}
+        <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:20,fontFamily:"inherit"}}>
+          <span style={{fontSize:16}}>←</span> 다른 계정으로 로그인
+        </button>
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>학번</label>
+          <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0} maxLength={5}/>
+          <div style={{fontSize:11,color:LI,marginTop:5}}>학년(1자리) + 반(2자리) + 번호(2자리) · 1학년 1반 1번 → 10101</div>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={lbl0}>비밀번호</label>
+          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(id.length!==5?setErr("학번은 5자리 숫자여야 합니다"):!pw.trim()?setErr("비밀번호를 입력해주세요"):(setErr(""),onLogin(id,pw,"student")))} placeholder="비밀번호 입력" style={inp0}/>
+        </div>
+        {err&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>}
+        <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}}
+          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"-.2px"}}>
+          로그인
+        </button>
+        <div style={{textAlign:"center",marginTop:20,fontSize:13,color:SO}}>
+          계정이 없으신가요?{" "}
+          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
+        </div>
+      </div>
     </div>
-    <div style={{marginBottom:4}}><label style={lbl0}>학번</label>
-      <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0}/>
-    </div>
-    <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,marginBottom:14}}>학년(1)+반(2자리)+번호(2자리) · 예: 1학년 1반 1번 → 10101</div>
-    <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label>
-      <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
-    </div>
-    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
-    <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
-    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
-    </div>
-  </div></div>;
+  );
 }
 
 function LoginTeacher({onBack,onLogin,onReg}) {
   const [name,setName]=useState(""); const [sub,setSub]=useState("국어"); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
-  return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>👩‍🏫 선생님 로그인</span>
+  return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader sub="선생님 로그인"/>
+        <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:20,fontFamily:"inherit"}}>
+          <span style={{fontSize:16}}>←</span> 다른 계정으로 로그인
+        </button>
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>이름</label>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>담당 교과목</label>
+          <select value={sub} onChange={e=>setSub(e.target.value)} style={{...inp0,appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center"}}>
+            {SUBS.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={lbl0}>비밀번호</label>
+          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
+        </div>
+        {err&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>}
+        <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}}
+          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          로그인
+        </button>
+        <div style={{textAlign:"center",marginTop:20,fontSize:13,color:SO}}>
+          계정이 없으신가요?{" "}
+          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
+        </div>
+      </div>
     </div>
-    <div style={{marginBottom:14}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
-    <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label>
-      <select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select>
-    </div>
-    <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/></div>
-    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
-    <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
-    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
-    </div>
-  </div></div>;
+  );
 }
 
 function Login({onLogin,onReg}) {
@@ -227,14 +271,9 @@ function Register({onDone,onBack}) {
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
     setErr("");
-    // 학생증 사진 업로드
     if(preview&&previewFile){
-      try{
-        const url=await uploadImage(previewFile);
-        onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});
-      }catch{
-        onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
-      }
+      try{const url=await uploadImage(previewFile);onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});}
+      catch{onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});}
     } else {
       onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
     }
@@ -247,93 +286,180 @@ function Register({onDone,onBack}) {
     setErr(""); onDone({role:"teacher",name,subject:sub,pw});
   };
 
-  const ErrBox = () => err ? <div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"8px 12px",border:"1px solid #fed7aa"}}>{err}</div> : null;
+  const ErrBox = () => err
+    ? <div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>
+    : null;
 
-  if(!role) return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>가입</div>
-    <div style={{color:SO,fontSize:13,marginBottom:20}}>가입할 계정을 선택해주세요</div>
-    <div style={{display:"flex",gap:12,marginBottom:20}}>
-      {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
-        <div key={r.k} onClick={()=>setRole(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"20px 12px",textAlign:"center",cursor:"pointer",background:CHIP}}>
-          <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
-          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
+  /* ── 역할 선택 ── */
+  if(!role) return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader/>
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:17,fontWeight:800,color:N,marginBottom:4}}>가입</div>
+          <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
         </div>
-      ))}
-    </div>
-    <div style={{textAlign:"center",color:"rgba(255,255,255,0.45)",fontSize:13}}>
-      이미 계정이 있으신가요? <span onClick={onBack} style={{color:MD,fontWeight:600,cursor:"pointer"}}>로그인</span>
-    </div>
-  </div></div>;
-
-  if(role==="student") return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
-      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
-    </div>
-    <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/></div>
-    <div style={{marginBottom:4}}><label style={lbl0}>학년 · 반 · 번호</label>
-      <div style={{display:"flex",gap:6}}>
-        <select value={grade} onChange={e=>setGrade(e.target.value)} style={{...inp0,flex:1}}><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
-        <select value={room} onChange={e=>setRoom(e.target.value)} style={{...inp0,flex:1}}>{Array.from({length:10},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}반</option>)}</select>
-        <select value={num} onChange={e=>setNum(e.target.value)} style={{...inp0,flex:1}}>{Array.from({length:35},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}번</option>)}</select>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+          {[{k:"student",i:"🎒",l:"학생",d:"재학생으로 가입 (학생증 인증 필요)"},{k:"teacher",i:"👩‍🏫",l:"선생님",d:"교사 인증코드로 가입"}].map(r=>(
+            <div key={r.k} onClick={()=>setRole(r.k)}
+              style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc"}}>
+              <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:700,color:N}}>{r.l}</div>
+                <div style={{fontSize:11,color:SO,marginTop:1}}>{r.d}</div>
+              </div>
+              <div style={{marginLeft:"auto",color:LI,fontSize:16}}>›</div>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",fontSize:13,color:SO}}>
+          이미 계정이 있으신가요?{" "}
+          <span onClick={onBack} style={{color:MD,fontWeight:700,cursor:"pointer"}}>로그인</span>
+        </div>
       </div>
     </div>
-    <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"8px 12px",fontSize:12,color:SO,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-      <span>🪪</span><span>자동 생성된 학번: <strong style={{color:MD,fontSize:14}}>{sid}</strong></span>
-    </div>
-    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
-    <div style={{marginBottom:14}}>
-      <label style={lbl0}>비밀번호 확인</label>
-      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
-      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
-      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
-    </div>
-    <div style={{marginBottom:14}}>
-      <label style={lbl0}>학생증 사진 <span style={{color:MD}}>*필수</span></label>
-      <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
-        {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
-          :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
-        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
-      </label>
-    </div>
-    <div style={{background:CHIP,border:`1px solid ${BO}`,borderRadius:10,padding:"14px",marginBottom:14}}>
-      <div style={{color:TX,fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
-      <div style={{color:SO,fontSize:11,lineHeight:1.7,marginBottom:10}}>
-        <strong style={{color:TX}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
-        <strong style={{color:TX}}>수집 목적:</strong> 재학생 여부 확인<br/>
-        <strong style={{color:TX}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
-        <strong style={{color:TX}}>제3자 제공:</strong> 없음
-      </div>
-      <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
-        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:16,height:16,accentColor:M}}/>
-        <span style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:M}}>*필수</span></span>
-      </label>
-    </div>
-    <ErrBox/>
-    <button onClick={doStudent} style={{width:"100%",background:agreed?M:"rgba(45,212,160,0.3)",color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit"}}>가입하기</button>
-  </div></div>;
+  );
 
-  return <div style={authBox}><div style={authCard}>
-    <AuthHeader/>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
-      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>👩‍🏫 선생님으로 가입</span>
+  /* ── 학생 가입 ── */
+  if(role==="student") return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader sub="학생 가입"/>
+        <button onClick={()=>{setRole(null);setErr("");}} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:22,fontFamily:"inherit"}}>
+          <span style={{fontSize:16}}>←</span> 다른 계정 유형 선택
+        </button>
+
+        {/* 이름 */}
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>이름</label>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/>
+        </div>
+
+        {/* 학년·반·번호 */}
+        <div style={{marginBottom:6}}>
+          <label style={lbl0}>학년 · 반 · 번호</label>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <select value={grade} onChange={e=>setGrade(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
+              <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+            </select>
+            <select value={room} onChange={e=>setRoom(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
+              {Array.from({length:10},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}반</option>)}
+            </select>
+            <select value={num} onChange={e=>setNum(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
+              {Array.from({length:35},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}번</option>)}
+            </select>
+          </div>
+        </div>
+        {/* 자동 학번 표시 */}
+        <div style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:9,padding:"9px 13px",marginBottom:14}}>
+          <span style={{fontSize:14}}>🪪</span>
+          <span style={{fontSize:12,color:SO}}>자동 생성 학번:</span>
+          <strong style={{fontSize:15,color:MD,letterSpacing:1}}>{sid}</strong>
+        </div>
+
+        {/* 비밀번호 */}
+        <div style={{marginBottom:10}}>
+          <label style={lbl0}>비밀번호</label>
+          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={lbl0}>비밀번호 확인</label>
+          <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력"
+            style={{...inp0,borderColor:pwC?(pw===pwC?"#86efac":"#fca5a5"):BO}}/>
+          {pwC&&<div style={{fontSize:11,marginTop:5,color:pw===pwC?"#16a34a":"#dc2626"}}>
+            {pw===pwC?"✅ 비밀번호가 일치해요":"비밀번호가 일치하지 않아요"}
+          </div>}
+        </div>
+
+        {/* 학생증 사진 */}
+        <div style={{marginBottom:14}}>
+          <label style={{...lbl0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            학생증 사진
+            <span style={{fontSize:10,fontWeight:700,background:"#dcfce7",color:"#16a34a",padding:"2px 7px",borderRadius:5}}>필수</span>
+          </label>
+          <label style={{display:"block",border:`2px dashed ${preview?"#86efac":BO}`,borderRadius:12,padding:preview?6:24,textAlign:"center",cursor:"pointer",background:preview?"#f0fdf4":"#f6f8fc",transition:".2s"}}>
+            {preview
+              ? <img src={preview} alt="" style={{width:"100%",maxHeight:120,objectFit:"cover",borderRadius:8}}/>
+              : <>
+                  <div style={{fontSize:28,marginBottom:6}}>🪪</div>
+                  <div style={{fontSize:12,color:SO}}><span style={{color:MD,fontWeight:700}}>클릭하여 첨부</span> · jpg, png 등</div>
+                </>
+            }
+            <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
+          </label>
+          {preview&&<button onClick={e=>{e.preventDefault();setPreview(null);setPreviewFile(null);}} style={{marginTop:6,background:"none",border:"none",color:SO,fontSize:11,cursor:"pointer",padding:0,fontFamily:"inherit"}}>✕ 사진 제거</button>}
+        </div>
+
+        {/* 개인정보 동의 */}
+        <div style={{background:"#f6f8fc",border:`1px solid ${BO}`,borderRadius:12,padding:"14px",marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:700,color:N,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
+          <div style={{fontSize:11,color:SO,lineHeight:1.8,marginBottom:10}}>
+            <span style={{fontWeight:600,color:TX}}>수집 항목</span> 학생증 사진, 이름, 학번<br/>
+            <span style={{fontWeight:600,color:TX}}>수집 목적</span> 재학생 여부 확인<br/>
+            <span style={{fontWeight:600,color:TX}}>보유 기간</span> 총관리자 검토 완료 후 7일 내 삭제<br/>
+            <span style={{fontWeight:600,color:TX}}>제3자 제공</span> 없음
+          </div>
+          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+            <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:17,height:17,accentColor:MD,flexShrink:0}}/>
+            <span style={{fontSize:12,color:TX,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:MD,fontWeight:700}}>*필수</span></span>
+          </label>
+        </div>
+
+        <ErrBox/>
+        <button onClick={doStudent}
+          style={{width:"100%",background:agreed?N:"#c9cfdb",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit",transition:".2s"}}>
+          가입하기
+        </button>
+      </div>
     </div>
-    <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
-    <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label><select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>
-    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
-    <div style={{marginBottom:14}}>
-      <label style={lbl0}>비밀번호 확인</label>
-      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
-      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
-      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+  );
+
+  /* ── 선생님 가입 ── */
+  return (
+    <div style={authBox}>
+      <div style={authCard}>
+        <AuthHeader sub="선생님 가입"/>
+        <button onClick={()=>{setRole(null);setErr("");}} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:22,fontFamily:"inherit"}}>
+          <span style={{fontSize:16}}>←</span> 다른 계정 유형 선택
+        </button>
+
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>이름</label>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={lbl0}>담당 교과목</label>
+          <select value={sub} onChange={e=>setSub(e.target.value)} style={{...inp0,appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center"}}>
+            {SUBS.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:10}}>
+          <label style={lbl0}>비밀번호</label>
+          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={lbl0}>비밀번호 확인</label>
+          <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력"
+            style={{...inp0,borderColor:pwC?(pw===pwC?"#86efac":"#fca5a5"):BO}}/>
+          {pwC&&<div style={{fontSize:11,marginTop:5,color:pw===pwC?"#16a34a":"#dc2626"}}>
+            {pw===pwC?"✅ 비밀번호가 일치해요":"비밀번호가 일치하지 않아요"}
+          </div>}
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={{...lbl0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            교사 인증코드
+            <span style={{fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 7px",borderRadius:5}}>필수</span>
+          </label>
+          <input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="관리자에게 문의하세요" style={inp0}/>
+        </div>
+        <ErrBox/>
+        <button onClick={doTeacher}
+          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          가입하기
+        </button>
+      </div>
     </div>
-    <div style={{marginBottom:6}}><label style={lbl0}>교사 인증코드 <span style={{color:M}}>*필수</span></label><input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="인증코드를 입력하세요" style={inp0}/></div>
-    <ErrBox/>
-    <button onClick={doTeacher} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:12}}>가입하기</button>
-  </div></div>;
+  );
 }
 
 // ── 프로필 페이지 ──
@@ -607,6 +733,10 @@ export default function App() {
   const [curPost,setCurPost]=useState(null);
   const [curWiki,setCurWiki]=useState(null);
   const [adminTab,setAdminTab]=useState("id");
+  // 개인정보 보호 설정
+  const [privacyDays,setPrivacyDays]=useState(7); // 승인 후 N일 뒤 자동 마스킹
+  const [privacyDaysInput,setPrivacyDaysInput]=useState("7");
+  const [privacySettingsOpen,setPrivacySettingsOpen]=useState(false);
   const [toast,setToast]=useState("");
   // 글쓰기
   const [wModal,setWModal]=useState(false);
@@ -710,6 +840,8 @@ export default function App() {
       if(savedWiki&&savedWiki.length>0) setWiki(savedWiki);
       const savedIdList=await fbGet("idList");
       if(savedIdList&&savedIdList.length>0) setIdList(savedIdList);
+      const savedPrivacyDays=await fbGet("privacyDays");
+      if(savedPrivacyDays!=null){ setPrivacyDays(savedPrivacyDays); setPrivacyDaysInput(String(savedPrivacyDays)); } else { setPrivacyDays(7); setPrivacyDaysInput("7"); }
       const sessStr=localStorage.getItem("innerschool_sess");
       const sess=sessStr?JSON.parse(sessStr):null;
       if(sess&&sess.userId){
@@ -1211,95 +1343,272 @@ export default function App() {
       {page==="profile"&&<ProfilePage user={user} isTeacher={isTeacher} isAdmin={isAdmin} accounts={accounts} onUpdate={onAccountUpdate} onDelete={onAccountDelete}/>}
 
       {/* ── 관리자 대시보드 ── */}
-      {page==="admin"&&isAdmin&&<div>
-        <div style={{marginBottom:16}}><h1 style={{fontSize:21,fontWeight:700}}>⚙️ 관리자 대시보드</h1><p style={{color:SO,fontSize:13,marginTop:3}}>총관리자 전용 페이지</p></div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:18}}>
-          {[{i:"🪪",n:idList.filter(r=>r.status==="pending").length,l:"학생증 대기",c:"#f59e0b"},{i:"✅",n:vq.length,l:"인증 대기",c:"#16a34a"},{i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:AC},{i:"👥",n:accounts.length,l:"전체 계정",c:N}].map((s,i)=>(
-            <div key={i} style={{background:CA,borderRadius:12,padding:"16px",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:20,marginBottom:6}}>{s.i}</div>
-              <div style={{fontSize:26,fontWeight:800,color:s.c,fontFamily:"serif"}}>{s.n}</div>
-              <div style={{fontSize:11,color:SO,marginTop:2}}>{s.l}</div>
+      {page==="admin"&&isAdmin&&<div style={{paddingBottom:24}}>
+
+        {/* 헤더 */}
+        <div style={{marginBottom:20}}>
+          <h1 style={{fontSize:20,fontWeight:800,color:N,letterSpacing:"-0.3px"}}>⚙️ 관리자 대시보드</h1>
+          <p style={{color:SO,fontSize:12,marginTop:4}}>총관리자 전용 페이지</p>
+        </div>
+
+        {/* 통계 카드 2×2 */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+          {[
+            {i:"🪪",n:idList.filter(r=>r.status==="pending").length,l:"학생증 대기",c:"#d97706",bg:"#fffbeb",k:"id"},
+            {i:"✅",n:vq.length,l:"인증 대기",c:"#059669",bg:"#ecfdf5",k:"verify"},
+            {i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:"#dc2626",bg:"#fff1f2",k:"fc"},
+            {i:"👥",n:accounts.length,l:"전체 계정",c:N,bg:"#f0f4ff",k:"users"},
+          ].map((s,i)=>(
+            <div key={i} onClick={()=>setAdminTab(s.k)} style={{background:s.bg,borderRadius:14,padding:"16px 14px",cursor:"pointer",border:`1.5px solid ${adminTab===s.k?s.c:"transparent"}`,transition:"border .15s"}}>
+              <div style={{fontSize:22,marginBottom:6}}>{s.i}</div>
+              <div style={{fontSize:28,fontWeight:900,color:s.c,lineHeight:1}}>{s.n}</div>
+              <div style={{fontSize:11,color:SO,marginTop:5,fontWeight:500}}>{s.l}</div>
             </div>
           ))}
         </div>
-        <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16,overflowX:"auto"}}>
+
+        {/* 탭 네비게이션 */}
+        <div style={{display:"flex",gap:4,background:"#f1f3f8",padding:4,borderRadius:12,marginBottom:16}}>
           {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"}].map(t=>(
-            <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 4px",textAlign:"center",borderRadius:8,fontSize:12,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",whiteSpace:"nowrap"}}>{t.l}</Btn>
+            <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 2px",textAlign:"center",borderRadius:8,fontSize:11,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",boxShadow:adminTab===t.k?"0 1px 4px rgba(0,0,0,.08)":"none",whiteSpace:"nowrap",transition:"all .15s"}}>{t.l}</Btn>
           ))}
         </div>
-        {adminTab==="id"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {idList.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>검토할 학생증이 없어요 🎉</div>}
-          {idList.map(r=>(
-            <div key={r.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+
+        {/* ── 학생증 탭 ── */}
+        {adminTab==="id"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+          {/* 개인정보 보호 패널 */}
+          <div style={{background:"#fffbeb",border:"1.5px solid #fde68a",borderRadius:14,overflow:"hidden"}}>
+            {/* 패널 헤더 */}
+            <div
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 16px",cursor:"pointer"}}
+              onClick={()=>setPrivacySettingsOpen(p=>!p)}
+            >
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:34,height:34,borderRadius:10,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>🔒</div>
                 <div>
-                  <div style={{fontSize:14,fontWeight:700}}>{r.name}{r.isTeacher&&<span style={{marginLeft:6,fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 6px",borderRadius:4}}>교사</span>}</div>
-                  <div style={{fontSize:12,color:SO}}>{r.grade} · {r.id} · {r.date}</div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#78350f"}}>개인정보 보호 설정</div>
+                  <div style={{fontSize:11,color:"#a16207",marginTop:1}}>승인 후 <strong>{privacyDays}일</strong> 경과 시 자동 마스킹</div>
                 </div>
-                <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:r.status==="pending"?"#fef3c7":r.status==="ok"?"#dcfce7":"#fee2e2",color:r.status==="pending"?"#92400e":r.status==="ok"?"#166534":"#991b1b"}}>
-                  {r.status==="pending"?"검토 대기":r.status==="ok"?"승인됨":"차단됨"}
-                </span>
               </div>
-              {r.idPhoto
-                ? <img src={r.idPhoto} alt="학생증" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:8,border:`1px solid ${BO}`,marginBottom:r.status==="pending"?10:0,cursor:"pointer"}} onClick={()=>window.open(r.idPhoto,"_blank")}/>
-                : <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>🪪 학생증 사진 없음</div>
-              }
-              {r.status==="pending"&&<div style={{display:"flex",gap:8}}>
-                <Btn onClick={async()=>{
-                  const newIdList=idList.map(x=>x.id===r.id?{...x,status:"ok"}:x);
-                  setIdList(newIdList); await fbSet("idList",newIdList);
-                  const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"ok"}:a);
-                  setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
-                  toast_(`${r.name} 승인됐어요 ✅`);
-                }} style={{flex:1,background:"#dcfce7",color:"#166534",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 승인</Btn>
-                <Btn onClick={async()=>{
-                  const newIdList=idList.map(x=>x.id===r.id?{...x,status:"blocked"}:x);
-                  setIdList(newIdList); await fbSet("idList",newIdList);
-                  const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"blocked"}:a);
-                  setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
-                  toast_(`${r.name} 차단됐어요 🚫`);
-                }} style={{flex:1,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🚫 차단</Btn>
-              </div>}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {/* 현황 배지 */}
+                <div style={{textAlign:"right",fontSize:10,color:"#a16207",lineHeight:1.5}}>
+                  <div>사진 {idList.filter(r=>r.idPhoto).length}건</div>
+                  <div>마스킹 {idList.filter(r=>r.photoMasked).length}건</div>
+                </div>
+                <span style={{fontSize:12,color:"#a16207",transition:"transform .2s",display:"inline-block",transform:privacySettingsOpen?"rotate(180deg)":"rotate(0deg)"}}>▼</span>
+              </div>
             </div>
-          ))}
+
+            {/* 펼쳐지는 내용 */}
+            {privacySettingsOpen&&<div style={{borderTop:"1px solid #fde68a",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
+              {/* 안내 문구 */}
+              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",fontSize:12,color:"#78350f",lineHeight:1.7,border:"1px solid #fde68a"}}>
+                📋 <strong>개인정보 처리방침</strong><br/>
+                학생증 사진은 본인 확인 목적으로만 수집되며, 승인 후 설정된 기간이 지나면 자동으로 삭제됩니다.
+              </div>
+
+              {/* 기간 설정 */}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:12,color:"#78350f",fontWeight:600,whiteSpace:"nowrap"}}>자동 마스킹</span>
+                <input
+                  type="number" min="1" max="365"
+                  value={privacyDaysInput}
+                  onChange={e=>setPrivacyDaysInput(e.target.value)}
+                  style={{width:52,padding:"6px 8px",borderRadius:8,border:"1.5px solid #fcd34d",fontSize:14,textAlign:"center",background:"#fff",fontWeight:700,color:N,outline:"none"}}
+                />
+                <span style={{fontSize:12,color:"#78350f",fontWeight:600}}>일 후</span>
+                <Btn onClick={async()=>{
+                  const n=parseInt(privacyDaysInput);
+                  if(isNaN(n)||n<1||n>365){toast_("1~365 사이 숫자를 입력해주세요");return;}
+                  setPrivacyDays(n);
+                  await fbSet("privacyDays",n);
+                  toast_(`자동 마스킹 기간 ${n}일로 변경됐어요 🔒`);
+                }} style={{marginLeft:"auto",padding:"6px 14px",background:"#f59e0b",color:"#fff",borderRadius:8,fontSize:12,fontWeight:700,flexShrink:0}}>저장</Btn>
+              </div>
+
+              {/* 일괄 처리 버튼 */}
+              <div style={{display:"flex",gap:8}}>
+                <Btn onClick={async()=>{
+                  const now=Date.now();
+                  let changed=0;
+                  const newIdList=idList.map(r=>{
+                    if(r.status==="ok"&&r.idPhoto&&!r.photoMasked){
+                      const approvedAt=r.approvedAt||new Date(r.date).getTime();
+                      const daysPassed=(now-approvedAt)/(1000*60*60*24);
+                      if(daysPassed>=privacyDays){ changed++; return {...r,idPhoto:null,photoMasked:true,maskedAt:now}; }
+                    }
+                    return r;
+                  });
+                  if(changed===0){toast_("마스킹할 대상이 없어요 (기간 미초과)");return;}
+                  setIdList(newIdList); await fbSet("idList",newIdList);
+                  toast_(`${changed}명 마스킹 완료 🔒`);
+                }} style={{flex:1,padding:"9px 0",background:"#fef3c7",color:"#92400e",border:"1px solid #fcd34d",borderRadius:9,fontSize:12,fontWeight:700,textAlign:"center"}}>
+                  ⏱ 기간 초과 일괄 마스킹
+                </Btn>
+                <Btn onClick={async()=>{
+                  if(!window.confirm("승인된 모든 학생증 사진을 삭제할까요?\n이 작업은 되돌릴 수 없습니다."))return;
+                  let changed=0;
+                  const newIdList=idList.map(r=>{
+                    if(r.status==="ok"&&r.idPhoto){ changed++; return {...r,idPhoto:null,photoMasked:true,maskedAt:Date.now()}; }
+                    return r;
+                  });
+                  setIdList(newIdList); await fbSet("idList",newIdList);
+                  toast_(`${changed}명 전체 삭제 완료 🗑️`);
+                }} style={{flex:1,padding:"9px 0",background:"#fee2e2",color:"#991b1b",border:"1px solid #fca5a5",borderRadius:9,fontSize:12,fontWeight:700,textAlign:"center"}}>
+                  🗑️ 전체 삭제
+                </Btn>
+              </div>
+            </div>}
+          </div>
+
+          {/* 학생증 목록 */}
+          {idList.length===0&&(
+            <div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>🎉</div>
+              <div style={{fontSize:14,fontWeight:600,color:N,marginBottom:4}}>검토할 학생증이 없어요</div>
+              <div style={{fontSize:12,color:LI}}>모든 학생증이 처리됐어요</div>
+            </div>
+          )}
+          {idList.map(r=>{
+            const approvedAt=r.approvedAt||new Date(r.date).getTime();
+            const daysPassed=r.status==="ok"?Math.floor((Date.now()-approvedAt)/(1000*60*60*24)):null;
+            const isOverdue=r.status==="ok"&&daysPassed>=privacyDays&&r.idPhoto&&!r.photoMasked;
+            const daysLeft=r.status==="ok"&&daysPassed!=null&&!r.photoMasked&&r.idPhoto?privacyDays-daysPassed:null;
+            return (
+              <div key={r.id} style={{background:CA,borderRadius:14,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,overflow:"hidden"}}>
+                {/* 카드 헤더 */}
+                <div style={{padding:"13px 16px 0 16px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:14,fontWeight:700,color:N,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                        {r.name}
+                        {r.isTeacher&&<span style={{fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 6px",borderRadius:5}}>교사</span>}
+                        {r.photoMasked&&<span style={{fontSize:10,fontWeight:700,background:"#f3f4f6",color:SO,padding:"2px 6px",borderRadius:5}}>🔒 마스킹됨</span>}
+                      </div>
+                      <div style={{fontSize:11,color:SO,marginTop:3}}>{r.grade} · {r.id} · {r.date}</div>
+                      {/* 경과일 뱃지 */}
+                      {r.status==="ok"&&daysPassed!=null&&!r.photoMasked&&r.idPhoto&&(
+                        <div style={{marginTop:5,display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:6,background:isOverdue?"#fee2e2":"#f0fdf4",border:`1px solid ${isOverdue?"#fca5a5":"#bbf7d0"}`}}>
+                          <span style={{fontSize:10,fontWeight:700,color:isOverdue?"#dc2626":"#16a34a"}}>
+                            {isOverdue?`⚠️ ${daysPassed}일 경과 · 마스킹 필요`:`D-${daysLeft} · ${daysPassed}일 경과`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span style={{flexShrink:0,marginLeft:10,padding:"4px 10px",borderRadius:7,fontSize:11,fontWeight:700,background:r.status==="pending"?"#fef3c7":r.status==="ok"?"#dcfce7":"#fee2e2",color:r.status==="pending"?"#92400e":r.status==="ok"?"#166534":"#991b1b"}}>
+                      {r.status==="pending"?"검토 대기":r.status==="ok"?"승인됨":"차단됨"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 학생증 사진 영역 */}
+                <div style={{padding:"0 16px",marginBottom:12}}>
+                  {r.photoMasked
+                    ? <div style={{background:"#f8fafc",border:`1px dashed ${BO}`,borderRadius:10,padding:"20px 0",textAlign:"center"}}>
+                        <div style={{fontSize:24,marginBottom:6}}>🔒</div>
+                        <div style={{fontSize:12,fontWeight:600,color:SO}}>개인정보 보호를 위해 삭제됨</div>
+                        {r.maskedAt&&<div style={{fontSize:11,color:LI,marginTop:3}}>{new Date(r.maskedAt).toLocaleDateString("ko-KR")} 처리</div>}
+                      </div>
+                    : r.idPhoto
+                      ? <div style={{position:"relative"}}>
+                          <img src={r.idPhoto} alt="학생증" onClick={()=>window.open(r.idPhoto,"_blank")} style={{width:"100%",maxHeight:180,objectFit:"contain",borderRadius:10,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,cursor:"pointer",display:"block",background:"#f8fafc"}}/>
+                          {isOverdue&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:5}}>마스킹 필요</div>}
+                        </div>
+                      : <div style={{background:"#f8fafc",border:`1px dashed ${BO}`,borderRadius:10,padding:"20px 0",textAlign:"center",fontSize:12,color:LI}}>🪪 학생증 사진 없음</div>
+                  }
+                </div>
+
+                {/* 액션 버튼 영역 */}
+                <div style={{padding:"0 16px 14px 16px",display:"flex",flexDirection:"column",gap:8}}>
+                  {r.status==="pending"&&(
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                      <Btn onClick={async()=>{
+                        const now=Date.now();
+                        const newIdList=idList.map(x=>x.id===r.id?{...x,status:"ok",approvedAt:now}:x);
+                        setIdList(newIdList); await fbSet("idList",newIdList);
+                        const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"ok"}:a);
+                        setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
+                        toast_(`${r.name} 승인됐어요 ✅`);
+                      }} style={{padding:"10px 0",background:"#dcfce7",color:"#166534",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>✅ 승인</Btn>
+                      <Btn onClick={async()=>{
+                        const newIdList=idList.map(x=>x.id===r.id?{...x,status:"blocked"}:x);
+                        setIdList(newIdList); await fbSet("idList",newIdList);
+                        const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"blocked"}:a);
+                        setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
+                        toast_(`${r.name} 차단됐어요 🚫`);
+                      }} style={{padding:"10px 0",background:"#fee2e2",color:"#991b1b",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>🚫 차단</Btn>
+                    </div>
+                  )}
+                  {r.status==="ok"&&!r.photoMasked&&r.idPhoto&&(
+                    <Btn onClick={async()=>{
+                      if(!window.confirm(`${r.name}의 학생증 사진을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`))return;
+                      const newIdList=idList.map(x=>x.id===r.id?{...x,idPhoto:null,photoMasked:true,maskedAt:Date.now()}:x);
+                      setIdList(newIdList); await fbSet("idList",newIdList);
+                      toast_(`${r.name}의 학생증이 삭제됐어요 🗑️`);
+                    }} style={{width:"100%",padding:"9px 0",background:"#fef3c7",color:"#92400e",border:"1px solid #fde68a",borderRadius:10,fontSize:12,fontWeight:700,textAlign:"center"}}>🗑️ 사진 삭제</Btn>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>}
-        {adminTab==="verify"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {vq.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>검토할 항목이 없어요 🎉</div>}
+
+        {/* ── 인증 탭 ── */}
+        {adminTab==="verify"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {vq.length===0&&<div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+            <div style={{fontSize:28,marginBottom:8}}>🎉</div>
+            <div style={{fontSize:14,fontWeight:600,color:N}}>검토할 항목이 없어요</div>
+          </div>}
           {vq.map(v=>(
-            <div key={v.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{v.title}</div>
-              <div style={{fontSize:12,color:SO,marginBottom:4}}>{v.author} · {v.cat}</div>
-              <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:7,padding:"8px 11px",fontSize:12,color:"#0e7a5a",marginBottom:10}}>📎 "{v.source}"</div>
-              <Btn onClick={()=>verifyPost(v.id)} style={{width:"100%",background:MS,color:"#0e8a5f",borderRadius:8,padding:"9px",fontSize:13,fontWeight:600}}>✅ 확인된 정보 승인</Btn>
+            <div key={v.id} style={{background:CA,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{v.title}</div>
+              <div style={{fontSize:12,color:SO,marginBottom:10}}>{v.author} · {v.cat}</div>
+              <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:"#0e7a5a",marginBottom:12}}>📎 "{v.source}"</div>
+              <Btn onClick={()=>verifyPost(v.id)} style={{width:"100%",background:MS,color:"#0e8a5f",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700}}>✅ 확인된 정보 승인</Btn>
             </div>
           ))}
         </div>}
-        {adminTab==="fc"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 요청이 없어요 🎉</div>}
+
+        {/* ── 사실확인 탭 ── */}
+        {adminTab==="fc"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:CA,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+            <div style={{fontSize:28,marginBottom:8}}>🎉</div>
+            <div style={{fontSize:14,fontWeight:600,color:N}}>접수된 요청이 없어요</div>
+          </div>}
           {posts.filter(p=>p.fc>0).map(p=>(
-            <div key={p.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{p.title}</div>
-              <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:6}}>요청 {p.fc}건</div>
-              {(p.fcR||[]).map((r,i)=><div key={i} style={{fontSize:12,color:SO,background:BG,borderRadius:6,padding:"5px 9px",marginBottom:4}}>· {r}</div>)}
-              <div style={{display:"flex",gap:8,marginTop:10}}>
-                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{status:"blinded",fc:0,fcR:[]});}catch(e){}toast_("블라인드 처리됐어요");}} style={{flex:1,background:"#fff7ed",color:"#c2410c",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🙈 블라인드</Btn>
-                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{fc:0,fcR:[]});}catch(e){}toast_("정상 처리됐어요 ✅");}} style={{flex:1,background:MS,color:"#0e8a5f",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 정상 처리</Btn>
+            <div key={p.id} style={{background:CA,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{p.title}</div>
+              <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:8}}>요청 {p.fc}건</div>
+              {(p.fcR||[]).map((r2,i)=><div key={i} style={{fontSize:12,color:SO,background:"#f8fafc",borderRadius:7,padding:"6px 10px",marginBottom:4}}>· {r2}</div>)}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
+                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{status:"blinded",fc:0,fcR:[]});}catch(e){}toast_("블라인드 처리됐어요");}} style={{padding:"9px 0",background:"#fff7ed",color:"#c2410c",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>🙈 블라인드</Btn>
+                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{fc:0,fcR:[]});}catch(e){}toast_("정상 처리됐어요 ✅");}} style={{padding:"9px 0",background:MS,color:"#0e8a5f",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>✅ 정상 처리</Btn>
               </div>
             </div>
           ))}
         </div>}
+
+        {/* ── 사용자 탭 ── */}
         {adminTab==="users"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
           {accounts.map(u=>(
-            <div key={u.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div>
-                <div style={{fontSize:14,fontWeight:700}}>{u.name}</div>
-                <div style={{fontSize:12,color:SO}}>{u.role==="teacher"?u.subject+" 선생님":u.grade+"학년 "+u.room+"반"} · {u.id}</div>
-                <span style={{display:"inline-block",marginTop:4,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:700,background:(!u.status||u.status==="ok"||u.role==="teacher")?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:(!u.status||u.status==="ok"||u.role==="teacher")?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>{(!u.status||u.status==="ok"||u.role==="teacher")?"정상":u.status==="pending"?"검토 중":"차단됨"}</span>
+            <div key={u.id} style={{background:CA,borderRadius:14,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:10,background:u.role==="teacher"?"#ede9fe":u.id==="11025"?"#dbeafe":"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                {u.role==="teacher"?"👩‍🏫":u.id==="11025"?"👑":"🙍"}
               </div>
-              {u.id!=="11025"&&<Btn onClick={async()=>{const updated=accounts.filter(a=>a.id!==u.id);await fbSet("accounts",updated);setAccounts(updated);toast_(`${u.name} 계정이 삭제됐어요`);}} style={{background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600}}>🗑 삭제</Btn>}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:N}}>{u.name}</div>
+                <div style={{fontSize:11,color:SO,marginTop:1}}>{u.role==="teacher"?u.subject+" 선생님":u.grade+"학년 "+u.room+"반"} · {u.id}</div>
+                <span style={{display:"inline-block",marginTop:4,padding:"2px 7px",borderRadius:5,fontSize:10,fontWeight:700,background:(!u.status||u.status==="ok"||u.role==="teacher")?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:(!u.status||u.status==="ok"||u.role==="teacher")?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>
+                  {(!u.status||u.status==="ok"||u.role==="teacher")?"정상":u.status==="pending"?"검토 중":"차단됨"}
+                </span>
+              </div>
+              {u.id!=="11025"&&<Btn onClick={async()=>{const updated=accounts.filter(a=>a.id!==u.id);await fbSet("accounts",updated);setAccounts(updated);toast_(`${u.name} 계정이 삭제됐어요`);}} style={{flexShrink:0,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"7px 11px",fontSize:12,fontWeight:600}}>🗑 삭제</Btn>}
             </div>
           ))}
         </div>}
+
         {adminTab==="inquiry"&&<InquiryTab/>}
       </div>}
     </main>
@@ -1469,7 +1778,7 @@ export default function App() {
 
     {/* 관리자 문의 */}
     <Modal open={inquiryModal} onClose={()=>setInquiryModal(false)} title="💬 관리자 문의">
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자(11025 이윤진)가 확인 후 처리할게요.</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>사이트 오류 신고나 건의사항을 남겨주세요. 총관리자가 확인 후 처리할게요.</p>
       <div style={{marginBottom:12}}><label style={lbl1}>문의 유형</label>
         <select value={inquiryType} onChange={e=>setInquiryType(e.target.value)} style={inp1}>
           {["오류 신고","기능 건의","계정 문의","기타"].map(t=><option key={t}>{t}</option>)}
