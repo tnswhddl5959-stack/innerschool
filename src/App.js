@@ -1763,10 +1763,41 @@ export default function App() {
         {adminTab==="inquiry"&&<InquiryTab/>}
 
         {/* ── 🛡️ 보안 탭 ── */}
-        {adminTab==="security"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-
-          {/* 요약 카드 */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {adminTab==="security"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {/* 요약 카드 */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {[
+                {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
+                {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
+              ].map((s,i)=>(
+                <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
+                  <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
+                  <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
+                  <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {/* 필터 + 로그 초기화 */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+              <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
+              <Btn onClick={async()=>{
+                if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
+                setSecLogs([]); await fbSet("secLogs",[]);
+                toast_("보안 로그가 초기화됐어요");
+              }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
+                🗑 전체 초기화
+              </Btn>
+            </div>
+            {/* 로그 목록 */}
+            {secLogs.length===0&&(
+              <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
+                <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
+                <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
+                <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
+              </div>
+            )}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[
               {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
               {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
@@ -1821,65 +1852,8 @@ export default function App() {
               </div>
             );
           })}
-        </div>}
-
-      </div>}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {[
-              {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
-              {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
-            ].map((s,i)=>(
-              <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
-                <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
-                <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
-                <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* 필터 + 로그 초기화 */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-            <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
-            <Btn onClick={async()=>{
-              if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
-              setSecLogs([]); await fbSet("secLogs",[]);
-              toast_("보안 로그가 초기화됐어요");
-            }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
-              🗑 전체 초기화
-            </Btn>
-          </div>
-
-          {/* 로그 목록 */}
-          {secLogs.length===0&&(
-            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
-              <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
-              <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
-            </div>
-          )}
-          {secLogs.map((log,i)=>{
-            const typeInfo={
-              SPAM:{label:"중복 제목 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
-              ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
-            }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
-            return(
-              <div key={i} style={{background:typeInfo.bg,borderRadius:12,padding:"13px 16px",border:`1.5px solid ${typeInfo.border}`}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,flexWrap:"wrap",gap:4}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:16}}>{typeInfo.icon}</span>
-                    <span style={{fontSize:12,fontWeight:700,color:typeInfo.color,background:"#fff",padding:"2px 8px",borderRadius:5,border:`1px solid ${typeInfo.border}`}}>{typeInfo.label}</span>
-                  </div>
-                  <span style={{fontSize:11,color:SO}}>{log.time}</span>
-                </div>
-                <div style={{fontSize:13,color:N,fontWeight:500,marginBottom:4}}>{log.detail}</div>
-                <div style={{fontSize:11,color:SO}}>
-                  {log.userName&&<span>👤 {log.userName}</span>}
-                  {log.userId&&<span style={{marginLeft:8}}>ID: {log.userId}</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>}
+        </div>
+        )}
 
       </div>}
     </main>
