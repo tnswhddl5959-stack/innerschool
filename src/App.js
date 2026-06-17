@@ -18,6 +18,7 @@ const fb = initializeApp({
 const db = getFirestore(fb);
 const fbGet = async k => { try { const d=await getDoc(doc(db,"kv",k)); return d.exists()?d.data().v:null; } catch { return null; }};
 const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e){console.error(e);} };
+const fbSetAccounts = async (list) => { const safe=list.map(a=>a.id==="11025"?{...a,...INIT_ACCOUNTS.find(x=>x.id==="11025")}:a); await fbSet("accounts",safe); };
 const fbDel = async k => { try { await deleteDoc(doc(db,"kv",k)); } catch {} };
 
 // ── 색상 ──
@@ -740,10 +741,13 @@ export default function App() {
   const doLogin=async(idOrName,pw,roleOrSub)=>{
     const savedAcc=await fbGet("accounts");
     const list=(savedAcc&&savedAcc.length>0)?savedAcc:INIT_ACCOUNTS;
-    setAccounts(list);
+    // 총관리자 계정은 role/id/name/status만 보호 (pw는 Firebase 값 유지)
+    const adminBase=INIT_ACCOUNTS.find(x=>x.id==="11025");
+    const safeList=list.map(a=>a.id==="11025"?{...a,role:adminBase.role,id:adminBase.id,name:adminBase.name,status:"ok"}:a);
+    setAccounts(safeList);
     let acc;
     if(roleOrSub==="student"){
-      acc=list.find(a=>a.role==="student"&&a.id===idOrName&&a.pw===pw);
+      acc=safeList.find(a=>a.role==="student"&&a.id===idOrName&&a.pw===pw);
       if(!acc){alert("학번 또는 비밀번호가 일치하지 않습니다.");return;}
       if(acc.status==="blocked"){alert("차단된 계정이에요. 총관리자에게 문의해주세요.");return;}
       setIsAdmin(acc.id==="11025"); setIsTeacher(false);
