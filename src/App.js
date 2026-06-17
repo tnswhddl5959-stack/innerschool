@@ -126,8 +126,8 @@ const Chip = ({type,status}) => {
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif"};
-const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 28px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
+const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif",width:"100%"};
+const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 32px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
 const inp0 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:".15s"};
 const inp1 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
 const lbl0 = {color:SO,fontSize:12,fontWeight:600,display:"block",marginBottom:6};
@@ -138,7 +138,7 @@ const AuthHeader = () => <>
     <img src="/logo192.png" alt="INNERSCHOOL" style={{width:52,height:52,borderRadius:14,boxShadow:"0 2px 8px rgba(15,31,61,.12)",flexShrink:0}}/>
     <div>
       <div style={{fontSize:20,fontWeight:800,color:TX,letterSpacing:"-.4px",lineHeight:1.2}}>INNER<span style={{color:MD}}>SCHOOL</span></div>
-      <div style={{color:SO,fontSize:11,marginTop:3,lineHeight:1.5}}>교육기회 공정성 실현을 위한<br/>경기창조고 정보 공유 플랫폼</div>
+      <div style={{color:SO,fontSize:11,marginTop:3}}>경기창조고 정보 공유 플랫폼</div>
     </div>
   </div>
 </>;
@@ -157,7 +157,7 @@ function LoginRole({onSelect,onReg}) {
         </div>
       ))}
     </div>
-    <div style={{textAlign:"center",color:SO,fontSize:13,marginTop:16}}>
+    <div style={{width:"100%",textAlign:"center",color:SO,fontSize:13,marginTop:16}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
@@ -174,13 +174,13 @@ function LoginStudent({onBack,onLogin,onReg}) {
     <div style={{marginBottom:4}}><label style={lbl0}>학번</label>
       <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0}/>
     </div>
-    <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,marginBottom:14}}>학년(1)+반(2자리)+번호(2자리) · 예: 1학년 1반 1번 → 10101</div>
+    <div style={{color:LI,fontSize:11,marginBottom:14}}>학년(1)+반(2자리)+번호(2자리) · 예: 1학년 1반 1번 → 10101</div>
     <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label>
       <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
     </div>
     {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
     <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
-    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
+    <div style={{width:"100%",textAlign:"center",marginTop:16,color:SO,fontSize:13}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
@@ -201,7 +201,7 @@ function LoginTeacher({onBack,onLogin,onReg}) {
     <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/></div>
     {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
     <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
-    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
+    <div style={{width:"100%",textAlign:"center",marginTop:16,color:SO,fontSize:13}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
