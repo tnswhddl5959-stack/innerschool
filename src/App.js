@@ -1,7 +1,4 @@
 /* eslint-disable */
-/* 💡 index.html <head>에 추가 필요:
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-*/
 import { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
@@ -127,7 +124,7 @@ const Chip = ({type,status}) => {
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif",width:"100%"};
+const authBox = {minHeight:"100vh",background:"#f7f8fc",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif"};
 const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 32px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
 const inp0 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:".15s"};
 const inp1 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
@@ -180,7 +177,7 @@ function LoginStudent({onBack,onLogin,onReg}) {
       <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
     </div>
     {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
-    <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
+    <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
     <div style={{width:"100%",textAlign:"center",marginTop:16,color:SO,fontSize:13}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
@@ -201,7 +198,7 @@ function LoginTeacher({onBack,onLogin,onReg}) {
     </div>
     <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/></div>
     {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
-    <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
+    <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
     <div style={{width:"100%",textAlign:"center",marginTop:16,color:SO,fontSize:13}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
@@ -300,7 +297,7 @@ function Register({onDone,onBack}) {
       <label style={lbl0}>학생증 사진 <span style={{color:MD}}>*필수</span></label>
       <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
         {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
-          :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
+          :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:SO,fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
         <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
       </label>
     </div>
@@ -318,7 +315,7 @@ function Register({onDone,onBack}) {
       </label>
     </div>
     <ErrBox/>
-    <button onClick={doStudent} style={{width:"100%",background:agreed?M:"rgba(45,212,160,0.3)",color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit"}}>가입하기</button>
+    <button onClick={doStudent} style={{width:"100%",background:agreed?N:"#ccc",color:"#fff",border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit"}}>가입하기</button>
   </div></div>;
 
   return <div style={authBox}><div style={authCard}>
@@ -921,28 +918,25 @@ export default function App() {
     </aside>
 
     {/* 헤더 — sticky blur */}
-    <div style={{maxWidth:560,margin:"0 auto"}}>
     <div style={{position:"sticky",top:0,zIndex:20,background:"rgba(255,255,255,.88)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:`1px solid ${BO}`}}>
       <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
         <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.4px",color:TX,cursor:"pointer"}} onClick={()=>goPage("home")}>INNER<span style={{color:MD}}>SCHOOL</span></div>
         <div style={{flex:1}}/>
         {showInstall&&<Btn onClick={installApp} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
-        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>{console.log("ios guide open");setShowIosGuide(true);}} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO,WebkitTapHighlightColor:"transparent",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center"}}>📲</Btn>}
+        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO,WebkitTapHighlightColor:"transparent",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center"}}>📲</Btn>}
         {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10,marginRight:4}}>{pending}</span>}
         <Btn onClick={()=>setSidebar(true)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:18,background:"none",border:"none"}}>☰</Btn>
       </div>
     </div>
 
     {/* 콘텐츠 */}
-    </div>
-    <div style={{maxWidth:560,margin:"0 auto"}}>
-    <main style={{padding:"0 0 80px",minHeight:"100vh"}}>
+    <main style={{padding:"0 0 80px",minHeight:"100vh",maxWidth:680,margin:"0 auto"}}>
 
       {/* ── 홈 ── */}
       {page==="home"&&<div>
         {/* 헤더 영역 */}
         <div style={{background:N,margin:"0 0 0",padding:"20px 18px 16px"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>안녕하세요 👋</div>
+          <div style={{fontSize:11,color:SO,marginBottom:2}}>안녕하세요 👋</div>
           <div style={{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.5px",marginBottom:16}}>
             {user.name} <span style={{color:M}}>님</span>
           </div>
@@ -964,7 +958,7 @@ export default function App() {
         </div>
 
         {/* 메뉴 그리드 */}
-        <div style={{padding:"16px 18px 0"}}>
+        <div style={{padding:"16px 18px"}}>
           <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10}}>메뉴</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
             {[
@@ -1014,25 +1008,34 @@ export default function App() {
 
       {/* ── 게시판 ── */}
       {page==="board"&&<div>
-        {/* 검색창 */}
-        <div style={{display:"flex",alignItems:"center",gap:8,background:CHIP,border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
-          <span style={{fontSize:15}}>🔍</span>
-          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
-            placeholder="수행평가, 시험범위, 급식 검색"
-            style={{border:0,background:"transparent",outline:0,fontFamily:"inherit",flex:1,color:TX,fontSize:14}}/>
-          {searchQ&&<span onClick={()=>setSearchQ("")} style={{cursor:"pointer",color:LI,fontSize:14}}>✕</span>}
-        </div>
-        {/* 카테고리 칩 */}
-        <div style={{display:"flex",gap:6,padding:"0 18px 12px",overflowX:"auto",scrollbarWidth:"none",flexWrap:"nowrap"}}>
-          {["전체","📝 수행평가","📚 학업·시험","🎓 입시","📊 SLAT","🎨 동아리","📅 행사","🍱 급식","📢 공지","🙋 질문"].map(c=>(
-            <Btn key={c} onClick={()=>setCat(c==="전체"?c:c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
-              color:cat===(c==="전체"?"전체":c)?CA:SO,
-              background:cat===(c==="전체"?"전체":c)?TX:CHIP,
-              border:`1px solid ${cat===(c==="전체"?"전체":c)?TX:BO}`,
-              borderRadius:999,padding:"7px 14px",whiteSpace:"nowrap"}}>
-              {c}
-            </Btn>
-          ))}
+        {/* 헤더 영역 — 검색 + 카테고리 */}
+        <div style={{background:BG,borderBottom:`1px solid ${BO}`,paddingBottom:0}}>
+          {/* 검색창 */}
+          <div style={{display:"flex",alignItems:"center",gap:8,background:CHIP,border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 8px"}}>
+            <span style={{fontSize:14,color:SO}}>🔍</span>
+            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+              placeholder="수행평가, 시험범위, 급식 검색"
+              style={{border:0,background:"transparent",outline:0,fontFamily:"inherit",flex:1,color:TX,fontSize:14}}/>
+            {searchQ&&<span onClick={()=>setSearchQ("")} style={{cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
+          </div>
+          {/* 학년 탭 */}
+          <div style={{display:"flex",gap:6,padding:"0 18px 8px",overflowX:"auto",scrollbarWidth:"none"}}>
+            {["전체","1학년","2학년","3학년","공통"].map(g=>(
+              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{flexShrink:0,fontSize:12,fontWeight:600,padding:"5px 13px",borderRadius:999,
+                border:`1.5px solid ${gradTab===g?N:BO}`,
+                background:gradTab===g?N:CHIP,
+                color:gradTab===g?"#fff":SO,whiteSpace:"nowrap"}}>{g}</Btn>
+            ))}
+          </div>
+          {/* 세부 카테고리 */}
+          <div style={{display:"flex",gap:5,padding:"0 18px 10px",overflowX:"auto",scrollbarWidth:"none"}}>
+            {["전체",...SUB_CATS].map(c=>(
+              <Btn key={c} onClick={()=>setCat(c)} style={{flexShrink:0,fontSize:12,fontWeight:500,padding:"4px 11px",borderRadius:999,
+                border:`1.5px solid ${cat===c?MD:BO}`,
+                background:cat===c?MD:CHIP,
+                color:cat===c?"#fff":SO,whiteSpace:"nowrap"}}>{c}</Btn>
+            ))}
+          </div>
         </div>
 
         {/* 승인 대기 */}
@@ -1051,34 +1054,16 @@ export default function App() {
         </div>}
 
         {(isAdmin||isTeacher||user.status==="ok")&&<>
-          {/* 학년 탭 */}
-          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
-            {["전체","1학년","2학년","3학년","공통"].map(g=>(
-              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:CA,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{g}</Btn>
+          {/* 정렬 바 */}
+          <div style={{display:"flex",alignItems:"center",padding:"8px 18px",borderBottom:`1px solid ${BO}`}}>
+            <span style={{fontSize:13,color:SO,flex:1}}>게시글 {filtered.length}개</span>
+            {[{k:"latest",l:"최신순"},{k:"popular",l:"인기순"}].map(s=>(
+              <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{fontSize:13,fontWeight:600,padding:"4px 10px",borderRadius:8,
+                color:sortBy===s.k?TX:SO,background:sortBy===s.k?CHIP:"none",border:"none",marginLeft:4}}>{s.l}</Btn>
             ))}
-          </div>
-          {/* 세부 카테고리 */}
-          <div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
-            {["전체",...SUB_CATS].map(c=>(
-              <Btn key={c} onClick={()=>setCat(c)} style={{padding:"5px 12px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:CA,color:cat===c?N:SO,fontSize:12,fontWeight:500,whiteSpace:"nowrap",flexShrink:0}}>{c}</Btn>
-            ))}
-          </div>
-          {/* 검색 */}
-          <div style={{position:"relative",marginBottom:10}}>
-            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 제목이나 내용으로 검색하세요" style={{width:"100%",background:CA,border:`1.5px solid ${BO}`,borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
-            {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
-          </div>
-          {/* 정렬 + 글쓰기 */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-            <div style={{display:"flex",gap:6}}>
-              {[{k:"latest",l:"🕐 최신순"},{k:"popular",l:"🔥 인기순"}].map(s=>(
-                <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{padding:"6px 12px",borderRadius:18,border:`1.5px solid ${sortBy===s.k?N:BO}`,background:sortBy===s.k?N:CA,color:sortBy===s.k?"#fff":SO,fontSize:12,fontWeight:600}}>{s.l}</Btn>
-              ))}
-            </div>
-            {canWrite&&<Btn onClick={()=>{setWType(null);setWTitle("");setWBody("");setWSrc("");setWModal(true);}} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700}}>✏️ 글쓰기</Btn>}
           </div>
           {filtered.length===0&&<div style={{textAlign:"center",color:SO,padding:"60px 0",fontSize:14}}>아직 게시글이 없어요.<br/>첫 글을 올려보세요!</div>}
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
             {filtered.map(p=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
                 style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:CA,transition:".12s"}}
@@ -1323,7 +1308,6 @@ export default function App() {
         {adminTab==="inquiry"&&<InquiryTab/>}
       </div>}
     </main>
-    </div>
 
     {/* ── 모달들 ── */}
 
