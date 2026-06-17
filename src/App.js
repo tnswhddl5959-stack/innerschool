@@ -18,17 +18,10 @@ const fb = initializeApp({
 const db = getFirestore(fb);
 const fbGet = async k => { try { const d=await getDoc(doc(db,"kv",k)); return d.exists()?d.data().v:null; } catch { return null; }};
 const fbSet = async (k,v) => { try { await setDoc(doc(db,"kv",k),{v}); } catch(e){console.error(e);} };
+const fbDel = async k => { try { await deleteDoc(doc(db,"kv",k)); } catch {} };
 
-// ── 비밀번호 SHA-256 해시 ──
-// 평문 여부 판별 (해시는 항상 64자 hex)
-const isHashed = pw => typeof pw==="string" && /^[0-9a-f]{64}$/.test(pw);
-const hashPw = async pw => {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-};
-
-// ── 색상 ── (N=TX=#1A2540 으로 통일, BG=BG=#ffffff 로 통일)
-const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3";
+// ── 색상 ──
+const N="#1A2540",M="#2DD4A0",MD="#15B488",MS="#E7FBF4",MM="#a8edcf",AC="#ff6b6b",BG="#ffffff",CA="#ffffff",TX="#1A2540",SO="#6B7488",LI="#C9CFDB",BO="#ECEEF3",CHIP="#F4F6FB";
 
 // ── Cloudinary 이미지 업로드 ──
 const CLOUD_NAME = "DM3GF1VXQ";
@@ -126,134 +119,93 @@ const Modal = ({open,onClose,title,children}) => !open ? null : (
   </div>
 );
 const Chip = ({type,status}) => {
-  if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩🏫 선생님 인증</span>;
+  if(type==="teacher") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>👩‍🏫 선생님 인증</span>;
   if(type==="verified"&&status==="verified") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:MS,color:"#0e8a5f"}}>✅ 확인된 정보</span>;
   if(type==="verified"&&status==="pending") return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#fef3c7",color:"#92400e"}}>🔍 검토 중</span>;
   return <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#fff7ed",color:"#c2410c"}}>⚠️ 미확인</span>;
 };
 
 // ── 스타일 상수 ──
-const authBox = {minHeight:"100vh",background:"#f0f4fb",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px",fontFamily:"'Pretendard',sans-serif"};
-const authCard = {background:"#fff",borderRadius:20,padding:"32px 24px",width:"100%",maxWidth:400,maxHeight:"96vh",overflowY:"auto",boxShadow:"0 8px 40px rgba(26,37,64,.10)"};
-const inp0 = {width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:11,padding:"13px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border .15s"};
-const lbl0 = {color:SO,fontSize:12,fontWeight:700,display:"block",marginBottom:6,letterSpacing:".2px"};
-// 모달/프로필용 스타일
-const inp1 = {width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:10,padding:"11px 13px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
-const lbl1 = {fontSize:12,fontWeight:600,color:SO,display:"block",marginBottom:6};
+const authBox = {minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Pretendard',sans-serif"};
+const authCard = {background:CA,border:`1px solid ${BO}`,borderRadius:16,padding:"36px 28px",width:"100%",maxWidth:420,maxHeight:"95vh",overflowY:"auto",boxShadow:"0 4px 24px rgba(26,37,64,.08)"};
+const inp0 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",color:TX,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:".15s"};
+const inp1 = {width:"100%",background:CHIP,border:`1.5px solid ${BO}`,borderRadius:10,padding:"12px 14px",fontSize:14,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"};
+const lbl0 = {color:SO,fontSize:12,fontWeight:600,display:"block",marginBottom:6};
+const lbl1 = {fontSize:12,fontWeight:500,color:SO,display:"block",marginBottom:6};
 
-const AuthHeader = ({sub}) => (
-  <div style={{marginBottom:28,textAlign:"center"}}>
-    {/* 로고 아이콘 */}
-    <div style={{width:56,height:56,borderRadius:16,background:N,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",boxShadow:"0 4px 16px rgba(26,37,64,.18)"}}>
-      <span style={{fontSize:24,fontWeight:900,color:M,fontFamily:"'Pretendard',sans-serif",letterSpacing:"-1px",lineHeight:1}}>IS</span>
+const AuthHeader = () => <>
+  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+    <img src="/logo192.png" alt="INNERSCHOOL" style={{width:52,height:52,borderRadius:14,boxShadow:"0 2px 8px rgba(15,31,61,.12)"}}/>
+    <div>
+      <div style={{fontSize:20,fontWeight:800,color:TX,letterSpacing:"-.4px",lineHeight:1.2}}>INNER<span style={{color:MD}}>SCHOOL</span></div>
+      <div style={{color:SO,fontSize:11,marginTop:2}}>경기창조고 정보 공유 플랫폼</div>
     </div>
-    <div style={{fontSize:20,fontWeight:900,color:N,letterSpacing:"-.5px",marginBottom:4}}>
-      INNER<span style={{color:MD}}>SCHOOL</span>
-    </div>
-    <div style={{color:SO,fontSize:11,lineHeight:1.5}}>{sub||"교육기회 공정성 실현을 위한 정보 공유 시스템"}</div>
   </div>
-);
+  <div style={{color:SO,fontSize:12,marginBottom:24,padding:"10px 12px",background:CHIP,borderRadius:8}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
+</>;
 
 // ── 로그인 화면 ──
 function LoginRole({onSelect,onReg}) {
-  return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader/>
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:17,fontWeight:800,color:N,marginBottom:4}}>로그인</div>
-          <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
+  return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>로그인</div>
+    <div style={{color:SO,fontSize:13,marginBottom:20}}>로그인할 계정을 선택해주세요</div>
+    <div style={{display:"flex",gap:12,marginBottom:20}}>
+      {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
+        <div key={r.k} onClick={()=>onSelect(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"22px 12px",textAlign:"center",cursor:"pointer",background:CHIP,transition:".15s"}}>
+          <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
+          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {[{k:"student",i:"🎒",l:"학생",d:"학번으로 로그인"},{k:"teacher",i:"👩🏫",l:"선생님",d:"교과목으로 로그인"}].map(r=>(
-            <div key={r.k} onClick={()=>onSelect(r.k)}
-              style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc",transition:".15s"}}>
-              <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
-              <div>
-                <div style={{fontSize:14,fontWeight:700,color:N}}>{r.l}</div>
-                <div style={{fontSize:12,color:SO,marginTop:1}}>{r.d}</div>
-              </div>
-              <div style={{marginLeft:"auto",color:LI,fontSize:16}}>›</div>
-            </div>
-          ))}
-        </div>
-        <div style={{textAlign:"center",fontSize:13,color:SO}}>
-          계정이 없으신가요?{" "}
-          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
-        </div>
-      </div>
+      ))}
     </div>
-  );
+    <div style={{textAlign:"center",color:SO,fontSize:13}}>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+    </div>
+  </div></div>;
 }
 
 function LoginStudent({onBack,onLogin,onReg}) {
   const [id,setId]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
-  return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader sub="학생 로그인"/>
-        {/* 뒤로가기 */}
-        <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:20,fontFamily:"inherit"}}>
-          <span style={{fontSize:16}}>←</span> 다른 계정으로 로그인
-        </button>
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>학번</label>
-          <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0} maxLength={5}/>
-          <div style={{fontSize:11,color:LI,marginTop:5}}>학년(1자리) + 반(2자리) + 번호(2자리) · 1학년 1반 1번 → 10101</div>
-        </div>
-        <div style={{marginBottom:20}}>
-          <label style={lbl0}>비밀번호</label>
-          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(id.length!==5?setErr("학번은 5자리 숫자여야 합니다"):!pw.trim()?setErr("비밀번호를 입력해주세요"):(setErr(""),onLogin(id,pw,"student")))} placeholder="비밀번호 입력" style={inp0}/>
-        </div>
-        {err&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>}
-        <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}}
-          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"-.2px"}}>
-          로그인
-        </button>
-        <div style={{textAlign:"center",marginTop:20,fontSize:13,color:SO}}>
-          계정이 없으신가요?{" "}
-          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
-        </div>
-      </div>
+  return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생 로그인</span>
     </div>
-  );
+    <div style={{marginBottom:4}}><label style={lbl0}>학번</label>
+      <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0}/>
+    </div>
+    <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,marginBottom:14}}>학년(1)+반(2자리)+번호(2자리) · 예: 1학년 1반 1번 → 10101</div>
+    <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label>
+      <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
+    </div>
+    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
+    <button onClick={()=>{if(id.length!==5){setErr("학번은 5자리 숫자여야 합니다");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(id,pw,"student");}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
+    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+    </div>
+  </div></div>;
 }
 
 function LoginTeacher({onBack,onLogin,onReg}) {
   const [name,setName]=useState(""); const [sub,setSub]=useState("국어"); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
-  return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader sub="선생님 로그인"/>
-        <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:20,fontFamily:"inherit"}}>
-          <span style={{fontSize:16}}>←</span> 다른 계정으로 로그인
-        </button>
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>이름</label>
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/>
-        </div>
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>담당 교과목</label>
-          <select value={sub} onChange={e=>setSub(e.target.value)} style={{...inp0,appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center"}}>
-            {SUBS.map(s=><option key={s}>{s}</option>)}
-          </select>
-        </div>
-        <div style={{marginBottom:20}}>
-          <label style={lbl0}>비밀번호</label>
-          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/>
-        </div>
-        {err&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>}
-        <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}}
-          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-          로그인
-        </button>
-        <div style={{textAlign:"center",marginTop:20,fontSize:13,color:SO}}>
-          계정이 없으신가요?{" "}
-          <span onClick={onReg} style={{color:MD,fontWeight:700,cursor:"pointer"}}>가입하기</span>
-        </div>
-      </div>
+  return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+      <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>선생님 로그인</span>
     </div>
-  );
+    <div style={{marginBottom:14}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
+    <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label>
+      <select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select>
+    </div>
+    <div style={{marginBottom:18}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" style={inp0}/></div>
+    {err&&<div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"7px 12px",border:"1px solid #fed7aa"}}>{err}</div>}
+    <button onClick={()=>{if(!name.trim()){setErr("이름을 입력해주세요");return;}if(!pw.trim()){setErr("비밀번호를 입력해주세요");return;}setErr("");onLogin(name,pw,sub);}} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>로그인</button>
+    <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,0.45)",fontSize:13}}>
+      계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
+    </div>
+  </div></div>;
 }
 
 function Login({onLogin,onReg}) {
@@ -280,14 +232,17 @@ function Register({onDone,onBack}) {
     if(pw!==pwC){setErr("비밀번호가 일치하지 않아요");return;}
     if(!preview){setErr("학생증 사진을 첨부해주세요");return;}
     if(!agreed){setErr("개인정보 수집·이용에 동의해주세요");return;}
-    setErr(""); setUploading(true);
-    try {
-      const url = previewFile ? await uploadImage(previewFile) : null;
-      onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});
-    } catch {
+    setErr("");
+    // 학생증 사진 업로드
+    if(preview&&previewFile){
+      try{
+        const url=await uploadImage(previewFile);
+        onDone({role:"student",name,sid,grade,room,pw,idPhoto:url});
+      }catch{
+        onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
+      }
+    } else {
       onDone({role:"student",name,sid,grade,room,pw,idPhoto:null});
-    } finally {
-      setUploading(false);
     }
   };
   const doTeacher=()=>{
@@ -298,180 +253,93 @@ function Register({onDone,onBack}) {
     setErr(""); onDone({role:"teacher",name,subject:sub,pw});
   };
 
-  const ErrBox = () => err
-    ? <div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#be123c",marginBottom:14}}>{err}</div>
-    : null;
+  const ErrBox = () => err ? <div style={{color:"#c2410c",fontSize:12,marginBottom:12,background:"#fff7ed",borderRadius:8,padding:"8px 12px",border:"1px solid #fed7aa"}}>{err}</div> : null;
 
-  /* ── 역할 선택 ── */
-  if(!role) return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader/>
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:17,fontWeight:800,color:N,marginBottom:4}}>가입</div>
-          <div style={{color:SO,fontSize:13}}>계정 유형을 선택해주세요</div>
+  if(!role) return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{color:TX,fontSize:20,fontWeight:700,marginBottom:6}}>가입</div>
+    <div style={{color:SO,fontSize:13,marginBottom:20}}>가입할 계정을 선택해주세요</div>
+    <div style={{display:"flex",gap:12,marginBottom:20}}>
+      {[{k:"student",i:"🎒",l:"학생"},{k:"teacher",i:"👩‍🏫",l:"선생님"}].map(r=>(
+        <div key={r.k} onClick={()=>setRole(r.k)} style={{flex:1,border:`2px solid ${BO}`,borderRadius:14,padding:"20px 12px",textAlign:"center",cursor:"pointer",background:CHIP}}>
+          <div style={{fontSize:32,marginBottom:8}}>{r.i}</div>
+          <div style={{color:TX,fontSize:15,fontWeight:700}}>{r.l}</div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {[{k:"student",i:"🎒",l:"학생",d:"재학생으로 가입 (학생증 인증 필요)"},{k:"teacher",i:"👩🏫",l:"선생님",d:"교사 인증코드로 가입"}].map(r=>(
-            <div key={r.k} onClick={()=>setRole(r.k)}
-              style={{display:"flex",alignItems:"center",gap:14,border:`1.5px solid ${BO}`,borderRadius:14,padding:"16px 18px",cursor:"pointer",background:"#f6f8fc"}}>
-              <div style={{width:44,height:44,borderRadius:12,background:"#fff",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 2px 8px rgba(26,37,64,.06)"}}>{r.i}</div>
-              <div>
-                <div style={{fontSize:14,fontWeight:700,color:N}}>{r.l}</div>
-                <div style={{fontSize:11,color:SO,marginTop:1}}>{r.d}</div>
-              </div>
-              <div style={{marginLeft:"auto",color:LI,fontSize:16}}>›</div>
-            </div>
-          ))}
-        </div>
-        <div style={{textAlign:"center",fontSize:13,color:SO}}>
-          이미 계정이 있으신가요?{" "}
-          <span onClick={onBack} style={{color:MD,fontWeight:700,cursor:"pointer"}}>로그인</span>
-        </div>
+      ))}
+    </div>
+    <div style={{textAlign:"center",color:SO,fontSize:13}}>
+      이미 계정이 있으신가요? <span onClick={onBack} style={{color:MD,fontWeight:600,cursor:"pointer"}}>로그인</span>
+    </div>
+  </div></div>;
+
+  if(role==="student") return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
+      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
+    </div>
+    <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/></div>
+    <div style={{marginBottom:4}}><label style={lbl0}>학년 · 반 · 번호</label>
+      <div style={{display:"flex",gap:6}}>
+        <select value={grade} onChange={e=>setGrade(e.target.value)} style={{...inp0,flex:1}}><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+        <select value={room} onChange={e=>setRoom(e.target.value)} style={{...inp0,flex:1}}>{Array.from({length:10},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}반</option>)}</select>
+        <select value={num} onChange={e=>setNum(e.target.value)} style={{...inp0,flex:1}}>{Array.from({length:35},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}번</option>)}</select>
       </div>
     </div>
-  );
-
-  /* ── 학생 가입 ── */
-  if(role==="student") return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader sub="학생 가입"/>
-        <button onClick={()=>{setRole(null);setErr("");}} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:22,fontFamily:"inherit"}}>
-          <span style={{fontSize:16}}>←</span> 다른 계정 유형 선택
-        </button>
-
-        {/* 이름 */}
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>이름</label>
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/>
-        </div>
-
-        {/* 학년·반·번호 */}
-        <div style={{marginBottom:6}}>
-          <label style={lbl0}>학년 · 반 · 번호</label>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            <select value={grade} onChange={e=>setGrade(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
-              <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
-            </select>
-            <select value={room} onChange={e=>setRoom(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
-              {Array.from({length:10},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}반</option>)}
-            </select>
-            <select value={num} onChange={e=>setNum(e.target.value)} style={{...inp0,padding:"12px 8px",textAlign:"center"}}>
-              {Array.from({length:35},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}번</option>)}
-            </select>
-          </div>
-        </div>
-        {/* 자동 학번 표시 */}
-        <div style={{display:"flex",alignItems:"center",gap:8,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:9,padding:"9px 13px",marginBottom:14}}>
-          <span style={{fontSize:14}}>🪪</span>
-          <span style={{fontSize:12,color:SO}}>자동 생성 학번:</span>
-          <strong style={{fontSize:15,color:MD,letterSpacing:1}}>{sid}</strong>
-        </div>
-
-        {/* 비밀번호 */}
-        <div style={{marginBottom:10}}>
-          <label style={lbl0}>비밀번호</label>
-          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
-        </div>
-        <div style={{marginBottom:16}}>
-          <label style={lbl0}>비밀번호 확인</label>
-          <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력"
-            style={{...inp0,borderColor:pwC?(pw===pwC?"#86efac":"#fca5a5"):BO}}/>
-          {pwC&&<div style={{fontSize:11,marginTop:5,color:pw===pwC?"#16a34a":"#dc2626"}}>
-            {pw===pwC?"✅ 비밀번호가 일치해요":"비밀번호가 일치하지 않아요"}
-          </div>}
-        </div>
-
-        {/* 학생증 사진 */}
-        <div style={{marginBottom:14}}>
-          <label style={{...lbl0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            학생증 사진
-            <span style={{fontSize:10,fontWeight:700,background:"#dcfce7",color:"#16a34a",padding:"2px 7px",borderRadius:5}}>필수</span>
-          </label>
-          <label style={{display:"block",border:`2px dashed ${preview?"#86efac":BO}`,borderRadius:12,padding:preview?6:24,textAlign:"center",cursor:"pointer",background:preview?"#f0fdf4":"#f6f8fc",transition:".2s"}}>
-            {preview
-              ? <img src={preview} alt="" style={{width:"100%",maxHeight:120,objectFit:"cover",borderRadius:8}}/>
-              : <>
-                  <div style={{fontSize:28,marginBottom:6}}>🪪</div>
-                  <div style={{fontSize:12,color:SO}}><span style={{color:MD,fontWeight:700}}>클릭하여 첨부</span> · jpg, png 등</div>
-                </>
-            }
-            <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
-          </label>
-          {preview&&<button onClick={e=>{e.preventDefault();setPreview(null);setPreviewFile(null);}} style={{marginTop:6,background:"none",border:"none",color:SO,fontSize:11,cursor:"pointer",padding:0,fontFamily:"inherit"}}>✕ 사진 제거</button>}
-        </div>
-
-        {/* 개인정보 동의 */}
-        <div style={{background:"#f6f8fc",border:`1px solid ${BO}`,borderRadius:12,padding:"14px",marginBottom:16}}>
-          <div style={{fontSize:12,fontWeight:700,color:N,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
-          <div style={{fontSize:11,color:SO,lineHeight:1.8,marginBottom:10}}>
-            <span style={{fontWeight:600,color:TX}}>수집 항목</span> 학생증 사진, 이름, 학번<br/>
-            <span style={{fontWeight:600,color:TX}}>수집 목적</span> 재학생 여부 확인<br/>
-            <span style={{fontWeight:600,color:TX}}>보유 기간</span> 총관리자 검토 완료 후 7일 내 삭제<br/>
-            <span style={{fontWeight:600,color:TX}}>제3자 제공</span> 없음
-          </div>
-          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-            <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:17,height:17,accentColor:MD,flexShrink:0}}/>
-            <span style={{fontSize:12,color:TX,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:MD,fontWeight:700}}>*필수</span></span>
-          </label>
-        </div>
-
-        <ErrBox/>
-        <button onClick={doStudent} disabled={uploading}
-          style={{width:"100%",background:agreed&&!uploading?N:"#c9cfdb",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:agreed&&!uploading?"pointer":"not-allowed",fontFamily:"inherit",transition:".2s"}}>
-          {uploading?"사진 업로드 중...":"가입하기"}
-        </button>
-      </div>
+    <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"8px 12px",fontSize:12,color:SO,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+      <span>🪪</span><span>자동 생성된 학번: <strong style={{color:MD,fontSize:14}}>{sid}</strong></span>
     </div>
-  );
-
-  /* ── 선생님 가입 ── */
-  return (
-    <div style={authBox}>
-      <div style={authCard}>
-        <AuthHeader sub="선생님 가입"/>
-        <button onClick={()=>{setRole(null);setErr("");}} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:SO,fontSize:13,cursor:"pointer",padding:0,marginBottom:22,fontFamily:"inherit"}}>
-          <span style={{fontSize:16}}>←</span> 다른 계정 유형 선택
-        </button>
-
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>이름</label>
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/>
-        </div>
-        <div style={{marginBottom:14}}>
-          <label style={lbl0}>담당 교과목</label>
-          <select value={sub} onChange={e=>setSub(e.target.value)} style={{...inp0,appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center"}}>
-            {SUBS.map(s=><option key={s}>{s}</option>)}
-          </select>
-        </div>
-        <div style={{marginBottom:10}}>
-          <label style={lbl0}>비밀번호</label>
-          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/>
-        </div>
-        <div style={{marginBottom:16}}>
-          <label style={lbl0}>비밀번호 확인</label>
-          <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력"
-            style={{...inp0,borderColor:pwC?(pw===pwC?"#86efac":"#fca5a5"):BO}}/>
-          {pwC&&<div style={{fontSize:11,marginTop:5,color:pw===pwC?"#16a34a":"#dc2626"}}>
-            {pw===pwC?"✅ 비밀번호가 일치해요":"비밀번호가 일치하지 않아요"}
-          </div>}
-        </div>
-        <div style={{marginBottom:16}}>
-          <label style={{...lbl0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            교사 인증코드
-            <span style={{fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 7px",borderRadius:5}}>필수</span>
-          </label>
-          <input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="관리자에게 문의하세요" style={inp0}/>
-        </div>
-        <ErrBox/>
-        <button onClick={doTeacher}
-          style={{width:"100%",background:N,color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-          가입하기
-        </button>
-      </div>
+    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
+    <div style={{marginBottom:14}}>
+      <label style={lbl0}>비밀번호 확인</label>
+      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
+      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
     </div>
-  );
+    <div style={{marginBottom:14}}>
+      <label style={lbl0}>학생증 사진 <span style={{color:MD}}>*필수</span></label>
+      <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
+        {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
+          :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:"rgba(255,255,255,0.45)",fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
+        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
+      </label>
+    </div>
+    <div style={{background:CHIP,border:`1px solid ${BO}`,borderRadius:10,padding:"14px",marginBottom:14}}>
+      <div style={{color:TX,fontSize:13,fontWeight:600,marginBottom:8}}>📋 개인정보 수집·이용 동의</div>
+      <div style={{color:SO,fontSize:11,lineHeight:1.7,marginBottom:10}}>
+        <strong style={{color:TX}}>수집 항목:</strong> 학생증 사진, 이름, 학번<br/>
+        <strong style={{color:TX}}>수집 목적:</strong> 재학생 여부 확인<br/>
+        <strong style={{color:TX}}>보유 기간:</strong> 총관리자 검토 완료 즉시 삭제<br/>
+        <strong style={{color:TX}}>제3자 제공:</strong> 없음
+      </div>
+      <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:16,height:16,accentColor:M}}/>
+        <span style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:M}}>*필수</span></span>
+      </label>
+    </div>
+    <ErrBox/>
+    <button onClick={doStudent} style={{width:"100%",background:agreed?M:"rgba(45,212,160,0.3)",color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:agreed?"pointer":"not-allowed",fontFamily:"inherit"}}>가입하기</button>
+  </div></div>;
+
+  return <div style={authBox}><div style={authCard}>
+    <AuthHeader/>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
+      <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>선생님으로 가입</span>
+    </div>
+    <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="성함을 입력하세요" style={inp0}/></div>
+    <div style={{marginBottom:14}}><label style={lbl0}>담당 교과목</label><select value={sub} onChange={e=>setSub(e.target.value)} style={inp0}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>
+    <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
+    <div style={{marginBottom:14}}>
+      <label style={lbl0}>비밀번호 확인</label>
+      <input type="password" value={pwC} onChange={e=>setPwC(e.target.value)} placeholder="비밀번호 다시 입력" style={{...inp0,border:pwC&&pw!==pwC?"1px solid #ff8a8a":inp0.border}}/>
+      {pwC&&pw!==pwC&&<div style={{fontSize:11,color:"#ff8a8a",marginTop:4}}>비밀번호가 일치하지 않아요</div>}
+      {pwC&&pw===pwC&&<div style={{fontSize:11,color:MD,marginTop:4}}>✅ 비밀번호가 일치해요</div>}
+    </div>
+    <div style={{marginBottom:6}}><label style={lbl0}>교사 인증코드 <span style={{color:M}}>*필수</span></label><input type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="인증코드를 입력하세요" style={inp0}/></div>
+    <ErrBox/>
+    <button onClick={doTeacher} style={{width:"100%",background:M,color:N,border:"none",borderRadius:10,padding:13,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:12}}>가입하기</button>
+  </div></div>;
 }
 
 // ── 프로필 페이지 ──
@@ -493,14 +361,10 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
   const savePw=async()=>{
     const acc=accounts.find(a=>a.id===user.id);
     if(!acc){setErr("계정을 찾을 수 없어요");return;}
-    // 해시된 비번이면 해시로 비교, 아직 평문이면 평문 비교
-    const curHashed=await hashPw(curPw);
-    const pwMatch=isHashed(acc.pw)?acc.pw===curHashed:acc.pw===curPw;
-    if(!pwMatch){setErr("현재 비밀번호가 일치하지 않아요");setOk("");return;}
+    if(acc.pw!==curPw){setErr("현재 비밀번호가 일치하지 않아요");setOk("");return;}
     if(newPw.length<4){setErr("비밀번호는 4자 이상이어야 해요");return;}
     if(newPw!==confirmPw){setErr("새 비밀번호가 일치하지 않아요");return;}
-    const newHashed=await hashPw(newPw);
-    const updated=[...accounts.filter(a=>a.id!==user.id),{...acc,pw:newHashed}];
+    const updated=[...accounts.filter(a=>a.id!==user.id),{...acc,pw:newPw}];
     await fbSet("accounts",updated);
     onUpdate(updated,user);
     setCurPw("");setNewPw("");setConfirmPw("");
@@ -517,7 +381,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
 
   return <div>
     <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>내 계정</h1><p style={{color:SO,fontSize:13,marginTop:3}}>계정 정보를 확인하고 수정하세요</p></div>
-    <div style={{background:BG,borderRadius:14,padding:"18px",border:`1px solid ${BO}`,marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
+    <div style={{background:CA,borderRadius:14,padding:"18px",border:`1px solid ${BO}`,marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
       <div style={{width:50,height:50,borderRadius:"50%",background:`linear-gradient(135deg,${M},#1a9e76)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:N,flexShrink:0}}>{user.name[0]}</div>
       <div>
         <div style={{fontSize:16,fontWeight:700,color:TX,marginBottom:3}}>{user.name}</div>
@@ -527,12 +391,12 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
     </div>
     <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16}}>
       {[{k:"info",l:"✏️ 정보 수정"},{k:"pw",l:"🔑 비밀번호 변경"},{k:"del",l:"🗑 계정 삭제"}].map(t=>(
-        <Btn key={t.k} onClick={()=>{setTab(t.k);setErr("");setOk("");}} style={{flex:1,padding:"9px 4px",borderRadius:8,fontSize:12,fontWeight:tab===t.k?700:500,color:tab===t.k?N:SO,background:tab===t.k?BG:"transparent",whiteSpace:"nowrap"}}>
+        <Btn key={t.k} onClick={()=>{setTab(t.k);setErr("");setOk("");}} style={{flex:1,padding:"9px 4px",borderRadius:8,fontSize:12,fontWeight:tab===t.k?700:500,color:tab===t.k?N:SO,background:tab===t.k?CA:"transparent",whiteSpace:"nowrap"}}>
           {t.l}
         </Btn>
       ))}
     </div>
-    {tab==="info"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="info"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{marginBottom:14}}><label style={lbl1}>이름</label><input value={newName} onChange={e=>setNewName(e.target.value)} style={inp1}/></div>
       {isTeacher&&<div style={{marginBottom:14}}><label style={lbl1}>담당 교과목</label><select value={newSub} onChange={e=>setNewSub(e.target.value)} style={inp1}>{SUBS.map(s=><option key={s}>{s}</option>)}</select></div>}
       {!isTeacher&&<div style={{marginBottom:14}}><label style={lbl1}>학번</label><input value={user.id} disabled style={{...inp1,opacity:0.5,cursor:"not-allowed"}}/><div style={{fontSize:11,color:LI,marginTop:4}}>학번은 변경할 수 없어요</div></div>}
@@ -540,7 +404,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
       {ok&&<div style={{color:"#0e8a5f",fontSize:12,marginBottom:10,background:MS,borderRadius:7,padding:"7px 11px"}}>{ok}</div>}
       <Btn onClick={saveInfo} style={{width:"100%",background:N,color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>저장하기</Btn>
     </div>}
-    {tab==="pw"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="pw"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{marginBottom:14}}><label style={lbl1}>현재 비밀번호</label><input type="password" value={curPw} onChange={e=>setCurPw(e.target.value)} placeholder="현재 비밀번호 입력" style={inp1}/></div>
       <div style={{marginBottom:14}}><label style={lbl1}>새 비밀번호</label><input type="password" value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="새 비밀번호 입력 (4자 이상)" style={inp1}/></div>
       <div style={{marginBottom:16}}><label style={lbl1}>새 비밀번호 확인</label><input type="password" value={confirmPw} onChange={e=>setConfirmPw(e.target.value)} placeholder="새 비밀번호 다시 입력" style={inp1}/></div>
@@ -548,7 +412,7 @@ function ProfilePage({user,isTeacher,isAdmin,accounts,onUpdate,onDelete}) {
       {ok&&<div style={{color:"#0e8a5f",fontSize:12,marginBottom:10,background:MS,borderRadius:7,padding:"7px 11px"}}>{ok}</div>}
       <Btn onClick={savePw} style={{width:"100%",background:N,color:"#fff",borderRadius:10,padding:12,fontSize:14,fontWeight:700}}>비밀번호 변경</Btn>
     </div>}
-    {tab==="del"&&<div style={{background:BG,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
+    {tab==="del"&&<div style={{background:CA,borderRadius:14,padding:"20px 18px",border:`1px solid ${BO}`}}>
       <div style={{background:"#fee2e2",border:"1px solid #fecaca",borderRadius:10,padding:"14px",marginBottom:16}}>
         <div style={{fontSize:14,fontWeight:700,color:"#991b1b",marginBottom:6}}>⚠️ 계정 삭제 주의사항</div>
         <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.7}}>• 삭제한 계정은 복구할 수 없어요<br/>• 작성한 게시글과 댓글은 삭제되지 않아요<br/>• 재가입 시 동일 학번으로 가입 가능해요</div>
@@ -584,9 +448,9 @@ function InquiryTab() {
     return ()=>unsub();
   },[]);
   return <div style={{display:"flex",flexDirection:"column",gap:10}}>
-    {items.length===0&&<div style={{background:BG,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 문의가 없어요 🎉</div>}
+    {items.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 문의가 없어요 🎉</div>}
     {items.map(item=>(
-      <div key={item.id} style={{background:BG,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
+      <div key={item.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,flexWrap:"wrap",gap:6}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:"#ede9fe",color:"#5b21b6"}}>{item.type}</span>
@@ -608,7 +472,7 @@ function CalendarPage() {
     5:{year:2026,month:5,days:31,startDay:4,holidays:[1,4],
       single:{1:"재량휴업",4:"재량휴업",7:"학력평가",15:"체육대회"},
       ranges:[{from:18,to:29,label:"진로컨설팅",color:N2}],
-      list:[{d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},{d:"5월 7일",l:"📝 고3 전국연합학력평가"},{d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},{d:"5월 18~29일",l:"👨👩👧 학부모 진로 진학 컨설팅"}]},
+      list:[{d:"5월 1일·4일",l:"🏫 학교장재량휴업일"},{d:"5월 7일",l:"📝 고3 전국연합학력평가"},{d:"5월 15일",l:"🎽 1·2학년 체육대회 / 3학년 졸업앨범 실내촬영"},{d:"5월 18~29일",l:"👨‍👩‍👧 학부모 진로 진학 컨설팅"}]},
     6:{year:2026,month:6,days:30,startDay:0,holidays:[3],
       single:{3:"지방선거",4:"전국연합·모의평가"},
       ranges:[{from:30,to:30,label:"2차 지필평가",color:M2}],
@@ -663,66 +527,67 @@ function CalendarPage() {
 
 
 // ── 이달의 급식 ──
-function MealPage({mealData, isAdmin, onEdit}){
+function MealPage(){
   const today = new Date();
-  const curMon = today.getMonth()+1;
-  const [mealMonth,setMealMonth]=useState(()=>{
-    // 현재 달이 데이터에 있으면 현재 달, 아니면 데이터 중 가장 최근 달
-    const months=[...new Set(Object.keys(mealData).map(k=>parseInt(k.split("/")[0])))].sort((a,b)=>a-b);
-    return months.includes(curMon)?curMon:(months[months.length-1]||curMon);
-  });
-
-  // 선택된 달의 날짜 목록 (정렬)
-  const daysInMonth=Object.keys(mealData)
-    .filter(k=>parseInt(k.split("/")[0])===mealMonth)
-    .sort((a,b)=>{
-      const [am,ad]=a.split("/").map(Number);
-      const [bm,bd]=b.split("/").map(Number);
-      return am!==bm?am-bm:ad-bd;
-    });
-
-  const months=[...new Set(Object.keys(mealData).map(k=>parseInt(k.split("/")[0])))].sort((a,b)=>a-b);
-
+  const curMon = today.getMonth()+1===6?6:5;
+  const [mealMonth,setMealMonth]=useState(curMon);
+  const MEAL_MONTHS={
+    5:{
+      label:"2026년 5월",
+      weeks:[
+        {label:"1주차",days:[{d:"5/6",day:"수"},{d:"5/7",day:"목"},{d:"5/8",day:"금"}]},
+        {label:"2주차",days:[{d:"5/11",day:"월"},{d:"5/12",day:"화"},{d:"5/13",day:"수"},{d:"5/14",day:"목"},{d:"5/15",day:"금"}]},
+        {label:"3주차",days:[{d:"5/18",day:"월"},{d:"5/19",day:"화"},{d:"5/20",day:"수"},{d:"5/21",day:"목"},{d:"5/22",day:"금"}]},
+        {label:"4주차",days:[{d:"5/26",day:"화"},{d:"5/27",day:"수"},{d:"5/28",day:"목"},{d:"5/29",day:"금"}]},
+      ]
+    },
+    6:{
+      label:"2026년 6월",
+      weeks:[
+        {label:"1주차",days:[{d:"6/1",day:"월"},{d:"6/2",day:"화"},{d:"6/3",day:"수"},{d:"6/4",day:"목"},{d:"6/5",day:"금"}]},
+        {label:"2주차",days:[{d:"6/8",day:"월"},{d:"6/9",day:"화"},{d:"6/10",day:"수"},{d:"6/11",day:"목"},{d:"6/12",day:"금"}]},
+        {label:"3주차",days:[{d:"6/15",day:"월"},{d:"6/16",day:"화"},{d:"6/17",day:"수"},{d:"6/18",day:"목"},{d:"6/19",day:"금"}]},
+        {label:"4주차",days:[{d:"6/22",day:"월"},{d:"6/23",day:"화"},{d:"6/24",day:"수"},{d:"6/25",day:"목"},{d:"6/26",day:"금"}]},
+        {label:"5주차",days:[{d:"6/29",day:"월"},{d:"6/30",day:"화"}]},
+      ]
+    }
+  };
+  const mealKeys=Object.keys(MEAL_MONTHS).map(Number);
+  const weeks=MEAL_MONTHS[mealMonth].weeks;
   return(
     <div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <div>
-          <h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1>
-          <p style={{color:SO,fontSize:13,marginTop:3}}>세종캐터링 제공</p>
-        </div>
-        {isAdmin&&<Btn onClick={onEdit} style={{display:"flex",alignItems:"center",gap:6,background:N,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:12,fontWeight:700}}>✏️ 급식 편집</Btn>}
+      <div style={{marginBottom:14}}><h1 style={{fontSize:21,fontWeight:700}}>🍱 이달의 급식</h1><p style={{color:"#5a6a8a",fontSize:13,marginTop:3}}>세종캐터링 제공</p></div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:"#fff",borderRadius:12,padding:"10px 16px",border:"1px solid #e2e8f4"}}>
+        <button onClick={()=>setMealMonth(v=>Math.max(Math.min(...mealKeys),v-1))} style={{background:mealMonth>Math.min(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth>Math.min(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
+        <div style={{fontWeight:700,fontSize:15,color:"#1a2540"}}>{MEAL_MONTHS[mealMonth].label}</div>
+        <button onClick={()=>setMealMonth(v=>Math.min(Math.max(...mealKeys),v+1))} style={{background:mealMonth<Math.max(...mealKeys)?"#0f1f3d":"#e2e8f4",color:mealMonth<Math.max(...mealKeys)?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
       </div>
-      {/* 달 선택 */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,background:BG,borderRadius:12,padding:"10px 16px",border:`1px solid ${BO}`}}>
-        <button onClick={()=>{const i=months.indexOf(mealMonth);if(i>0)setMealMonth(months[i-1]);}} style={{background:months.indexOf(mealMonth)>0?N:"#e2e8f4",color:months.indexOf(mealMonth)>0?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>‹</button>
-        <div style={{fontWeight:700,fontSize:15,color:TX}}>2026년 {mealMonth}월</div>
-        <button onClick={()=>{const i=months.indexOf(mealMonth);if(i<months.length-1)setMealMonth(months[i+1]);}} style={{background:months.indexOf(mealMonth)<months.length-1?N:"#e2e8f4",color:months.indexOf(mealMonth)<months.length-1?"#fff":"#9aa5c0",border:"none",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer"}}>›</button>
-      </div>
-      {daysInMonth.length===0&&<div style={{textAlign:"center",color:LI,padding:"40px 0",fontSize:14}}>이 달의 급식 정보가 없어요</div>}
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {daysInMonth.map(d=>{
-          const menu=mealData[d];
-          const [mo,da]=d.split("/").map(Number);
-          const isToday=today.getMonth()+1===mo&&today.getDate()===da;
-          const weekDays=["일","월","화","수","목","금","토"];
-          const day=weekDays[new Date(2026,mo-1,da).getDay()];
-          return(
-            <div key={d} style={{background:isToday?"#f0fdf9":BG,border:`1.5px solid ${isToday?M:BO}`,borderRadius:12,padding:"12px 14px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?.length?8:0}}>
-                <span style={{background:isToday?M:N,color:isToday?N:"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
-                <span style={{fontSize:13,fontWeight:700,color:isToday?MD:TX}}>{mo}월 {da}일</span>
-                {isToday&&<span style={{fontSize:11,fontWeight:700,color:MD,background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
-              </div>
-              {menu?.length
-                ?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                  {menu.map((item,i)=><span key={i} style={{background:"#f4f6fb",border:`1px solid ${BO}`,borderRadius:5,padding:"3px 8px",fontSize:12,color:TX}}>{item}</span>)}
+      {weeks.map((w,wi)=>(
+        <div key={wi} style={{marginBottom:16}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#5a6a8a",marginBottom:8,paddingLeft:2}}>{w.label}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {w.days.map(({d,day})=>{
+              const menu=MEAL[d];
+              const isToday=today.getMonth()+1===parseInt(d.split("/")[0])&&today.getDate()===parseInt(d.split("/")[1]);
+              return(
+                <div key={d} style={{background:isToday?"#f0fdf9":"#fff",border:`1.5px solid ${isToday?"#2dd4a0":"#e2e8f4"}`,borderRadius:12,padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:menu?8:0}}>
+                    <span style={{background:isToday?"#2dd4a0":"#0f1f3d",color:isToday?"#0f1f3d":"#fff",borderRadius:6,padding:"2px 10px",fontSize:12,fontWeight:700}}>{day}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:isToday?"#2dd4a0":"#1a2540"}}>{d.split("/")[0]}월 {d.split("/")[1]}일</span>
+                    {isToday&&<span style={{fontSize:11,fontWeight:700,color:"#2dd4a0",background:"#d1fae5",padding:"1px 7px",borderRadius:10}}>오늘</span>}
+                  </div>
+                  {menu
+                    ?<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {menu.map((item,i)=><span key={i} style={{background:"#f4f6fb",border:"1px solid #e2e8f4",borderRadius:5,padding:"3px 8px",fontSize:12,color:"#1a2540"}}>{item}</span>)}
+                    </div>
+                    :<div style={{fontSize:12,color:"#9aa5c0"}}>휴업일</div>
+                  }
                 </div>
-                :<div style={{fontSize:12,color:LI}}>휴업일</div>
-              }
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -748,12 +613,6 @@ export default function App() {
   const [curPost,setCurPost]=useState(null);
   const [curWiki,setCurWiki]=useState(null);
   const [adminTab,setAdminTab]=useState("id");
-  // 개인정보 보호 설정
-  const [privacyDays,setPrivacyDays]=useState(7);
-  const [privacyDaysInput,setPrivacyDaysInput]=useState("7");
-  const [privacySettingsOpen,setPrivacySettingsOpen]=useState(false);
-  // 보안 로그
-  const [secLogs,setSecLogs]=useState([]);
   const [toast,setToast]=useState("");
   // 글쓰기
   const [wModal,setWModal]=useState(false);
@@ -794,26 +653,26 @@ export default function App() {
   const [inquiryModal,setInquiryModal]=useState(false);
   const [inquiryType,setInquiryType]=useState("오류 신고");
   const [inquiryText,setInquiryText]=useState("");
-  // 알림
-  const [notiList,setNotiList]=useState([]);
-  const [notiOpen,setNotiOpen]=useState(false);
-  // 급식 데이터 (Firebase에서 로드, 없으면 하드코딩 MEAL 사용)
-  const [mealData,setMealData]=useState(MEAL);
-  // 급식 편집 모달
-  const [mealEditModal,setMealEditModal]=useState(false);
-  const [mealEditDate,setMealEditDate]=useState(""); // "7/1" 형식
-  const [mealEditItems,setMealEditItems]=useState(""); // 줄바꿈 구분 텍스트
-  const [mealEditTarget,setMealEditTarget]=useState(null); // 편집 중인 날짜 키
 
 
-  // 오늘 급식
-  const _today = new Date();
-  const todayMeal = mealData[`${_today.getMonth()+1}/${_today.getDate()}`] || null;
+  // 오늘 급식 가져오기
+  const getTodayMeal = () => {
+    const t = new Date();
+    const key = `${t.getMonth()+1}/${t.getDate()}`;
+    return MEAL[key] || null;
+  };
+  const todayMeal = getTodayMeal();
 
   // D-day 계산 (2차 지필평가 6월 30일)
-  const _target = new Date(2026, 5, 30); _target.setHours(0,0,0,0);
-  const _now = new Date(); _now.setHours(0,0,0,0);
-  const dday = Math.ceil((_target - _now) / (1000 * 60 * 60 * 24));
+  const getDday = () => {
+    const target = new Date(2026, 5, 30);
+    const today2 = new Date();
+    today2.setHours(0,0,0,0);
+    target.setHours(0,0,0,0);
+    const diff = Math.ceil((target - today2) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+  const dday = getDday();
 
   const toast_ = msg => { setToast(msg); setTimeout(()=>setToast(""),2800); };
   const [deferredPrompt,setDeferredPrompt]=useState(null);
@@ -821,9 +680,12 @@ export default function App() {
   const [showIosGuide,setShowIosGuide]=useState(false);
   const [isIos]=useState(()=>{
     const ua=window.navigator.userAgent.toLowerCase();
-    return /iphone|ipad|ipod/.test(ua)||(navigator.maxTouchPoints>0&&/mac/.test(ua));
+    const isIpad=(navigator.maxTouchPoints>1&&/mac/.test(ua));
+    return /iphone|ipod/.test(ua)||isIpad;
   });
-  const [isStandalone]=useState(()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true);
+  const [isStandalone]=useState(()=>{
+    try{ return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true; }catch{ return false; }
+  });
 
   useEffect(()=>{
     const handler=e=>{ e.preventDefault(); setDeferredPrompt(e); setShowInstall(true); };
@@ -838,7 +700,7 @@ export default function App() {
     if(result.outcome==="accepted") toast_("앱이 설치됐어요! 😊");
     setDeferredPrompt(null); setShowInstall(false);
   };
-  
+  const goPage = p => { setPage(p); setSidebar(false); setCurWiki(null); };
 
   // ── 초기 로드 ──
   useEffect(()=>{
@@ -857,14 +719,6 @@ export default function App() {
       if(savedWiki&&savedWiki.length>0) setWiki(savedWiki);
       const savedIdList=await fbGet("idList");
       if(savedIdList&&savedIdList.length>0) setIdList(savedIdList);
-      const savedPrivacyDays=await fbGet("privacyDays");
-      if(savedPrivacyDays!=null){ setPrivacyDays(savedPrivacyDays); setPrivacyDaysInput(String(savedPrivacyDays)); } else { setPrivacyDays(7); setPrivacyDaysInput("7"); }
-      // 급식 데이터 로드 (없으면 하드코딩 MEAL 유지)
-      const savedMeal=await fbGet("mealData");
-      if(savedMeal&&Object.keys(savedMeal).length>0) setMealData(savedMeal);
-      // 보안 로그 로드
-      const savedSecLogs=await fbGet("secLogs");
-      if(savedSecLogs&&savedSecLogs.length>0) setSecLogs(savedSecLogs);
       const sessStr=localStorage.getItem("innerschool_sess");
       const sess=sessStr?JSON.parse(sessStr):null;
       if(sess&&sess.userId){
@@ -882,19 +736,6 @@ export default function App() {
   // ── 실시간 구독 ──
   useEffect(()=>{ const u=onSnapshot(collection(db,"posts"),snap=>{ const l=snap.docs.map(d=>({id:d.id,...d.data()})); l.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); setPosts(l); }); return()=>u(); },[]);
   useEffect(()=>{ const u=onSnapshot(collection(db,"comments"),snap=>{ const m={}; snap.docs.forEach(d=>{const dt=d.data();if(!m[dt.postId])m[dt.postId]=[];m[dt.postId].push({id:d.id,...dt});}); setCmts(m); }); return()=>u(); },[]);
-  // 알림 실시간 구독 (로그인 후 user.id 확정되면)
-  useEffect(()=>{
-    if(!user.id) return;
-    const u=onSnapshot(collection(db,"notifications"),snap=>{
-      const list=snap.docs
-        .map(d=>({id:d.id,...d.data()}))
-        .filter(n=>n.toUserId===user.id)
-        .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))
-        .slice(0,30); // 최근 30개만
-      setNotiList(list);
-    });
-    return()=>u();
-  },[user.id]);
 
   // ── 로그인 ──
   const doLogin=async(idOrName,pw,roleOrSub)=>{
@@ -902,26 +743,18 @@ export default function App() {
     const list=(savedAcc&&savedAcc.length>0)?savedAcc:INIT_ACCOUNTS;
     setAccounts(list);
     let acc;
-    const hashed=await hashPw(pw);
     if(roleOrSub==="student"){
-      // 해시 비교 우선, 기존 평문 계정도 허용 (마이그레이션용)
-      acc=list.find(a=>a.role==="student"&&a.id===idOrName&&(a.pw===hashed||(!isHashed(a.pw)&&a.pw===pw)));
+      acc=list.find(a=>a.role==="student"&&a.id===idOrName&&a.pw===pw);
       if(!acc){alert("학번 또는 비밀번호가 일치하지 않습니다.");return;}
       if(acc.status==="blocked"){alert("차단된 계정이에요. 총관리자에게 문의해주세요.");return;}
       setIsAdmin(acc.id==="11025"); setIsTeacher(false);
-      const stu_status=acc.id==="11025"?"ok":(acc.status||"pending");
+      const stu_status = acc.id==="11025" ? "ok" : (acc.status||"pending");
       setUser({name:acc.name,id:acc.id,grade:acc.grade+"학년",room:acc.room+"반",status:stu_status});
     } else {
-      acc=list.find(a=>a.role==="teacher"&&a.name===idOrName&&(a.pw===hashed||(!isHashed(a.pw)&&a.pw===pw))&&a.subject===roleOrSub);
+      acc=list.find(a=>a.role==="teacher"&&a.name===idOrName&&a.pw===pw&&a.subject===roleOrSub);
       if(!acc){alert("이름, 비밀번호 또는 교과목이 일치하지 않습니다.");return;}
       setIsAdmin(false); setIsTeacher(true);
       setUser({name:acc.name,id:acc.id,grade:"교사",room:acc.subject||"",status:"ok"});
-    }
-    // 평문 비밀번호면 이번 로그인 시점에 해시로 자동 변환
-    if(!isHashed(acc.pw)){
-      const migrated=list.map(a=>a.id===acc.id?{...a,pw:hashed}:a);
-      await fbSet("accounts",migrated);
-      setAccounts(migrated);
     }
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:acc.id}));
     setScr("app"); setPage("board");
@@ -934,56 +767,31 @@ export default function App() {
     if(info.role==="student"){
       if(base.find(a=>a.id===info.sid)){alert(`이미 가입된 학번이에요 (${info.sid}).`);return;}
     }
-    const pwHash=await hashPw(info.pw);
-    let updated, newUser;
+    let updated,newUser;
     if(info.role==="teacher"){
       const tid="T"+Date.now().toString().slice(-4);
-      const newAcc={role:"teacher",id:tid,name:info.name,pw:pwHash,subject:info.subject,status:"ok"};
-      updated=[...base,newAcc];
-      newUser={name:info.name,id:tid,grade:"교사",room:info.subject,status:"ok"};
+      const newAcc={role:"teacher",id:tid,name:info.name,pw:info.pw,subject:info.subject,status:"ok"};
+      updated=[...base,newAcc]; newUser={name:info.name,id:tid,grade:"교사",room:info.subject,status:"ok"};
       setIsTeacher(true); setIsAdmin(false);
     } else {
-      const newAcc={role:"student",id:info.sid,name:info.name,pw:pwHash,grade:info.grade,room:info.room,status:"pending"};
-      updated=[...base,newAcc];
-      newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
+      const newAcc={role:"student",id:info.sid,name:info.name,pw:info.pw,grade:info.grade,room:info.room,status:"pending"};
+      updated=[...base,newAcc]; newUser={name:info.name,id:info.sid,grade:info.grade+"학년",room:info.room+"반",status:"pending"};
       setIsTeacher(false); setIsAdmin(false);
       const newItem={id:info.sid,name:info.name,grade:info.grade+"학년 "+info.room+"반",date:new Date().toLocaleDateString("ko-KR"),status:"pending",isTeacher:false,idPhoto:info.idPhoto||null};
       const savedIdList=await fbGet("idList");
       const newIdList=[newItem,...(savedIdList||[])];
       setIdList(newIdList); await fbSet("idList",newIdList);
     }
-    if(!updated||!newUser){toast_("가입 처리 중 오류가 발생했어요");return;}
     await fbSet("accounts",updated);
     localStorage.setItem("innerschool_sess",JSON.stringify({userId:newUser.id}));
     setAccounts(updated); setUser(newUser);
     setScr("app"); setPage("home");
-    toast_(info.role==="teacher"?"가입 완료! 👩🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
+    toast_(info.role==="teacher"?"가입 완료! 👩‍🏫":"가입 완료! 총관리자 승인 후 게시판 이용 가능해요 😊");
   };
 
   const doLogout=()=>{ localStorage.removeItem("innerschool_sess"); setScr("login"); };
   const onAccountUpdate=(newAcc,newUser)=>{ setAccounts(newAcc); setUser(newUser); };
   const onAccountDelete=()=>{ setScr("login"); };
-
-  // ── 🛡️ 보안 에이전트 ──
-  // 보안 로그 기록
-  const secLog=async(type,detail)=>{
-    const entry={type,detail,userId:user.id,userName:user.name,time:new Date().toLocaleString("ko-KR"),createdAt:Date.now()};
-    const prev=await fbGet("secLogs")||[];
-    const next=[entry,...prev].slice(0,200);
-    setSecLogs(next); await fbSet("secLogs",next);
-  };
-
-  // 중복 제목 감지 — 같은 작성자가 동일한 제목으로 이미 올린 경우
-  const checkDupTitle=(title)=>{
-    const t=title.trim().toLowerCase();
-    return posts.some(p=>p.realAuthor===user.name&&p.title.trim().toLowerCase()===t);
-  };
-
-  // 관리자 페이지 접근 로그
-  const goPage=p=>{
-    setPage(p); setSidebar(false); setCurWiki(null);
-    if(p==="admin"&&isAdmin) secLog("ADMIN_ACCESS","관리자 페이지 접근");
-  };
 
   // ── 게시글 ──
   const submitPost=async()=>{
@@ -992,12 +800,6 @@ export default function App() {
     if(!wBody.trim()&&wImages.length===0){toast_("내용을 입력하거나 이미지를 첨부해주세요");return;}
     if(hasBad(wTitle)||hasBad(wBody)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
     if(!isTeacher&&wType==="verified"&&!wSrc.trim()){toast_("확인 근거를 입력해주세요");return;}
-    // 🚨 중복 제목 감지 (선생님·관리자 제외)
-    if(!isTeacher&&!isAdmin&&checkDupTitle(wTitle)){
-      await secLog("SPAM",`중복 제목 게시 감지: "${wTitle.trim().slice(0,30)}"`);
-      toast_("🚨 동일한 제목의 게시글이 이미 있어요. 제목을 확인해주세요.");
-      return;
-    }
     const grade=isTeacher?wGrade:user.grade.replace("학년","");
     const now=new Date();
     const dateStr=now.getFullYear()+"."+String(now.getMonth()+1).padStart(2,"0")+"."+String(now.getDate()).padStart(2,"0");
@@ -1008,7 +810,7 @@ export default function App() {
       const ref=await addDoc(collection(db,"posts"),np);
       if(!isTeacher&&wType==="verified") setVq(q=>[{id:ref.id,title:np.title,author:user.name,cat:wCat,source:np.source},...q]);
       setWModal(false);setWType(null);setWTitle("");setWBody("");setWSrc("");setWImages([]);setWAnon(false);
-      toast_(isTeacher?"게시됐어요! 👩🏫":wType==="verified"?"검토 후 배지가 부여됩니다 ✅":"게시됐어요!");
+      toast_(isTeacher?"게시됐어요! 👩‍🏫":wType==="verified"?"검토 후 배지가 부여됩니다 ✅":"게시됐어요!");
     }catch(e){console.error(e);toast_("게시 중 오류가 발생했어요.");}
   };
   const deletePost=async(id)=>{ if(!window.confirm("이 게시글을 삭제할까요?"))return; try{await deleteDoc(doc(db,"posts",id));}catch(e){console.error(e);} setPage("board"); toast_("게시글이 삭제됐어요"); };
@@ -1023,35 +825,7 @@ export default function App() {
   };
 
   // ── 댓글 ──
-  const submitCmt=async()=>{
-    if(!cText.trim()){toast_("댓글을 입력해주세요");return;}
-    if(hasBad(cText)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;}
-    try{
-      await addDoc(collection(db,"comments"),{
-        postId:curPost.id,author:user.name,anon,
-        text:cText.trim(),time:"방금 전",createdAt:Date.now()
-      });
-      // 🔔 댓글 알림 — 내가 내 글에 달 때는 제외
-      if(curPost.realAuthor!==user.name){
-        // 게시글 작성자의 userId 찾기
-        const postOwner=accounts.find(a=>a.name===curPost.realAuthor);
-        if(postOwner){
-          await addDoc(collection(db,"notifications"),{
-            toUserId:postOwner.id,
-            toUserName:postOwner.name,
-            fromUserName:anon?"익명":user.name,
-            type:"comment",
-            postId:curPost.id,
-            postTitle:curPost.title,
-            preview:cText.trim().slice(0,40),
-            read:false,
-            createdAt:Date.now(),
-          });
-        }
-      }
-    }catch(e){console.error(e);}
-    setCText(""); toast_("댓글이 등록됐어요!");
-  };
+  const submitCmt=async()=>{ if(!cText.trim()){toast_("댓글을 입력해주세요");return;} if(hasBad(cText)){toast_("⚠️ 비속어가 포함되어 있습니다.");return;} try{await addDoc(collection(db,"comments"),{postId:curPost.id,author:user.name,anon,text:cText.trim(),time:"방금 전",createdAt:Date.now()});}catch(e){console.error(e);} setCText(""); toast_("댓글이 등록됐어요!"); };
   const deleteCmt=async(cid)=>{ try{await deleteDoc(doc(db,"comments",cid));}catch(e){console.error(e);} toast_("댓글이 삭제됐어요"); };
 
   // ── 위키 ──
@@ -1086,7 +860,8 @@ export default function App() {
     </div>
 
     {/* 바텀탭 */}
-    <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:560,background:"rgba(255,255,255,.94)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderTop:`1px solid ${BO}`,display:"flex",zIndex:40}}>
+    <nav style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(255,255,255,.94)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderTop:`1px solid ${BO}`,display:"flex",zIndex:40,justifyContent:"center"}}>
+      <div style={{display:"flex",width:"100%",maxWidth:560}}>
       {[
         {k:"home",i:"🏠",l:"홈"},
         {k:"board",i:"📋",l:"게시판"},
@@ -1100,13 +875,14 @@ export default function App() {
           <span style={{fontSize:20}}>{t.i}</span>{t.l}
         </div>
       ))}
+      </div>
     </nav>
 
-    {/* 사이드바 오버레이 */}
+    {/* 사이드바 오버레이 */}}
     {sidebar&&<div onClick={()=>setSidebar(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:99}}/>}
 
     {/* 사이드바 */}
-    <aside style={{width:240,background:N,height:"100vh",display:"flex",flexDirection:"column",position:"fixed",left:0,top:0,zIndex:100,transform:sidebar?"translateX(0)":"translateX(-100%)",transition:"transform 0.25s ease",boxShadow:sidebar?"4px 0 24px rgba(0,0,0,0.2)":"none",overflowY:"auto"}}>
+    <aside style={{width:240,background:N,height:"100vh",display:"flex",flexDirection:"column",position:"fixed",right:0,top:0,zIndex:100,transform:sidebar?"translateX(0)":"translateX(100%)",transition:"transform 0.25s ease",boxShadow:sidebar?"-4px 0 24px rgba(0,0,0,0.2)":"none",overflowY:"auto"}}>
       <div style={{padding:"20px 18px 16px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div><div style={{fontFamily:"serif",fontSize:19,fontWeight:800,color:M}}>INNERSCHOOL</div><div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:1}}>경기창조고 교내 정보 공유 플랫폼</div></div>
         <Btn onClick={()=>setSidebar(false)} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,width:32,height:32,color:"rgba(255,255,255,0.6)",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</Btn>
@@ -1135,79 +911,29 @@ export default function App() {
       </nav>
       <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",flexDirection:"column",gap:6}}>
         {showInstall&&<Btn onClick={installApp} style={{width:"100%",background:"rgba(45,212,160,0.15)",border:"1px solid rgba(45,212,160,0.3)",borderRadius:10,padding:8,color:"#2dd4a0",fontSize:12,marginBottom:4}}>📲 앱으로 설치하기</Btn>}
-        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>{setShowIosGuide(true);setSidebar(false);}} style={{width:"100%",background:"rgba(45,212,160,0.15)",border:"1px solid rgba(45,212,160,0.3)",borderRadius:10,padding:8,color:"#2dd4a0",fontSize:12,marginBottom:4}}>📲 홈 화면에 추가</Btn>}
+        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>{setShowIosGuide(true);setSidebar(false);}} style={{width:"100%",background:"rgba(45,212,160,0.15)",border:"1px solid rgba(45,212,160,0.3)",borderRadius:10,padding:12,color:"#2dd4a0",fontSize:13,marginBottom:4,WebkitTapHighlightColor:"transparent"}}>📲 홈 화면에 추가하기</Btn>}
         <Btn onClick={()=>{setInquiryModal(true);setSidebar(false);}} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:8,color:"rgba(255,255,255,0.5)",fontSize:12}}>💬 관리자 문의</Btn>
         <Btn onClick={doLogout} style={{width:"100%",background:"rgba(255,107,107,0.1)",border:"1px solid rgba(255,107,107,0.2)",borderRadius:10,padding:10,color:"#ff8a8a",fontSize:13}}>로그아웃</Btn>
       </div>
     </aside>
 
     {/* 헤더 — sticky blur */}
+    <div style={{maxWidth:560,margin:"0 auto"}}>
     <div style={{position:"sticky",top:0,zIndex:20,background:"rgba(255,255,255,.88)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:`1px solid ${BO}`}}>
       <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
         <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.4px",color:TX,cursor:"pointer"}} onClick={()=>goPage("home")}>INNER<span style={{color:MD}}>SCHOOL</span></div>
         <div style={{flex:1}}/>
         {showInstall&&<Btn onClick={installApp} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
-        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>setShowIosGuide(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO}}>📲</Btn>}
+        {!showInstall&&isIos&&!isStandalone&&<Btn onClick={()=>{console.log("ios guide open");setShowIosGuide(true);}} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:SO,WebkitTapHighlightColor:"transparent",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center"}}>📲</Btn>}
         {isAdmin&&pending>0&&<span style={{background:AC,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:10,marginRight:4}}>{pending}</span>}
-        {/* 🔔 알림 버튼 */}
-        <div style={{position:"relative"}}>
-          <Btn onClick={()=>setNotiOpen(v=>!v)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:20,background:"none",border:"none",position:"relative"}}>
-            🔔
-            {notiList.filter(n=>!n.read).length>0&&(
-              <span style={{position:"absolute",top:4,right:4,width:16,height:16,background:AC,borderRadius:"50%",fontSize:9,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>
-                {notiList.filter(n=>!n.read).length>9?"9+":notiList.filter(n=>!n.read).length}
-              </span>
-            )}
-          </Btn>
-          {/* 알림 드롭다운 */}
-          {notiOpen&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:46,right:0,width:300,maxHeight:420,overflowY:"auto",background:"#fff",borderRadius:16,boxShadow:"0 8px 32px rgba(26,37,64,.16)",border:`1px solid ${BO}`,zIndex:200}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",borderBottom:`1px solid ${BO}`}}>
-              <div style={{fontSize:14,fontWeight:700,color:N}}>🔔 알림</div>
-              {notiList.some(n=>!n.read)&&<Btn onClick={async()=>{
-                // 전체 읽음 처리
-                const unread=notiList.filter(n=>!n.read);
-                await Promise.all(unread.map(n=>updateDoc(doc(db,"notifications",n.id),{read:true})));
-              }} style={{fontSize:11,color:MD,fontWeight:600,background:"none",border:"none",cursor:"pointer",padding:0}}>전체 읽음</Btn>}
-            </div>
-            {notiList.length===0
-              ?<div style={{padding:"28px 16px",textAlign:"center",color:LI,fontSize:13}}>아직 알림이 없어요</div>
-              :notiList.map(n=>(
-                <div key={n.id} onClick={async()=>{
-                  // 읽음 처리 후 해당 게시글로 이동
-                  if(!n.read) await updateDoc(doc(db,"notifications",n.id),{read:true});
-                  const post=posts.find(p=>p.id===n.postId);
-                  if(post){ setCurPost(post); setPage("detail"); }
-                  setNotiOpen(false);
-                }} style={{padding:"12px 16px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:n.read?"#fff":"#f0fdf9",display:"flex",gap:10,alignItems:"flex-start",transition:".1s"}}
-                  onMouseEnter={e=>e.currentTarget.style.background="#f6f8fc"}
-                  onMouseLeave={e=>e.currentTarget.style.background=n.read?"#fff":"#f0fdf9"}>
-                  <div style={{width:36,height:36,borderRadius:10,background:n.read?"#f6f8fc":MS,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>💬</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,color:N,marginBottom:2}}>
-                      <span style={{color:MD}}>{n.fromUserName}</span>님이 댓글을 달았어요
-                    </div>
-                    <div style={{fontSize:11,color:SO,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{n.postTitle}"</div>
-                    <div style={{fontSize:12,color:TX,background:"#f6f8fc",borderRadius:6,padding:"4px 8px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{n.preview}</div>
-                  </div>
-                  {!n.read&&<div style={{width:7,height:7,borderRadius:"50%",background:M,flexShrink:0,marginTop:4}}/>}
-                </div>
-              ))
-            }
-            {notiList.length>0&&<Btn onClick={async()=>{
-              if(!window.confirm("알림을 전체 삭제할까요?"))return;
-              await Promise.all(notiList.map(n=>deleteDoc(doc(db,"notifications",n.id))));
-              setNotiOpen(false);
-            }} style={{width:"100%",padding:"11px",fontSize:12,color:SO,background:"none",border:"none",borderTop:`1px solid ${BO}`,cursor:"pointer",fontFamily:"inherit"}}>🗑 알림 전체 삭제</Btn>}
-          </div>}
-        </div>
         <Btn onClick={()=>setSidebar(true)} style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",color:SO,fontSize:18,background:"none",border:"none"}}>☰</Btn>
       </div>
     </div>
-    {/* 알림 드롭다운 외부 클릭 닫기 */}
-    {notiOpen&&<div onClick={()=>setNotiOpen(false)} style={{position:"fixed",inset:0,zIndex:19}}/>}
 
     {/* 콘텐츠 */}
-    <main style={{padding:"0 0 80px",minHeight:"100vh",maxWidth:560,margin:"0 auto",borderLeft:`1px solid ${BO}`,borderRight:`1px solid ${BO}`}}>
+    </div>
+    <div style={{maxWidth:560,margin:"0 auto"}}>
+    <main style={{padding:"0 0 80px",minHeight:"100vh"}}>
 
       {/* ── 홈 ── */}
       {page==="home"&&<div>
@@ -1235,7 +961,7 @@ export default function App() {
         </div>
 
         {/* 메뉴 그리드 */}
-        <div style={{padding:"16px 0 0"}}>
+        <div style={{padding:"16px 18px 0"}}>
           <div style={{fontSize:11,fontWeight:700,color:SO,marginBottom:10}}>메뉴</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
             {[
@@ -1245,7 +971,7 @@ export default function App() {
               {k:"meal",ico:"🍱",title:"이달의 급식",desc:"월간 급식표",badge:"6월"},
             ].map(m=>(
               <div key={m.k} onClick={()=>goPage(m.k)}
-                style={{background:m.primary?N:BG,borderRadius:14,padding:"13px 12px",
+                style={{background:m.primary?N:CA,borderRadius:14,padding:"13px 12px",
                   boxShadow:"0 2px 8px rgba(15,31,61,.07)",border:`0.5px solid ${m.primary?N:BO}`,cursor:"pointer"}}>
                 <div style={{fontSize:22,marginBottom:6}}>{m.ico}</div>
                 <div style={{fontSize:12,fontWeight:700,color:m.primary?"#fff":TX,marginBottom:3}}>{m.title}</div>
@@ -1264,7 +990,7 @@ export default function App() {
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {[...posts].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,4).map((p,i)=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{background:BG,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
+                style={{background:CA,borderRadius:12,display:"flex",alignItems:"center",overflow:"hidden",
                   boxShadow:"0 1px 4px rgba(15,31,61,.06)",cursor:"pointer"}}>
                 <div style={{width:3,alignSelf:"stretch",background:p.type==="unverified"?"#f59e0b":M,flexShrink:0}}/>
                 <div style={{padding:"9px 11px",flex:1,minWidth:0}}>
@@ -1284,7 +1010,27 @@ export default function App() {
       </div>}
 
       {/* ── 게시판 ── */}
-      {page==="board"&&<div style={{padding:"0 18px"}}>
+      {page==="board"&&<div>
+        {/* 검색창 */}
+        <div style={{display:"flex",alignItems:"center",gap:8,background:CHIP,border:`1px solid ${BO}`,borderRadius:12,padding:"10px 14px",margin:"12px 18px 10px"}}>
+          <span style={{fontSize:15}}>🔍</span>
+          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+            placeholder="수행평가, 시험범위, 급식 검색"
+            style={{border:0,background:"transparent",outline:0,fontFamily:"inherit",flex:1,color:TX,fontSize:14}}/>
+          {searchQ&&<span onClick={()=>setSearchQ("")} style={{cursor:"pointer",color:LI,fontSize:14}}>✕</span>}
+        </div>
+        {/* 카테고리 칩 */}
+        <div style={{display:"flex",gap:6,padding:"0 18px 12px",overflowX:"auto",scrollbarWidth:"none",flexWrap:"nowrap"}}>
+          {["전체","📝 수행평가","📚 학업·시험","🎓 입시","📊 SLAT","🎨 동아리","📅 행사","🍱 급식","📢 공지","🙋 질문"].map(c=>(
+            <Btn key={c} onClick={()=>setCat(c==="전체"?c:c)} style={{flexShrink:0,fontSize:13,fontWeight:600,
+              color:cat===(c==="전체"?"전체":c)?CA:SO,
+              background:cat===(c==="전체"?"전체":c)?TX:CHIP,
+              border:`1px solid ${cat===(c==="전체"?"전체":c)?TX:BO}`,
+              borderRadius:999,padding:"7px 14px",whiteSpace:"nowrap"}}>
+              {c}
+            </Btn>
+          ))}
+        </div>
 
         {/* 승인 대기 */}
         {!isAdmin&&!isTeacher&&user.status==="pending"&&<div style={{background:"#fef3c7",border:"1px solid #fde047",borderRadius:14,padding:"28px 20px",textAlign:"center",marginTop:20}}>
@@ -1302,41 +1048,28 @@ export default function App() {
         </div>}
 
         {(isAdmin||isTeacher||user.status==="ok")&&<>
-          {/* ── 검색창 (1개) ── */}
-          <div style={{position:"relative",margin:"14px 0 12px"}}>
-            <span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
-            <input
-              value={searchQ} onChange={e=>setSearchQ(e.target.value)}
-              placeholder="제목이나 내용으로 검색하세요"
-              style={{width:"100%",background:"#f6f8fc",border:`1.5px solid ${BO}`,borderRadius:12,padding:"11px 38px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}
-            />
-            {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
-          </div>
-
-          {/* ── 학년 탭 ── */}
-          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",scrollbarWidth:"none"}}>
+          {/* 학년 탭 */}
+          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
             {["전체","1학년","2학년","3학년","공통"].map(g=>(
-              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}}
-                style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:BG,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>
-                {g}
-              </Btn>
+              <Btn key={g} onClick={()=>{setGradTab(g);setCat("전체");}} style={{padding:"7px 14px",borderRadius:18,border:`1.5px solid ${gradTab===g?N:BO}`,background:gradTab===g?N:CA,color:gradTab===g?"#fff":SO,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{g}</Btn>
             ))}
           </div>
-
-          {/* ── 카테고리 칩 (1줄) ── */}
-          <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,scrollbarWidth:"none",paddingBottom:2}}>
+          {/* 세부 카테고리 */}
+          <div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
             {["전체",...SUB_CATS].map(c=>(
-              <Btn key={c} onClick={()=>setCat(c)}
-                style={{padding:"6px 13px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:BG,color:cat===c?N:SO,fontSize:12,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>
-                {c}
-              </Btn>
+              <Btn key={c} onClick={()=>setCat(c)} style={{padding:"5px 12px",borderRadius:16,border:`1.5px solid ${cat===c?M:BO}`,background:cat===c?M:CA,color:cat===c?N:SO,fontSize:12,fontWeight:500,whiteSpace:"nowrap",flexShrink:0}}>{c}</Btn>
             ))}
+          </div>
+          {/* 검색 */}
+          <div style={{position:"relative",marginBottom:10}}>
+            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 제목이나 내용으로 검색하세요" style={{width:"100%",background:CA,border:`1.5px solid ${BO}`,borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",color:TX,fontFamily:"inherit",boxSizing:"border-box"}}/>
+            {searchQ&&<span onClick={()=>setSearchQ("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:LI,fontSize:16}}>✕</span>}
           </div>
           {/* 정렬 + 글쓰기 */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <div style={{display:"flex",gap:6}}>
               {[{k:"latest",l:"🕐 최신순"},{k:"popular",l:"🔥 인기순"}].map(s=>(
-                <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{padding:"6px 12px",borderRadius:18,border:`1.5px solid ${sortBy===s.k?N:BO}`,background:sortBy===s.k?N:BG,color:sortBy===s.k?"#fff":SO,fontSize:12,fontWeight:600}}>{s.l}</Btn>
+                <Btn key={s.k} onClick={()=>setSortBy(s.k)} style={{padding:"6px 12px",borderRadius:18,border:`1.5px solid ${sortBy===s.k?N:BO}`,background:sortBy===s.k?N:CA,color:sortBy===s.k?"#fff":SO,fontSize:12,fontWeight:600}}>{s.l}</Btn>
               ))}
             </div>
             {canWrite&&<Btn onClick={()=>{setWType(null);setWTitle("");setWBody("");setWSrc("");setWModal(true);}} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700}}>✏️ 글쓰기</Btn>}
@@ -1345,9 +1078,9 @@ export default function App() {
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
               <div key={p.id} onClick={async()=>{const latest=posts.find(x=>x.id===p.id)||p;setCurPost(latest);setPage("detail");try{await updateDoc(doc(db,"posts",p.id),{views:(p.views||0)+1});}catch{}}}
-                style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:BG,transition:".12s"}}
+                style={{display:"flex",gap:14,padding:"16px 18px",borderBottom:`1px solid ${BO}`,cursor:"pointer",background:CA,transition:".12s"}}
                 onMouseEnter={e=>e.currentTarget.style.background="#FBFCFE"}
-                onMouseLeave={e=>e.currentTarget.style.background=BG}>
+                onMouseLeave={e=>e.currentTarget.style.background=CA}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                     <span style={{fontSize:12,fontWeight:700,color:MD}}>{p.cat}</span>
@@ -1385,7 +1118,7 @@ export default function App() {
       {/* ── 게시글 상세 ── */}
       {page==="detail"&&curPost&&<div>
         <Btn onClick={()=>setPage("board")} style={{display:"flex",alignItems:"center",gap:4,background:BG,color:SO,border:`1.5px solid ${BO}`,borderRadius:8,padding:"7px 14px",fontSize:13,marginBottom:16}}>← 목록으로</Btn>
-        <div style={{background:BG,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`,marginBottom:12}}>
+        <div style={{background:CA,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`,marginBottom:12}}>
           <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}><Chip type={curPost.type} status={curPost.status}/></div>
           <div style={{fontSize:18,fontWeight:700,color:TX,lineHeight:1.4,marginBottom:10}}>{curPost.title}</div>
           <div style={{display:"flex",gap:12,fontSize:11,color:LI,marginBottom:12,flexWrap:"wrap"}}>
@@ -1415,7 +1148,7 @@ export default function App() {
           </div>
         </div>
         {/* 댓글 */}
-        <div style={{background:BG,borderRadius:12,padding:"18px 16px",border:`1px solid ${BO}`}}>
+        <div style={{background:CA,borderRadius:12,padding:"18px 16px",border:`1px solid ${BO}`}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>💬 댓글 <span style={{color:SO,fontWeight:400,fontSize:12}}>({(cmts[curPost.id]||[]).length}개)</span></div>
           {(cmts[curPost.id]||[]).length===0&&<div style={{color:LI,fontSize:13,paddingBottom:12}}>아직 댓글이 없어요.</div>}
           {(cmts[curPost.id]||[]).map(c=>(
@@ -1447,7 +1180,7 @@ export default function App() {
         {isAdmin&&<Btn onClick={()=>setWikiAddModal(true)} style={{display:"flex",alignItems:"center",gap:6,background:M,color:N,borderRadius:9,padding:"9px 16px",fontSize:13,fontWeight:700,marginBottom:14}}>➕ 위키 추가</Btn>}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {wiki.map((w,i)=>(
-            <div key={i} onClick={()=>setCurWiki({...w,idx:i})} style={{background:BG,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+            <div key={i} onClick={()=>setCurWiki({...w,idx:i})} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
               <div style={{fontSize:30,flexShrink:0}}>{w.icon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:3}}>{w.title}</div>
@@ -1462,7 +1195,7 @@ export default function App() {
       {/* ── 교내 위키 상세 ── */}
       {page==="wiki"&&curWiki&&<div>
         <Btn onClick={()=>setCurWiki(null)} style={{display:"flex",alignItems:"center",gap:4,background:BG,color:SO,border:`1.5px solid ${BO}`,borderRadius:8,padding:"7px 14px",fontSize:13,marginBottom:16}}>← 위키 목록으로</Btn>
-        <div style={{background:BG,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`}}>
+        <div style={{background:CA,borderRadius:12,padding:"20px 16px",border:`1px solid ${BO}`}}>
           <div style={{fontSize:34,marginBottom:10}}>{curWiki.icon}</div>
           <h1 style={{fontSize:19,fontWeight:700,color:TX,marginBottom:6}}>{curWiki.title}</h1>
           <span style={{display:"inline-block",padding:"3px 9px",borderRadius:5,fontSize:11,fontWeight:700,background:curWiki.ok?MS:"#fef3c7",color:curWiki.ok?"#0e8a5f":"#92400e",marginBottom:14}}>{curWiki.ok?"✅ 교사 인증":"📝 학생 작성"}</span>
@@ -1486,383 +1219,114 @@ export default function App() {
       {page==="calendar"&&<CalendarPage/>}
 
       {/* ── 이달의 급식 ── */}
-      {page==="meal"&&<MealPage mealData={mealData} isAdmin={isAdmin} onEdit={()=>setMealEditModal(true)}/>}
+      {page==="meal"&&<MealPage/>}
 
       {/* ── 내 계정 ── */}
       {page==="profile"&&<ProfilePage user={user} isTeacher={isTeacher} isAdmin={isAdmin} accounts={accounts} onUpdate={onAccountUpdate} onDelete={onAccountDelete}/>}
 
       {/* ── 관리자 대시보드 ── */}
-      {page==="admin"&&isAdmin&&<div style={{paddingBottom:24}}>
-
-        {/* 헤더 */}
-        <div style={{marginBottom:20}}>
-          <h1 style={{fontSize:20,fontWeight:800,color:N,letterSpacing:"-0.3px"}}>⚙️ 관리자 대시보드</h1>
-          <p style={{color:SO,fontSize:12,marginTop:4}}>총관리자 전용 페이지</p>
-        </div>
-
-        {/* 통계 카드 2×2 + 보안 */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          {[
-            {i:"🪪",n:idList.filter(r=>r.status==="pending").length,l:"학생증 대기",c:"#d97706",bg:"#fffbeb",k:"id"},
-            {i:"✅",n:vq.length,l:"인증 대기",c:"#059669",bg:"#ecfdf5",k:"verify"},
-            {i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:"#dc2626",bg:"#fff1f2",k:"fc"},
-            {i:"👥",n:accounts.length,l:"전체 계정",c:N,bg:"#f0f4ff",k:"users"},
-            {i:"🛡️",n:secLogs.filter(l=>l.type==="SPAM").length,l:"중복 제목 감지",c:"#7c3aed",bg:"#f5f3ff",k:"security"},
-            {i:"📋",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,l:"관리자 접근",c:"#0369a1",bg:"#eff6ff",k:"security"},
-          ].map((s,i)=>(
-            <div key={i} onClick={()=>setAdminTab(s.k)} style={{background:s.bg,borderRadius:14,padding:"16px 14px",cursor:"pointer",border:`1.5px solid ${adminTab===s.k?s.c:"transparent"}`,transition:"border .15s"}}>
-              <div style={{fontSize:22,marginBottom:6}}>{s.i}</div>
-              <div style={{fontSize:28,fontWeight:900,color:s.c,lineHeight:1}}>{s.n}</div>
-              <div style={{fontSize:11,color:SO,marginTop:5,fontWeight:500}}>{s.l}</div>
+      {page==="admin"&&isAdmin&&<div>
+        <div style={{marginBottom:16}}><h1 style={{fontSize:21,fontWeight:700}}>⚙️ 관리자 대시보드</h1><p style={{color:SO,fontSize:13,marginTop:3}}>총관리자 전용 페이지</p></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:18}}>
+          {[{i:"🪪",n:idList.filter(r=>r.status==="pending").length,l:"학생증 대기",c:"#f59e0b"},{i:"✅",n:vq.length,l:"인증 대기",c:"#16a34a"},{i:"🚨",n:posts.filter(p=>p.fc>0).length,l:"사실확인 요청",c:AC},{i:"👥",n:accounts.length,l:"전체 계정",c:N}].map((s,i)=>(
+            <div key={i} style={{background:CA,borderRadius:12,padding:"16px",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:20,marginBottom:6}}>{s.i}</div>
+              <div style={{fontSize:26,fontWeight:800,color:s.c,fontFamily:"serif"}}>{s.n}</div>
+              <div style={{fontSize:11,color:SO,marginTop:2}}>{s.l}</div>
             </div>
           ))}
         </div>
-
-        {/* 탭 네비게이션 */}
-        <div style={{display:"flex",gap:4,background:"#f1f3f8",padding:4,borderRadius:12,marginBottom:16,overflowX:"auto"}}>
-          {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"},{k:"security",l:"🛡️ 보안"}].map(t=>(
-            <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 2px",textAlign:"center",borderRadius:8,fontSize:11,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",boxShadow:adminTab===t.k?"0 1px 4px rgba(0,0,0,.08)":"none",whiteSpace:"nowrap",transition:"all .15s"}}>{t.l}</Btn>
+        <div style={{display:"flex",gap:3,background:BG,padding:3,borderRadius:10,marginBottom:16,overflowX:"auto"}}>
+          {[{k:"id",l:"🪪 학생증"},{k:"verify",l:"✅ 인증"},{k:"fc",l:"🚨 사실확인"},{k:"users",l:"👥 사용자"},{k:"inquiry",l:"💬 문의"}].map(t=>(
+            <Btn key={t.k} onClick={()=>setAdminTab(t.k)} style={{flex:1,padding:"8px 4px",textAlign:"center",borderRadius:8,fontSize:12,fontWeight:adminTab===t.k?700:500,color:adminTab===t.k?N:SO,background:adminTab===t.k?"#fff":"transparent",whiteSpace:"nowrap"}}>{t.l}</Btn>
           ))}
         </div>
-
-        {/* ── 학생증 탭 ── */}
-        {adminTab==="id"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-
-          {/* 개인정보 보호 패널 */}
-          <div style={{background:"#fffbeb",border:"1.5px solid #fde68a",borderRadius:14,overflow:"hidden"}}>
-            {/* 패널 헤더 */}
-            <div
-              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 16px",cursor:"pointer"}}
-              onClick={()=>setPrivacySettingsOpen(p=>!p)}
-            >
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:34,height:34,borderRadius:10,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>🔒</div>
+        {adminTab==="id"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {idList.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>검토할 학생증이 없어요 🎉</div>}
+          {idList.map(r=>(
+            <div key={r.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:700,color:"#78350f"}}>개인정보 보호 설정</div>
-                  <div style={{fontSize:11,color:"#a16207",marginTop:1}}>승인 후 <strong>{privacyDays}일</strong> 경과 시 자동 마스킹</div>
+                  <div style={{fontSize:14,fontWeight:700}}>{r.name}{r.isTeacher&&<span style={{marginLeft:6,fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 6px",borderRadius:4}}>교사</span>}</div>
+                  <div style={{fontSize:12,color:SO}}>{r.grade} · {r.id} · {r.date}</div>
                 </div>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                {/* 현황 배지 */}
-                <div style={{textAlign:"right",fontSize:10,color:"#a16207",lineHeight:1.5}}>
-                  <div>사진 {idList.filter(r=>r.idPhoto).length}건</div>
-                  <div>마스킹 {idList.filter(r=>r.photoMasked).length}건</div>
-                </div>
-                <span style={{fontSize:12,color:"#a16207",transition:"transform .2s",display:"inline-block",transform:privacySettingsOpen?"rotate(180deg)":"rotate(0deg)"}}>▼</span>
-              </div>
-            </div>
-
-            {/* 펼쳐지는 내용 */}
-            {privacySettingsOpen&&<div style={{borderTop:"1px solid #fde68a",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
-              {/* 안내 문구 */}
-              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",fontSize:12,color:"#78350f",lineHeight:1.7,border:"1px solid #fde68a"}}>
-                📋 <strong>개인정보 처리방침</strong><br/>
-                학생증 사진은 본인 확인 목적으로만 수집되며, 승인 후 설정된 기간이 지나면 자동으로 삭제됩니다.
-              </div>
-
-              {/* 기간 설정 */}
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:12,color:"#78350f",fontWeight:600,whiteSpace:"nowrap"}}>자동 마스킹</span>
-                <input
-                  type="number" min="1" max="365"
-                  value={privacyDaysInput}
-                  onChange={e=>setPrivacyDaysInput(e.target.value)}
-                  style={{width:52,padding:"6px 8px",borderRadius:8,border:"1.5px solid #fcd34d",fontSize:14,textAlign:"center",background:"#fff",fontWeight:700,color:N,outline:"none"}}
-                />
-                <span style={{fontSize:12,color:"#78350f",fontWeight:600}}>일 후</span>
-                <Btn onClick={async()=>{
-                  const n=parseInt(privacyDaysInput);
-                  if(isNaN(n)||n<1||n>365){toast_("1~365 사이 숫자를 입력해주세요");return;}
-                  setPrivacyDays(n);
-                  await fbSet("privacyDays",n);
-                  toast_(`자동 마스킹 기간 ${n}일로 변경됐어요 🔒`);
-                }} style={{marginLeft:"auto",padding:"6px 14px",background:"#f59e0b",color:"#fff",borderRadius:8,fontSize:12,fontWeight:700,flexShrink:0}}>저장</Btn>
-              </div>
-
-              {/* 일괄 처리 버튼 */}
-              <div style={{display:"flex",gap:8}}>
-                <Btn onClick={async()=>{
-                  const now=Date.now();
-                  let changed=0;
-                  const newIdList=idList.map(r=>{
-                    if(r.status==="ok"&&r.idPhoto&&!r.photoMasked){
-                      const approvedAt=r.approvedAt||new Date(r.date).getTime();
-                      const daysPassed=(now-approvedAt)/(1000*60*60*24);
-                      if(daysPassed>=privacyDays){ changed++; return {...r,idPhoto:null,photoMasked:true,maskedAt:now}; }
-                    }
-                    return r;
-                  });
-                  if(changed===0){toast_("마스킹할 대상이 없어요 (기간 미초과)");return;}
-                  setIdList(newIdList); await fbSet("idList",newIdList);
-                  toast_(`${changed}명 마스킹 완료 🔒`);
-                }} style={{flex:1,padding:"9px 0",background:"#fef3c7",color:"#92400e",border:"1px solid #fcd34d",borderRadius:9,fontSize:12,fontWeight:700,textAlign:"center"}}>
-                  ⏱ 기간 초과 일괄 마스킹
-                </Btn>
-                <Btn onClick={async()=>{
-                  if(!window.confirm("승인된 모든 학생증 사진을 삭제할까요?\n이 작업은 되돌릴 수 없습니다."))return;
-                  let changed=0;
-                  const newIdList=idList.map(r=>{
-                    if(r.status==="ok"&&r.idPhoto){ changed++; return {...r,idPhoto:null,photoMasked:true,maskedAt:Date.now()}; }
-                    return r;
-                  });
-                  setIdList(newIdList); await fbSet("idList",newIdList);
-                  toast_(`${changed}명 전체 삭제 완료 🗑️`);
-                }} style={{flex:1,padding:"9px 0",background:"#fee2e2",color:"#991b1b",border:"1px solid #fca5a5",borderRadius:9,fontSize:12,fontWeight:700,textAlign:"center"}}>
-                  🗑️ 전체 삭제
-                </Btn>
-              </div>
-            </div>}
-          </div>
-
-          {/* 학생증 목록 */}
-          {idList.length===0&&(
-            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:28,marginBottom:8}}>🎉</div>
-              <div style={{fontSize:14,fontWeight:600,color:N,marginBottom:4}}>검토할 학생증이 없어요</div>
-              <div style={{fontSize:12,color:LI}}>모든 학생증이 처리됐어요</div>
-            </div>
-          )}
-          {idList.map(r=>{
-            const approvedAt=r.approvedAt||new Date(r.date).getTime();
-            const daysPassed=r.status==="ok"?Math.floor((Date.now()-approvedAt)/(1000*60*60*24)):null;
-            const isOverdue=r.status==="ok"&&daysPassed>=privacyDays&&r.idPhoto&&!r.photoMasked;
-            const daysLeft=r.status==="ok"&&daysPassed!=null&&!r.photoMasked&&r.idPhoto?privacyDays-daysPassed:null;
-            return (
-              <div key={r.id} style={{background:BG,borderRadius:14,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,overflow:"hidden"}}>
-                {/* 카드 헤더 */}
-                <div style={{padding:"13px 16px 0 16px"}}>
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:14,fontWeight:700,color:N,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                        {r.name}
-                        {r.isTeacher&&<span style={{fontSize:10,fontWeight:700,background:"#ede9fe",color:"#5b21b6",padding:"2px 6px",borderRadius:5}}>교사</span>}
-                        {r.photoMasked&&<span style={{fontSize:10,fontWeight:700,background:"#f3f4f6",color:SO,padding:"2px 6px",borderRadius:5}}>🔒 마스킹됨</span>}
-                      </div>
-                      <div style={{fontSize:11,color:SO,marginTop:3}}>{r.grade} · {r.id} · {r.date}</div>
-                      {/* 경과일 뱃지 */}
-                      {r.status==="ok"&&daysPassed!=null&&!r.photoMasked&&r.idPhoto&&(
-                        <div style={{marginTop:5,display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:6,background:isOverdue?"#fee2e2":"#f0fdf4",border:`1px solid ${isOverdue?"#fca5a5":"#bbf7d0"}`}}>
-                          <span style={{fontSize:10,fontWeight:700,color:isOverdue?"#dc2626":"#16a34a"}}>
-                            {isOverdue?`⚠️ ${daysPassed}일 경과 · 마스킹 필요`:`D-${daysLeft} · ${daysPassed}일 경과`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <span style={{flexShrink:0,marginLeft:10,padding:"4px 10px",borderRadius:7,fontSize:11,fontWeight:700,background:r.status==="pending"?"#fef3c7":r.status==="ok"?"#dcfce7":"#fee2e2",color:r.status==="pending"?"#92400e":r.status==="ok"?"#166534":"#991b1b"}}>
-                      {r.status==="pending"?"검토 대기":r.status==="ok"?"승인됨":"차단됨"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 학생증 사진 영역 */}
-                <div style={{padding:"0 16px",marginBottom:12}}>
-                  {r.photoMasked
-                    ? <div style={{background:"#f8fafc",border:`1px dashed ${BO}`,borderRadius:10,padding:"20px 0",textAlign:"center"}}>
-                        <div style={{fontSize:24,marginBottom:6}}>🔒</div>
-                        <div style={{fontSize:12,fontWeight:600,color:SO}}>개인정보 보호를 위해 삭제됨</div>
-                        {r.maskedAt&&<div style={{fontSize:11,color:LI,marginTop:3}}>{new Date(r.maskedAt).toLocaleDateString("ko-KR")} 처리</div>}
-                      </div>
-                    : r.idPhoto
-                      ? <div style={{position:"relative"}}>
-                          <img src={r.idPhoto} alt="학생증" onClick={()=>window.open(r.idPhoto,"_blank")} style={{width:"100%",maxHeight:180,objectFit:"contain",borderRadius:10,border:`1.5px solid ${isOverdue?"#fca5a5":BO}`,cursor:"pointer",display:"block",background:"#f8fafc"}}/>
-                          {isOverdue&&<div style={{position:"absolute",top:8,right:8,background:"#dc2626",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:5}}>마스킹 필요</div>}
-                        </div>
-                      : <div style={{background:"#f8fafc",border:`1px dashed ${BO}`,borderRadius:10,padding:"20px 0",textAlign:"center",fontSize:12,color:LI}}>🪪 학생증 사진 없음</div>
-                  }
-                </div>
-
-                {/* 액션 버튼 영역 */}
-                <div style={{padding:"0 16px 14px 16px",display:"flex",flexDirection:"column",gap:8}}>
-                  {r.status==="pending"&&(
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      <Btn onClick={async()=>{
-                        const now=Date.now();
-                        const newIdList=idList.map(x=>x.id===r.id?{...x,status:"ok",approvedAt:now}:x);
-                        setIdList(newIdList); await fbSet("idList",newIdList);
-                        const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"ok"}:a);
-                        setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
-                        toast_(`${r.name} 승인됐어요 ✅`);
-                      }} style={{padding:"10px 0",background:"#dcfce7",color:"#166534",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>✅ 승인</Btn>
-                      <Btn onClick={async()=>{
-                        const newIdList=idList.map(x=>x.id===r.id?{...x,status:"blocked"}:x);
-                        setIdList(newIdList); await fbSet("idList",newIdList);
-                        const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"blocked"}:a);
-                        setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
-                        toast_(`${r.name} 차단됐어요 🚫`);
-                      }} style={{padding:"10px 0",background:"#fee2e2",color:"#991b1b",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>🚫 차단</Btn>
-                    </div>
-                  )}
-                  {r.status==="ok"&&!r.photoMasked&&r.idPhoto&&(
-                    <Btn onClick={async()=>{
-                      if(!window.confirm(`${r.name}의 학생증 사진을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`))return;
-                      const newIdList=idList.map(x=>x.id===r.id?{...x,idPhoto:null,photoMasked:true,maskedAt:Date.now()}:x);
-                      setIdList(newIdList); await fbSet("idList",newIdList);
-                      toast_(`${r.name}의 학생증이 삭제됐어요 🗑️`);
-                    }} style={{width:"100%",padding:"9px 0",background:"#fef3c7",color:"#92400e",border:"1px solid #fde68a",borderRadius:10,fontSize:12,fontWeight:700,textAlign:"center"}}>🗑️ 사진 삭제</Btn>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>}
-
-        {/* ── 인증 탭 ── */}
-        {adminTab==="verify"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {vq.length===0&&<div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-            <div style={{fontSize:28,marginBottom:8}}>🎉</div>
-            <div style={{fontSize:14,fontWeight:600,color:N}}>검토할 항목이 없어요</div>
-          </div>}
-          {vq.map(v=>(
-            <div key={v.id} style={{background:BG,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{v.title}</div>
-              <div style={{fontSize:12,color:SO,marginBottom:10}}>{v.author} · {v.cat}</div>
-              <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:"#0e7a5a",marginBottom:12}}>📎 "{v.source}"</div>
-              <Btn onClick={()=>verifyPost(v.id)} style={{width:"100%",background:MS,color:"#0e8a5f",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700}}>✅ 확인된 정보 승인</Btn>
-            </div>
-          ))}
-        </div>}
-
-        {/* ── 사실확인 탭 ── */}
-        {adminTab==="fc"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-            <div style={{fontSize:28,marginBottom:8}}>🎉</div>
-            <div style={{fontSize:14,fontWeight:600,color:N}}>접수된 요청이 없어요</div>
-          </div>}
-          {posts.filter(p=>p.fc>0).map(p=>(
-            <div key={p.id} style={{background:BG,borderRadius:14,padding:"16px",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:14,fontWeight:700,color:N,marginBottom:4}}>{p.title}</div>
-              <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:8}}>요청 {p.fc}건</div>
-              {(p.fcR||[]).map((r2,i)=><div key={i} style={{fontSize:12,color:SO,background:"#f8fafc",borderRadius:7,padding:"6px 10px",marginBottom:4}}>· {r2}</div>)}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
-                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{status:"blinded",fc:0,fcR:[]});}catch(e){}toast_("블라인드 처리됐어요");}} style={{padding:"9px 0",background:"#fff7ed",color:"#c2410c",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>🙈 블라인드</Btn>
-                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{fc:0,fcR:[]});}catch(e){}toast_("정상 처리됐어요 ✅");}} style={{padding:"9px 0",background:MS,color:"#0e8a5f",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center"}}>✅ 정상 처리</Btn>
-              </div>
-            </div>
-          ))}
-        </div>}
-
-        {/* ── 사용자 탭 ── */}
-        {adminTab==="users"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {accounts.map(u=>(
-            <div key={u.id} style={{background:BG,borderRadius:14,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:10,background:u.role==="teacher"?"#ede9fe":u.id==="11025"?"#dbeafe":"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-                {u.role==="teacher"?"👩🏫":u.id==="11025"?"👑":"🙍"}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:N}}>{u.name}</div>
-                <div style={{fontSize:11,color:SO,marginTop:1}}>{u.role==="teacher"?u.subject+" 선생님":u.grade+"학년 "+u.room+"반"} · {u.id}</div>
-                <span style={{display:"inline-block",marginTop:4,padding:"2px 7px",borderRadius:5,fontSize:10,fontWeight:700,background:(!u.status||u.status==="ok"||u.role==="teacher")?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:(!u.status||u.status==="ok"||u.role==="teacher")?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>
-                  {(!u.status||u.status==="ok"||u.role==="teacher")?"정상":u.status==="pending"?"검토 중":"차단됨"}
+                <span style={{padding:"3px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:r.status==="pending"?"#fef3c7":r.status==="ok"?"#dcfce7":"#fee2e2",color:r.status==="pending"?"#92400e":r.status==="ok"?"#166534":"#991b1b"}}>
+                  {r.status==="pending"?"검토 대기":r.status==="ok"?"승인됨":"차단됨"}
                 </span>
               </div>
-              {u.id!=="11025"&&<Btn onClick={async()=>{const updated=accounts.filter(a=>a.id!==u.id);await fbSet("accounts",updated);setAccounts(updated);toast_(`${u.name} 계정이 삭제됐어요`);}} style={{flexShrink:0,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"7px 11px",fontSize:12,fontWeight:600}}>🗑 삭제</Btn>}
+              {r.idPhoto
+                ? <img src={r.idPhoto} alt="학생증" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:8,border:`1px solid ${BO}`,marginBottom:r.status==="pending"?10:0,cursor:"pointer"}} onClick={()=>window.open(r.idPhoto,"_blank")}/>
+                : <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>🪪 학생증 사진 없음</div>
+              }
+              {r.status==="pending"&&<div style={{display:"flex",gap:8}}>
+                <Btn onClick={async()=>{
+                  const newIdList=idList.map(x=>x.id===r.id?{...x,status:"ok"}:x);
+                  setIdList(newIdList); await fbSet("idList",newIdList);
+                  const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"ok"}:a);
+                  setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
+                  toast_(`${r.name} 승인됐어요 ✅`);
+                }} style={{flex:1,background:"#dcfce7",color:"#166534",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 승인</Btn>
+                <Btn onClick={async()=>{
+                  const newIdList=idList.map(x=>x.id===r.id?{...x,status:"blocked"}:x);
+                  setIdList(newIdList); await fbSet("idList",newIdList);
+                  const updatedAcc=accounts.map(a=>a.id===r.id?{...a,status:"blocked"}:a);
+                  setAccounts(updatedAcc); await fbSet("accounts",updatedAcc);
+                  toast_(`${r.name} 차단됐어요 🚫`);
+                }} style={{flex:1,background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🚫 차단</Btn>
+              </div>}
             </div>
           ))}
         </div>}
-
+        {adminTab==="verify"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {vq.length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>검토할 항목이 없어요 🎉</div>}
+          {vq.map(v=>(
+            <div key={v.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{v.title}</div>
+              <div style={{fontSize:12,color:SO,marginBottom:4}}>{v.author} · {v.cat}</div>
+              <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:7,padding:"8px 11px",fontSize:12,color:"#0e7a5a",marginBottom:10}}>📎 "{v.source}"</div>
+              <Btn onClick={()=>verifyPost(v.id)} style={{width:"100%",background:MS,color:"#0e8a5f",borderRadius:8,padding:"9px",fontSize:13,fontWeight:600}}>✅ 확인된 정보 승인</Btn>
+            </div>
+          ))}
+        </div>}
+        {adminTab==="fc"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {posts.filter(p=>p.fc>0).length===0&&<div style={{background:CA,borderRadius:12,padding:"24px",textAlign:"center",color:LI,border:`1px solid ${BO}`}}>접수된 요청이 없어요 🎉</div>}
+          {posts.filter(p=>p.fc>0).map(p=>(
+            <div key={p.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{p.title}</div>
+              <div style={{fontSize:13,color:AC,fontWeight:700,marginBottom:6}}>요청 {p.fc}건</div>
+              {(p.fcR||[]).map((r,i)=><div key={i} style={{fontSize:12,color:SO,background:BG,borderRadius:6,padding:"5px 9px",marginBottom:4}}>· {r}</div>)}
+              <div style={{display:"flex",gap:8,marginTop:10}}>
+                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{status:"blinded",fc:0,fcR:[]});}catch(e){}toast_("블라인드 처리됐어요");}} style={{flex:1,background:"#fff7ed",color:"#c2410c",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>🙈 블라인드</Btn>
+                <Btn onClick={async()=>{try{await updateDoc(doc(db,"posts",p.id),{fc:0,fcR:[]});}catch(e){}toast_("정상 처리됐어요 ✅");}} style={{flex:1,background:MS,color:"#0e8a5f",borderRadius:8,padding:"8px",fontSize:13,fontWeight:600}}>✅ 정상 처리</Btn>
+              </div>
+            </div>
+          ))}
+        </div>}
+        {adminTab==="users"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {accounts.map(u=>(
+            <div key={u.id} style={{background:CA,borderRadius:12,padding:"14px 16px",border:`1px solid ${BO}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:32,height:32,borderRadius:"50%",background:u.id==="11025"?N:u.role==="teacher"?"#ede9fe":CHIP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{u.id==="11025"?"🛡":u.role==="teacher"?"👩‍🏫":"👤"}</div>
+                <div>
+                <div style={{fontSize:14,fontWeight:700}}>{u.name}{u.id==="11025"&&<span style={{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4,background:N,color:M,marginLeft:6}}>총관리자</span>}</div>
+                <div style={{fontSize:12,color:SO}}>{u.role==="teacher"?u.subject+" 선생님":u.grade+"학년 "+u.room+"반"} · {u.id}</div>
+                <span style={{display:"inline-block",marginTop:4,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:700,background:(!u.status||u.status==="ok"||u.role==="teacher")?"#dcfce7":u.status==="pending"?"#fef3c7":"#fee2e2",color:(!u.status||u.status==="ok"||u.role==="teacher")?"#166534":u.status==="pending"?"#92400e":"#991b1b"}}>{(!u.status||u.status==="ok"||u.role==="teacher")?"정상":u.status==="pending"?"검토 중":"차단됨"}</span>
+                </div>
+              </div>
+              {u.id!=="11025"&&<Btn onClick={async()=>{const updated=accounts.filter(a=>a.id!==u.id);await fbSet("accounts",updated);setAccounts(updated);toast_(`${u.name} 계정이 삭제됐어요`);}} style={{background:"#fee2e2",color:"#991b1b",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600}}>🗑 삭제</Btn>}
+            </div>
+          ))}
+        </div>}
         {adminTab==="inquiry"&&<InquiryTab/>}
-
-        {/* ── 🛡️ 보안 탭 ── */}
-        {adminTab==="security"&&(
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            {/* 요약 카드 */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {[
-                {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
-                {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
-              ].map((s,i)=>(
-                <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
-                  <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
-                  <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
-                  <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
-                </div>
-              ))}
-            </div>
-            {/* 필터 + 로그 초기화 */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-              <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
-              <Btn onClick={async()=>{
-                if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
-                setSecLogs([]); await fbSet("secLogs",[]);
-                toast_("보안 로그가 초기화됐어요");
-              }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
-                🗑 전체 초기화
-              </Btn>
-            </div>
-            {/* 로그 목록 */}
-            {secLogs.length===0&&(
-              <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-                <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
-                <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
-                <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
-              </div>
-            )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {[
-              {l:"중복 제목 감지",n:secLogs.filter(l=>l.type==="SPAM").length,c:"#dc2626",bg:"#fff1f2",i:"🚨"},
-              {l:"관리자 접근",n:secLogs.filter(l=>l.type==="ADMIN_ACCESS").length,c:"#0369a1",bg:"#eff6ff",i:"📋"},
-            ].map((s,i)=>(
-              <div key={i} style={{background:s.bg,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${BO}`}}>
-                <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
-                <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
-                <div style={{fontSize:10,color:SO,marginTop:3,fontWeight:500}}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* 필터 + 로그 초기화 */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-            <div style={{fontSize:13,fontWeight:700,color:N}}>보안 이벤트 로그</div>
-            <Btn onClick={async()=>{
-              if(!window.confirm("보안 로그를 전체 초기화할까요?"))return;
-              setSecLogs([]); await fbSet("secLogs",[]);
-              toast_("보안 로그가 초기화됐어요");
-            }} style={{padding:"5px 12px",background:"#fee2e2",color:"#991b1b",border:"1px solid #fecaca",borderRadius:7,fontSize:11,fontWeight:600}}>
-              🗑 전체 초기화
-            </Btn>
-          </div>
-
-          {/* 로그 목록 */}
-          {secLogs.length===0&&(
-            <div style={{background:BG,borderRadius:14,padding:"32px 24px",textAlign:"center",border:`1px solid ${BO}`}}>
-              <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
-              <div style={{fontSize:14,fontWeight:600,color:N}}>보안 이벤트가 없어요</div>
-              <div style={{fontSize:12,color:LI,marginTop:4}}>이상 활동이 감지되면 여기에 기록돼요</div>
-            </div>
-          )}
-          {secLogs.map((log,i)=>{
-            const typeInfo={
-              SPAM:{label:"중복 제목 감지",bg:"#fff1f2",color:"#dc2626",border:"#fecaca",icon:"🚨"},
-              ADMIN_ACCESS:{label:"관리자 접근",bg:"#eff6ff",color:"#0369a1",border:"#bfdbfe",icon:"📋"},
-            }[log.type]||{label:log.type,bg:"#f8fafc",color:SO,border:BO,icon:"📌"};
-            return(
-              <div key={i} style={{background:typeInfo.bg,borderRadius:12,padding:"13px 16px",border:`1.5px solid ${typeInfo.border}`}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,flexWrap:"wrap",gap:4}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:16}}>{typeInfo.icon}</span>
-                    <span style={{fontSize:12,fontWeight:700,color:typeInfo.color,background:"#fff",padding:"2px 8px",borderRadius:5,border:`1px solid ${typeInfo.border}`}}>{typeInfo.label}</span>
-                  </div>
-                  <span style={{fontSize:11,color:SO}}>{log.time}</span>
-                </div>
-                <div style={{fontSize:13,color:N,fontWeight:500,marginBottom:4}}>{log.detail}</div>
-                <div style={{fontSize:11,color:SO}}>
-                  {log.userName&&<span>👤 {log.userName}</span>}
-                  {log.userId&&<span style={{marginLeft:8}}>ID: {log.userId}</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        )}
-
       </div>}
     </main>
+    </div>
 
     {/* ── 모달들 ── */}
 
     {/* 글쓰기 */}
     <Modal open={wModal} onClose={()=>setWModal(false)} title="✏️ 새 글 작성">
-      {isTeacher&&<div style={{background:"#ede9fe",border:"1px solid #c4b5fd",borderRadius:9,padding:"10px 14px",fontSize:12,color:"#5b21b6",marginBottom:14}}>👩🏫 선생님 계정으로 게시하면 <strong>'선생님 인증'</strong> 배지가 자동으로 부여됩니다.</div>}
+      {isTeacher&&<div style={{background:"#ede9fe",border:"1px solid #c4b5fd",borderRadius:9,padding:"10px 14px",fontSize:12,color:"#5b21b6",marginBottom:14}}>👩‍🏫 선생님 계정으로 게시하면 <strong>'선생님 인증'</strong> 배지가 자동으로 부여됩니다.</div>}
       {isTeacher&&<div style={{marginBottom:12}}><label style={lbl1}>대상 학년</label>
         <select value={wGrade} onChange={e=>setWGrade(e.target.value)} style={inp1}><option value="공통">공통 (전체 학년)</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
       </div>}
@@ -2033,83 +1497,6 @@ export default function App() {
       <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
         <Btn onClick={()=>setInquiryModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
         <Btn onClick={submitInquiry} style={{padding:"9px 22px",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>문의 접수</Btn>
-      </div>
-    </Modal>
-
-    {/* 🍱 급식 편집 모달 */}
-    <Modal open={mealEditModal} onClose={()=>setMealEditModal(false)} title="🍱 급식 편집">
-      {/* 날짜별 목록 */}
-      <div style={{marginBottom:16}}>
-        <div style={{fontSize:13,fontWeight:700,color:N,marginBottom:10}}>등록된 급식 날짜</div>
-        <div style={{maxHeight:240,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
-          {Object.keys(mealData).sort((a,b)=>{
-            const [am,ad]=a.split("/").map(Number);
-            const [bm,bd]=b.split("/").map(Number);
-            return am!==bm?am-bm:ad-bd;
-          }).map(dateKey=>(
-            <div key={dateKey} style={{display:"flex",alignItems:"center",gap:8,background:"#f6f8fc",borderRadius:8,padding:"8px 10px",border:`1px solid ${BO}`}}>
-              <span style={{fontSize:12,fontWeight:700,color:N,minWidth:36}}>{dateKey}</span>
-              <span style={{fontSize:11,color:SO,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{mealData[dateKey].join(", ")}</span>
-              <Btn onClick={()=>{
-                setMealEditTarget(dateKey);
-                setMealEditDate(dateKey);
-                setMealEditItems(mealData[dateKey].join("\n"));
-              }} style={{padding:"3px 9px",background:MS,color:"#0e8a5f",borderRadius:5,fontSize:11,fontWeight:600,flexShrink:0}}>수정</Btn>
-              <Btn onClick={async()=>{
-                if(!window.confirm(`${dateKey} 급식을 삭제할까요?`))return;
-                const updated={...mealData};
-                delete updated[dateKey];
-                setMealData(updated);
-                await fbSet("mealData",updated);
-                toast_(`${dateKey} 급식이 삭제됐어요`);
-              }} style={{padding:"3px 9px",background:"#fee2e2",color:"#991b1b",borderRadius:5,fontSize:11,fontWeight:600,flexShrink:0}}>삭제</Btn>
-            </div>
-          ))}
-          {Object.keys(mealData).length===0&&<div style={{textAlign:"center",color:LI,fontSize:13,padding:"16px 0"}}>등록된 급식이 없어요</div>}
-        </div>
-      </div>
-
-      {/* 날짜 추가/수정 입력 */}
-      <div style={{borderTop:`1px solid ${BO}`,paddingTop:14}}>
-        <div style={{fontSize:13,fontWeight:700,color:N,marginBottom:10}}>
-          {mealEditTarget?"✏️ 급식 수정":"➕ 급식 추가"}
-        </div>
-        <div style={{marginBottom:10}}>
-          <label style={lbl1}>날짜 <span style={{color:SO,fontWeight:400}}>(예: 7/1)</span></label>
-          <input
-            value={mealEditDate}
-            onChange={e=>setMealEditDate(e.target.value)}
-            placeholder="월/일 형식 (예: 7/1)"
-            style={inp1}
-            disabled={!!mealEditTarget}
-          />
-        </div>
-        <div style={{marginBottom:12}}>
-          <label style={lbl1}>메뉴 항목 <span style={{color:SO,fontWeight:400}}>(한 줄에 하나씩)</span></label>
-          <textarea
-            value={mealEditItems}
-            onChange={e=>setMealEditItems(e.target.value)}
-            rows={6}
-            placeholder={"흑미밥\n소고기미역국\n닭갈비\n포기김치"}
-            style={{...inp1,resize:"vertical",boxSizing:"border-box"}}
-          />
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          {mealEditTarget&&<Btn onClick={()=>{setMealEditTarget(null);setMealEditDate("");setMealEditItems("");}} style={{padding:"9px 14px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>}
-          <Btn onClick={async()=>{
-            const dateKey=mealEditDate.trim();
-            if(!dateKey||!/^\d+\/\d+$/.test(dateKey)){toast_("날짜를 월/일 형식으로 입력해주세요 (예: 7/1)");return;}
-            const items=mealEditItems.split("\n").map(s=>s.trim()).filter(Boolean);
-            if(items.length===0){toast_("메뉴 항목을 하나 이상 입력해주세요");return;}
-            const updated={...mealData,[dateKey]:items};
-            setMealData(updated);
-            await fbSet("mealData",updated);
-            setMealEditTarget(null);setMealEditDate("");setMealEditItems("");
-            toast_(`${dateKey} 급식이 ${mealEditTarget?"수정":"등록"}됐어요 🍱`);
-          }} style={{flex:1,padding:"9px 0",borderRadius:8,background:N,color:"#fff",fontSize:13,fontWeight:700}}>
-            {mealEditTarget?"저장":"추가하기"}
-          </Btn>
-        </div>
       </div>
     </Modal>
 
