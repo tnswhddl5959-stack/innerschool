@@ -284,7 +284,7 @@ function Register({onDone,onBack}) {
       </div>
     </div>
     <div style={{background:MS,border:`1px solid ${MM}`,borderRadius:8,padding:"8px 12px",fontSize:12,color:SO,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-      <span>🪪</span><span>자동 생성된 학번: <strong style={{color:MD,fontSize:14}}>{sid}</strong></span>
+      <span>🎓</span><span>자동 생성된 학번: <strong style={{color:MD,fontSize:14}}>{sid}</strong></span>
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>비밀번호</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="4자 이상 입력" style={inp0}/></div>
     <div style={{marginBottom:14}}>
@@ -297,7 +297,7 @@ function Register({onDone,onBack}) {
       <label style={lbl0}>학생증 사진 <span style={{color:MD}}>*필수</span></label>
       <label style={{display:"block",border:`2px dashed rgba(45,212,160,${preview?0.6:0.3})`,borderRadius:10,padding:preview?6:18,textAlign:"center",cursor:"pointer"}}>
         {preview?<img src={preview} alt="" style={{width:"100%",maxHeight:110,objectFit:"cover",borderRadius:8}}/>
-          :<><div style={{fontSize:26,marginBottom:6}}>🪪</div><div style={{color:SO,fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
+          :<><div style={{fontSize:32,marginBottom:6}}>📸</div><div style={{color:SO,fontSize:12}}><span style={{color:M,fontWeight:600}}>클릭하여 첨부</span></div></>}
         <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setPreview(URL.createObjectURL(f));setPreviewFile(f);}}}/>
       </label>
     </div>
@@ -818,7 +818,7 @@ export default function App() {
   const verifyPost=async(id)=>{ try{await updateDoc(doc(db,"posts",id),{status:"verified"});}catch(e){console.error(e);} setVq(q=>q.filter(v=>v.id!==id)); toast_("✅ 확인된 정보 배지가 부여됐어요!"); };
   const submitFc=async()=>{
     if(!isTeacher&&!fcText.trim()){toast_("사유를 입력해주세요");return;}
-    const entry=(isTeacher||isAdmin)?`[✅ ${user.name} ${isAdmin?"총관리자":"선생님"} 확인]${fcText.trim()?" "+fcText.trim():""}`:fcText.trim();
+    const entry=(isTeacher||isAdmin)?`[✅ ${isAdmin?"총관리자":"선생님"} 확인]${fcText.trim()?" "+fcText.trim():""}`:fcText.trim();
     const p=posts.find(x=>x.id===fcTarget); if(!p)return;
     try{await updateDoc(doc(db,"posts",fcTarget),{fc:(p.fc||0)+1,fcR:[...(p.fcR||[]),entry]});}catch(e){console.error(e);}
     setFcModal(false);setFcText(""); toast_((isTeacher||isAdmin)?"사실 확인이 등록됐어요 ✅":"사실 확인 요청이 접수됐어요");
@@ -1244,7 +1244,7 @@ export default function App() {
               </div>
               {r.idPhoto
                 ? <img src={r.idPhoto} alt="학생증" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:8,border:`1px solid ${BO}`,marginBottom:r.status==="pending"?10:0,cursor:"pointer"}} onClick={()=>window.open(r.idPhoto,"_blank")}/>
-                : <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>🪪 학생증 사진 없음</div>
+                : <div style={{background:BG,border:`1px dashed ${BO}`,borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,color:LI,marginBottom:r.status==="pending"?10:0}}>📷 학생증 사진 없음</div>
               }
               {r.status==="pending"&&<div style={{display:"flex",gap:8}}>
                 <Btn onClick={async()=>{
@@ -1378,7 +1378,7 @@ export default function App() {
 
     {/* 사실확인 */}
     <Modal open={fcModal} onClose={()=>setFcModal(false)} title={(isTeacher||isAdmin)?"✅ 사실 확인 체크":"🚨 사실 확인 요청"}>
-      <p style={{fontSize:13,color:SO,marginBottom:16}}>{isTeacher?"이 게시글의 내용이 사실임을 확인합니다. 추가로 전달할 내용이 있다면 아래에 입력해주세요.":"사실과 다르다고 생각하시나요? 구체적인 사유를 입력해주세요."}</p>
+      <p style={{fontSize:13,color:SO,marginBottom:16}}>{(isTeacher||isAdmin)?"이 게시글의 내용이 사실임을 확인합니다. 추가로 전달할 내용이 있다면 아래에 입력해주세요.":"사실과 다르다고 생각하시나요? 구체적인 사유를 입력해주세요."}</p>
       <textarea value={fcText} onChange={e=>setFcText(e.target.value)} rows={4} placeholder={(isTeacher||isAdmin)?"추가로 할 말이 있으면 입력하세요 (선택사항)":"예: 시험 범위가 실제로는 2단원까지입니다."} style={{...inp1,resize:"none",boxSizing:"border-box",marginBottom:16}}/>
       <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
         <Btn onClick={()=>setFcModal(false)} style={{padding:"9px 18px",borderRadius:8,border:`1.5px solid ${BO}`,background:BG,color:SO,fontSize:13}}>취소</Btn>
