@@ -311,7 +311,7 @@ function Register({onDone,onBack}) {
       </div>
       <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
         <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} style={{width:16,height:16,accentColor:M}}/>
-        <span style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:M}}>*필수</span></span>
+        <span style={{color:SO,fontSize:12,fontWeight:500}}>위 개인정보 수집·이용에 동의합니다 <span style={{color:M}}>*필수</span></span>
       </label>
     </div>
     <ErrBox/>
