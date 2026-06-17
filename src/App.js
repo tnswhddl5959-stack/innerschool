@@ -1028,7 +1028,7 @@ export default function App() {
             ))}
           </div>
           {/* 세부 카테고리 */}
-          <div style={{display:"flex",gap:5,padding:"0 18px 10px",overflowX:"auto",scrollbarWidth:"none"}}>
+          <div style={{display:"flex",gap:5,padding:"0 18px 10px",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",msOverflowStyle:"none"}}>
             {["전체",...SUB_CATS].map(c=>(
               <Btn key={c} onClick={()=>setCat(c)} style={{flexShrink:0,fontSize:12,fontWeight:500,padding:"4px 11px",borderRadius:999,
                 border:`1.5px solid ${cat===c?MD:BO}`,
@@ -1087,7 +1087,7 @@ export default function App() {
                           :<span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6,color:"#7A8194",background:"#F0F2F6"}}>· 미확인</span>
                     }
                     {isAdmin&&p.fc>0&&<span style={{color:AC,fontWeight:700}}>🚨 {p.fc}건</span>}
-                    <span>♡ {p.views||0}</span>
+                    <span>👁 {p.views||0}</span>
                     <span>💬 {(cmts[p.id]||[]).length}</span>
                   </div>
                 </div>
