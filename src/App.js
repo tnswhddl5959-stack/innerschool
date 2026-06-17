@@ -134,14 +134,13 @@ const lbl0 = {color:SO,fontSize:12,fontWeight:600,display:"block",marginBottom:6
 const lbl1 = {fontSize:12,fontWeight:500,color:SO,display:"block",marginBottom:6};
 
 const AuthHeader = () => <>
-  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-    <img src="/logo192.png" alt="INNERSCHOOL" style={{width:52,height:52,borderRadius:14,boxShadow:"0 2px 8px rgba(15,31,61,.12)"}}/>
+  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,userSelect:"none"}}>
+    <img src="/logo192.png" alt="INNERSCHOOL" style={{width:52,height:52,borderRadius:14,boxShadow:"0 2px 8px rgba(15,31,61,.12)",flexShrink:0}}/>
     <div>
       <div style={{fontSize:20,fontWeight:800,color:TX,letterSpacing:"-.4px",lineHeight:1.2}}>INNER<span style={{color:MD}}>SCHOOL</span></div>
-      <div style={{color:SO,fontSize:11,marginTop:2}}>경기창조고 정보 공유 플랫폼</div>
+      <div style={{color:SO,fontSize:11,marginTop:3,lineHeight:1.5}}>교육기회 공정성 실현을 위한<br/>경기창조고 정보 공유 플랫폼</div>
     </div>
   </div>
-  <div style={{color:SO,fontSize:12,marginBottom:24,padding:"10px 12px",background:CHIP,borderRadius:8}}>교육기회 공정성 실현을 위한 정보 공유 시스템</div>
 </>;
 
 // ── 로그인 화면 ──
@@ -158,7 +157,7 @@ function LoginRole({onSelect,onReg}) {
         </div>
       ))}
     </div>
-    <div style={{textAlign:"center",color:SO,fontSize:13}}>
+    <div style={{textAlign:"center",color:SO,fontSize:13,marginTop:16}}>
       계정이 없으신가요? <span onClick={onReg} style={{color:MD,fontWeight:600,cursor:"pointer"}}>가입하기</span>
     </div>
   </div></div>;
@@ -170,7 +169,7 @@ function LoginStudent({onBack,onLogin,onReg}) {
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
       <span onClick={onBack} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생 로그인</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>학생 로그인</span>
     </div>
     <div style={{marginBottom:4}}><label style={lbl0}>학번</label>
       <input value={id} onChange={e=>{const v=e.target.value.replace(/[^0-9]/g,"");if(v.length<=5)setId(v);}} placeholder="예: 10101" style={inp0}/>
@@ -276,7 +275,7 @@ function Register({onDone,onBack}) {
     <AuthHeader/>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
       <span onClick={()=>{setRole(null);setErr("");}} style={{color:SO,fontSize:13,cursor:"pointer"}}>← 뒤로</span>
-      <span style={{color:TX,fontSize:18,fontWeight:700}}>🎒 학생으로 가입</span>
+      <span style={{color:TX,fontSize:18,fontWeight:700}}>학생으로 가입</span>
     </div>
     <div style={{marginBottom:12}}><label style={lbl0}>이름</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="본명을 입력하세요" style={inp0}/></div>
     <div style={{marginBottom:4}}><label style={lbl0}>학년 · 반 · 번호</label>
